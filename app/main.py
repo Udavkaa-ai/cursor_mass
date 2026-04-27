@@ -145,6 +145,39 @@ async def raw_html_endpoint(stop_id: str) -> PlainTextResponse:
     return PlainTextResponse(html[:50_000], media_type="text/plain; charset=utf-8")
 
 
+@app.get("/scripts/{stop_id}", dependencies=[Depends(require_api_key)])
+async def scripts_endpoint(stop_id: str) -> JSONResponse:
+    """Все <script> блоки страницы с JSON-подобным телом, отсортированные по
+    длине. Помогает быстро найти где в HTML спрятан state."""
+    import re as _re
+
+    assert masstransit is not None
+    html = await masstransit.fetch_stop_html(stop_id)
+    out = []
+    pattern = _re.compile(
+        r"<script([^>]*)>(.*?)</script>",
+        _re.DOTALL | _re.IGNORECASE,
+    )
+    for idx, m in enumerate(pattern.finditer(html)):
+        attrs = m.group(1).strip()
+        body = m.group(2).strip()
+        if not body:
+            continue
+        looks_jsonish = body.startswith("{") or body.startswith("[") or "&quot;" in body[:200]
+        if not looks_jsonish:
+            continue
+        out.append(
+            {
+                "idx": idx,
+                "attrs": attrs[:200],
+                "length": len(body),
+                "preview": body[:400],
+            }
+        )
+    out.sort(key=lambda x: -x["length"])
+    return JSONResponse({"total_html": len(html), "json_scripts": out[:20]})
+
+
 @app.get("/raw_api/{stop_id}", dependencies=[Depends(require_api_key)])
 async def raw_api_endpoint(stop_id: str) -> JSONResponse:
     """Старое API-обращение (сейчас обычно пусто; оставлено для проверки)."""
