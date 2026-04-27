@@ -26,7 +26,7 @@ USER_AGENT = (
 )
 SESSION_TTL_SECONDS = 30 * 60
 BOOTSTRAP_URL = "https://yandex.ru/maps/"
-STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{numeric}/"
+STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{numeric}/?lang=ru"
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
 
@@ -186,125 +186,141 @@ def _extract_state(html: str) -> dict[str, Any]:
     )
 
 
-def _walk(obj: Any, key: str) -> list[Any]:
-    """Найти все значения по ключу `key` на любой глубине."""
-    found: list[Any] = []
-    stack: list[Any] = [obj]
-    while stack:
-        cur = stack.pop()
-        if isinstance(cur, dict):
-            for k, v in cur.items():
-                if k == key:
-                    found.append(v)
-                if isinstance(v, (dict, list)):
-                    stack.append(v)
-        elif isinstance(cur, list):
-            stack.extend(cur)
-    return found
+_NAME_DIRECTION_RE = re.compile(r"^(\S+)\s*(?:\((.+?)\))?\s*$")
 
 
-def _extract_stop_name(payload: dict[str, Any]) -> str:
-    for meta in _walk(payload, "StopMetaData"):
-        if isinstance(meta, dict) and meta.get("name"):
-            return str(meta["name"])
-    for props in _walk(payload, "properties"):
-        if isinstance(props, dict) and props.get("name"):
-            return str(props["name"])
-    return ""
+def _split_route_name(full: str) -> tuple[str, str | None]:
+    """Из 'м27 (МЦД Остафьево)' → ('м27', 'МЦД Остафьево')."""
+    m = _NAME_DIRECTION_RE.match(full.strip())
+    if not m:
+        return full.strip(), None
+    return m.group(1), (m.group(2) or None)
 
 
-def _extract_transport(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Достать список маршрутов из ответа getStopInfo, перебирая возможные ключи."""
-    candidates: list[Any] = []
-    for key in ("Transport", "transport"):
-        candidates.extend(_walk(payload, key))
-    flat: list[dict[str, Any]] = []
-    for c in candidates:
-        if isinstance(c, list):
-            flat.extend(x for x in c if isinstance(x, dict))
-    seen: set[int] = set()
-    unique: list[dict[str, Any]] = []
-    for item in flat:
-        if id(item) in seen:
+def _server_now(state: dict[str, Any]) -> int:
+    """Unix-время сервера: предпочитаем config.serverTime, иначе системные now."""
+    config = state.get("config")
+    if isinstance(config, dict):
+        st = config.get("serverTime")
+        if isinstance(st, str):
+            try:
+                from datetime import datetime as _dt
+
+                ts = _dt.fromisoformat(st.replace("Z", "+00:00"))
+                return int(ts.timestamp())
+            except ValueError:
+                pass
+    return int(time.time())
+
+
+def _eta_from_value(value: Any, now_ts: int) -> int | None:
+    """Поле .value у Scheduled/Estimated может быть строкой/числом, абс. unix-time
+    (предпочитают это) или секундами от сейчас."""
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        return None
+    if v <= 0:
+        return None
+    # > сегодняшней полночи 1970 + 30 лет → точно абсолютная метка
+    if v > 1_000_000_000:
+        return max(0, v - now_ts)
+    return v
+
+
+def _events_of_thread(thread: dict[str, Any]) -> list[tuple[str, int | None, bool]]:
+    """Возвращает [(текст, eta_sec, real_time)]; real_time=True если Estimated."""
+    out: list[tuple[str, int | None, bool]] = []
+    brief = thread.get("BriefSchedule") or thread.get("briefSchedule")
+    if not isinstance(brief, dict):
+        return out
+    events = brief.get("Events") or brief.get("events") or []
+    if not isinstance(events, list):
+        return out
+    # _server_now прокинуть нельзя сюда без рефакторинга; оставлю заглушку — пересчитаю в вызывающей.
+    for ev in events:
+        if not isinstance(ev, dict):
             continue
-        seen.add(id(item))
-        unique.append(item)
-    return unique
+        est = ev.get("Estimated") or ev.get("estimated")
+        if isinstance(est, dict):
+            text = str(est.get("text") or "")
+            out.append((text, est.get("value"), True))
+            continue
+        sch = ev.get("Scheduled") or ev.get("scheduled")
+        if isinstance(sch, dict):
+            text = str(sch.get("text") or "по расписанию")
+            out.append((text, sch.get("value"), False))
+    return out
 
 
-def _direction_of(transport: dict[str, Any]) -> str | None:
-    for key in ("EssentialStops", "essentialStops"):
-        stops = transport.get(key)
-        if isinstance(stops, list) and stops:
-            last = stops[-1]
-            if isinstance(last, dict) and last.get("name"):
-                return str(last["name"])
-    threads = transport.get("threads")
-    if isinstance(threads, list) and threads:
-        first = threads[0]
-        if isinstance(first, dict) and first.get("name"):
-            return str(first["name"])
-    return None
+def parse_arrivals(state: dict[str, Any]) -> tuple[str, list[Arrival]]:
+    """Парсит SSR-state Я.Карт остановочной страницы.
 
+    Путь к данным: state['stack'][0]['stops']['data'] → {name, transports: [...]}.
+    Каждый transport имеет name='925 (МЦД Остафьево)', threads (по направлениям),
+    у каждого thread есть BriefSchedule.Events с Estimated/Scheduled.
+    """
+    name = ""
+    transports: list[dict[str, Any]] = []
 
-def _arrivals_of(transport: dict[str, Any]) -> list[tuple[str, int | None]]:
-    """Возвращает список (текст, секунды) для прогнозов конкретного маршрута."""
-    results: list[tuple[str, int | None]] = []
-    for key in ("Estimated", "estimated"):
-        ests = transport.get(key)
-        if isinstance(ests, list):
-            for est in ests:
-                if not isinstance(est, dict):
-                    continue
-                text = est.get("text") or ""
-                seconds = est.get("value")
-                results.append((str(text), int(seconds) if isinstance(seconds, (int, float)) else None))
-    if results:
-        return results
-    brief = transport.get("BriefSchedule") or transport.get("briefSchedule")
-    if isinstance(brief, dict):
-        events = brief.get("Events") or brief.get("events") or []
-        if isinstance(events, list):
-            for ev in events:
-                if not isinstance(ev, dict):
-                    continue
-                est = ev.get("Estimated") or ev.get("estimated")
-                if isinstance(est, dict):
-                    text = est.get("text") or ""
-                    seconds = est.get("value")
-                    results.append((str(text), int(seconds) if isinstance(seconds, (int, float)) else None))
-                elif "Scheduled" in ev:
-                    sch = ev["Scheduled"]
-                    if isinstance(sch, dict):
-                        results.append((str(sch.get("text") or "по расписанию"), None))
-    return results
+    stack = state.get("stack")
+    if isinstance(stack, list) and stack:
+        first = stack[0]
+        if isinstance(first, dict):
+            stops_obj = first.get("stops")
+            if isinstance(stops_obj, dict):
+                data = stops_obj.get("data")
+                if isinstance(data, dict):
+                    if isinstance(data.get("name"), str):
+                        name = data["name"]
+                    raw_transports = data.get("transports") or []
+                    if isinstance(raw_transports, list):
+                        transports = [t for t in raw_transports if isinstance(t, dict)]
 
-
-def parse_arrivals(payload: dict[str, Any]) -> tuple[str, list[Arrival]]:
-    name = _extract_stop_name(payload)
-    transport = _extract_transport(payload)
+    now_ts = _server_now(state)
     arrivals: list[Arrival] = []
-    for t in transport:
-        route = (
-            t.get("name")
-            or t.get("shortName")
-            or t.get("number")
-            or ""
-        )
-        if not route:
-            line = t.get("lineId") or {}
-            if isinstance(line, dict):
-                route = str(line.get("name") or "")
-        ttype = str(t.get("type") or t.get("Type") or "")
-        direction = _direction_of(t)
-        ests = _arrivals_of(t)
-        if not ests:
+
+    for t in transports:
+        full_name = str(t.get("name") or "")
+        route, dir_from_name = _split_route_name(full_name)
+        ttype = str(t.get("type") or "")
+        threads = t.get("threads")
+        if not isinstance(threads, list):
+            threads = []
+        wrote_any = False
+        for thread in threads:
+            if not isinstance(thread, dict):
+                continue
+            if thread.get("noBoarding"):
+                continue
+            direction = dir_from_name
+            ess = thread.get("EssentialStops")
+            if isinstance(ess, list) and ess:
+                last = ess[-1]
+                if isinstance(last, dict) and last.get("name"):
+                    direction = str(last["name"])
+            for text, value, real_time in _events_of_thread(thread):
+                eta_seconds = _eta_from_value(value, now_ts)
+                if not real_time and not text and eta_seconds is None:
+                    continue
+                arrivals.append(
+                    Arrival(
+                        route=route,
+                        type=ttype,
+                        direction=direction,
+                        eta_text=text or "по расписанию",
+                        eta_seconds=eta_seconds,
+                    )
+                )
+                wrote_any = True
+        if not wrote_any:
             arrivals.append(
-                Arrival(route=str(route), type=ttype, direction=direction, eta_text="нет данных", eta_seconds=None)
-            )
-            continue
-        for text, seconds in ests:
-            arrivals.append(
-                Arrival(route=str(route), type=ttype, direction=direction, eta_text=text, eta_seconds=seconds)
+                Arrival(
+                    route=route,
+                    type=ttype,
+                    direction=dir_from_name,
+                    eta_text="нет данных",
+                    eta_seconds=None,
+                )
             )
     return name, arrivals
