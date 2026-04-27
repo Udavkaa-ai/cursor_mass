@@ -56,69 +56,107 @@ _INDEX_HTML = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f0f10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Автобусы</title>
 <style>
-:root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#8a8a90; --fg:#f4f4f6; --accent:#42d883; --warn:#ffaa33; }
+:root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#7a7a80; --fg:#f4f4f6;
+        --run:#ff4d4d; --hurry:#ffaa33; --walk:#42d883; --sched:#7ea0ff; }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),12px) 12px max(env(safe-area-inset-bottom),12px) 12px}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px;color:var(--muted)}
-header button{background:none;border:1px solid #333;color:var(--fg);padding:6px 12px;border-radius:8px;font:inherit;font-size:13px}
-.stop{background:var(--card);border-radius:14px;padding:14px 14px 6px;margin-bottom:12px}
-.stop h2{margin:0 0 8px;font-size:17px;font-weight:600}
-.row{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid #232328}
-.row:first-of-type{border-top:none}
-.route{font-weight:700;font-size:18px;min-width:54px;color:var(--accent)}
-.dir{flex:1;color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.eta{font-weight:600;font-size:17px}
-.eta.scheduled{color:var(--warn);font-weight:500}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),14px) 14px max(env(safe-area-inset-bottom),14px) 14px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:13px;color:var(--muted)}
+header button{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);padding:8px 14px;border-radius:10px;font:inherit;font-size:14px}
+.stop{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px}
+.stop h2{margin:0 0 12px;font-size:17px;font-weight:600;color:var(--muted);letter-spacing:.2px}
+.route-block{margin-top:14px}
+.route-block:first-of-type{margin-top:0}
+.route-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.route{font-weight:800;font-size:24px;color:var(--fg)}
+.dir{flex:1;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.etas{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+.eta{font-weight:700;font-size:28px;line-height:1;}
+.eta.run{color:var(--run)}
+.eta.hurry{color:var(--hurry)}
+.eta.walk{color:var(--walk)}
+.eta.sched{color:var(--sched);font-weight:500}
+.eta.next{font-size:16px;color:var(--muted);font-weight:500}
 .empty{color:var(--muted);font-style:italic;font-size:14px;padding:6px 0}
 .error{color:#ff6b6b;font-size:13px;padding:6px 0}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid #333;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <header>
-  <span id="status">обновляется… <span class="spinner"></span></span>
+  <span id="status">обновляется<span class="spinner"></span></span>
   <button onclick="load(true)">Обновить</button>
 </header>
 <main id="root"></main>
 <script>
 const $ = (sel) => document.querySelector(sel);
 const root = $('#root');
-const status = $('#status');
+const statusEl = $('#status');
+const MAX_ARRIVALS_PER_ROUTE = 3;
 
-function eta_class(a) {
-  if (a.eta_seconds == null) return 'eta scheduled';
-  return 'eta';
+function urgencyClass(secs) {
+  if (secs == null) return 'sched';
+  if (secs < 120) return 'run';
+  if (secs < 300) return 'hurry';
+  return 'walk';
+}
+
+function groupByRoute(arrivals) {
+  const map = new Map();
+  for (const a of arrivals) {
+    const key = (a.route || '?') + '|' + (a.direction || '');
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(a);
+  }
+  for (const list of map.values()) {
+    list.sort((x, y) => (x.eta_seconds ?? 1e12) - (y.eta_seconds ?? 1e12));
+  }
+  return [...map.values()].sort((a, b) => (a[0].eta_seconds ?? 1e12) - (b[0].eta_seconds ?? 1e12));
+}
+
+function renderRoute(group) {
+  const head = group[0];
+  const items = group.slice(0, MAX_ARRIVALS_PER_ROUTE);
+  const main = items[0];
+  const rest = items.slice(1);
+  return `
+    <div class="route-block">
+      <div class="route-head">
+        <span class="route">${head.route || '—'}</span>
+        <span class="dir">${head.direction || ''}</span>
+      </div>
+      <div class="etas">
+        <span class="eta ${urgencyClass(main.eta_seconds)}">${main.eta_local || main.eta_text || ''}</span>
+        ${rest.map(a => `<span class="eta next">${a.eta_local || a.eta_text || ''}</span>`).join('')}
+      </div>
+    </div>`;
 }
 
 function renderStop(s) {
-  const arrivals = (s.arrivals || []);
-  let body = arrivals.length
-    ? arrivals.map(a => `
-        <div class="row">
-          <span class="route">${a.route || '—'}</span>
-          <span class="dir">${a.direction || ''}</span>
-          <span class="${eta_class(a)}">${a.eta_local || a.eta_text || ''}</span>
-        </div>`).join('')
-    : '<div class="empty">нет прибытий</div>';
-  return `<section class="stop"><h2>${s.name || s.stop_id}</h2>${body}</section>`;
+  if (!s.arrivals || !s.arrivals.length) {
+    return `<section class="stop"><h2>${s.name || s.stop_id}</h2><div class="empty">нет прибытий</div></section>`;
+  }
+  const groups = groupByRoute(s.arrivals);
+  return `<section class="stop"><h2>${s.name || s.stop_id}</h2>${groups.map(renderRoute).join('')}</section>`;
 }
 
 async function load(force) {
-  if (force) status.innerHTML = 'обновляется… <span class="spinner"></span>';
+  if (force) statusEl.innerHTML = 'обновляется<span class="spinner"></span>';
   try {
     const r = await fetch('/arrivals', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     root.innerHTML = data.length
       ? data.map(renderStop).join('')
-      : '<div class="empty">остановок не задано (см. STOPS env)</div>';
+      : '<div class="empty">остановок не задано (см. переменную STOPS)</div>';
     const now = new Date();
-    status.textContent = 'обновлено ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    statusEl.textContent = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch (e) {
-    status.innerHTML = '<span class="error">ошибка: ' + e.message + '</span>';
+    statusEl.innerHTML = '<span class="error">ошибка: ' + e.message + '</span>';
   }
 }
 
