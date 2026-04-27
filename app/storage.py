@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import settings
 from .models import Stop, StopCreate
+from .yandex import normalize_stop_id
 
 
 def _connect() -> sqlite3.Connection:
@@ -46,6 +47,7 @@ def list_stops() -> list[Stop]:
 
 def upsert_stop(payload: StopCreate) -> Stop:
     routes_json = json.dumps(payload.routes, ensure_ascii=False)
+    canonical_id = normalize_stop_id(payload.stop_id)
     with _connect() as conn:
         row = conn.execute(
             """
@@ -53,12 +55,14 @@ def upsert_stop(payload: StopCreate) -> Stop:
             ON CONFLICT(stop_id) DO UPDATE SET name=excluded.name, routes=excluded.routes
             RETURNING id, stop_id, name, routes
             """,
-            (payload.stop_id, payload.name, routes_json),
+            (canonical_id, payload.name, routes_json),
         ).fetchone()
     return _row_to_stop(row)
 
 
 def delete_stop(stop_id: str) -> bool:
     with _connect() as conn:
-        cur = conn.execute("DELETE FROM stops WHERE stop_id = ?", (stop_id,))
+        cur = conn.execute(
+            "DELETE FROM stops WHERE stop_id = ?", (normalize_stop_id(stop_id),)
+        )
         return cur.rowcount > 0

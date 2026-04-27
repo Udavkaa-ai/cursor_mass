@@ -29,15 +29,16 @@
 
 ## Как достать `stop_id`
 
-Самый надёжный способ — через URL Яндекс.Карт в браузере:
-
 1. Открой [yandex.ru/maps](https://yandex.ru/maps/) и найди свою остановку.
 2. Кликни по знаку остановки на карте — слева откроется карточка с маршрутами.
-3. В адресной строке появится фрагмент вида `/stops/stop__9645524/`.
-   Вот это `stop__9645524` и есть `stop_id`.
+3. В адресной строке появится фрагмент вида:
+   `https://yandex.ru/maps/213/moscow/stops/5854295457/?ll=...`
+   Число `5854295457` — это и есть ID. Можно скопировать его как есть, либо
+   сразу в каноническом виде `stop__5854295457`. Сервис принимает оба формата
+   и нормализует.
 
-Альтернатива через сервис: `GET /search?q=Дорский Ручей` — вернёт сырой JSON
-от Яндекса, в нём ищи `"id":"stop__..."`.
+Альтернатива: `GET /search?q=Дорский Ручей` — сырой ответ Яндекса с
+кандидатами, ищи в нём `"id":"stop__..."`.
 
 ## Локальный запуск
 
@@ -54,9 +55,9 @@ uvicorn app.main:app --reload
 curl -s localhost:8000/health
 # {"ok": true}
 
-# добавить остановку
+# добавить остановку (можно как stop__5854295457, так и просто 5854295457)
 curl -s -X POST localhost:8000/stops -H "Content-Type: application/json" \
-  -d '{"stop_id":"stop__9645524","name":"Улица Дорский Ручей","routes":["925"]}'
+  -d '{"stop_id":"5854295457","name":"Улица Дорский Ручей","routes":["925"]}'
 
 # прогноз по всем сохранённым
 curl -s localhost:8000/arrivals
@@ -81,7 +82,7 @@ curl -s localhost:8000/arrivals
 ## Пример реального запроса
 
 ```bash
-curl -s 'https://your-app.up.railway.app/arrivals/stop__9645524?routes=925'
+curl -s 'https://your-app.up.railway.app/arrivals/stop__5854295457?routes=925'
 # Если включал API_KEY — добавь -H "X-API-Key: <ключ>"
 ```
 
@@ -89,7 +90,7 @@ curl -s 'https://your-app.up.railway.app/arrivals/stop__9645524?routes=925'
 
 ```json
 {
-  "stop_id": "stop__9645524",
+  "stop_id": "stop__5854295457",
   "name": "Улица Дорский Ручей",
   "arrivals": [
     {"route": "925", "type": "bus", "direction": "МЦД Остафьево", "eta_text": "5 мин", "eta_seconds": 300}

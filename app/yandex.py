@@ -27,6 +27,15 @@ STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
 
 
+def normalize_stop_id(value: str) -> str:
+    """Принимает числовой ID из URL Я.Карт (.../stops/5854295457/) или
+    канонический stop__5854295457; возвращает канонический."""
+    value = value.strip()
+    if value.isdigit():
+        return f"stop__{value}"
+    return value
+
+
 class YandexError(RuntimeError):
     pass
 
@@ -86,7 +95,11 @@ class YandexMasstransit:
     async def get_stop_info(self, stop_id: str) -> dict[str, Any]:
         return await self._get_json(
             STOP_INFO_URL,
-            {"id": stop_id, "lang": settings.yandex_lang, "locale": settings.yandex_lang},
+            {
+                "id": normalize_stop_id(stop_id),
+                "lang": settings.yandex_lang,
+                "locale": settings.yandex_lang,
+            },
         )
 
     async def search(self, query: str) -> dict[str, Any]:
