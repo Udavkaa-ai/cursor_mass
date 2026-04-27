@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
 from . import storage, yandex
@@ -66,10 +66,12 @@ async def add_stop_endpoint(payload: StopCreate) -> Stop:
     "/stops/{stop_id}",
     dependencies=[Depends(require_api_key)],
     status_code=204,
+    response_class=Response,
 )
-async def delete_stop_endpoint(stop_id: str) -> None:
+async def delete_stop_endpoint(stop_id: str) -> Response:
     if not storage.delete_stop(stop_id):
         raise HTTPException(status_code=404, detail="stop not found")
+    return Response(status_code=204)
 
 
 @app.get("/arrivals", dependencies=[Depends(require_api_key)])
