@@ -12,7 +12,7 @@ class Settings:
 
 def _load() -> Settings:
     return Settings(
-        api_key=os.environ.get("API_KEY", "dev-change-me"),
+        api_key=os.environ.get("API_KEY", ""),
         database_path=os.environ.get("DATABASE_PATH", "./data/db.sqlite3"),
         yandex_lang=os.environ.get("YANDEX_LANG", "ru_RU"),
         request_timeout=float(os.environ.get("REQUEST_TIMEOUT", "10")),

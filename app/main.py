@@ -28,7 +28,9 @@ app = FastAPI(title="Bus Arrival Tracker", lifespan=lifespan)
 
 
 def require_api_key(x_api_key: str = Header(default="")) -> None:
-    if not settings.api_key or x_api_key != settings.api_key:
+    if not settings.api_key:
+        return
+    if x_api_key != settings.api_key:
         raise HTTPException(status_code=401, detail="invalid or missing X-API-Key")
 
 

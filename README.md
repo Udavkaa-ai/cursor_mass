@@ -11,7 +11,10 @@
 
 ## Endpoints
 
-Все ручки кроме `/health` требуют заголовок `X-API-Key: <твой ключ>`.
+Авторизация опциональна. Если переменная `API_KEY` пустая (по умолчанию) —
+ручки открыты без заголовка. Если `API_KEY` задан — все ручки кроме `/health`
+требуют заголовок `X-API-Key: <тот же ключ>`. Включай, когда соберёшься
+открывать сервис кому-то ещё или повесишь публичный URL.
 
 | Метод  | Путь                  | Что делает                                                              |
 | ------ | --------------------- | ----------------------------------------------------------------------- |
@@ -42,24 +45,21 @@
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # отредактируй API_KEY
-export $(grep -v '^#' .env | xargs)
 uvicorn app.main:app --reload
 ```
 
-Затем:
+Затем (без `API_KEY` — auth выключена):
 
 ```bash
 curl -s localhost:8000/health
 # {"ok": true}
 
 # добавить остановку
-curl -s -X POST localhost:8000/stops \
-  -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+curl -s -X POST localhost:8000/stops -H "Content-Type: application/json" \
   -d '{"stop_id":"stop__9645524","name":"Улица Дорский Ручей","routes":["925"]}'
 
 # прогноз по всем сохранённым
-curl -s localhost:8000/arrivals -H "X-API-Key: $API_KEY"
+curl -s localhost:8000/arrivals
 ```
 
 ## Деплой на Railway
@@ -68,8 +68,9 @@ curl -s localhost:8000/arrivals -H "X-API-Key: $API_KEY"
    и ветку `claude/bus-arrival-tracker-rcZgg` (или main после мержа).
 2. Railway автоматически подхватит `requirements.txt` и `Procfile`.
 3. В Variables добавь:
-   - `API_KEY` — длинная случайная строка
    - `DATABASE_PATH` — `/data/db.sqlite3`
+   - `API_KEY` — опционально, для защиты публичного URL. Сгенерировать:
+     `openssl rand -hex 32`. Пусто = без авторизации.
 4. В разделе Volumes создай volume и подключи к `/data`, чтобы SQLite не
    терялся при редеплое.
 5. Открой публичный URL, дёрни `/health`, потом наполни `/stops`.
@@ -80,8 +81,8 @@ curl -s localhost:8000/arrivals -H "X-API-Key: $API_KEY"
 ## Пример реального запроса
 
 ```bash
-curl -s 'https://your-app.up.railway.app/arrivals/stop__9645524?routes=925' \
-  -H "X-API-Key: $API_KEY"
+curl -s 'https://your-app.up.railway.app/arrivals/stop__9645524?routes=925'
+# Если включал API_KEY — добавь -H "X-API-Key: <ключ>"
 ```
 
 Ответ:
