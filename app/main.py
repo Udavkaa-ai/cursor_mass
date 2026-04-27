@@ -61,7 +61,7 @@ _INDEX_HTML = """<!doctype html>
 <title>Автобусы</title>
 <style>
 :root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#7a7a80; --fg:#f4f4f6;
-        --run:#ff4d4d; --hurry:#ffaa33; --walk:#42d883; --sched:#7ea0ff; }
+        --run:#ff4d4d; --hurry:#ffaa33; --walk:#42d883; --calm:#9aa1aa; --sched:#7ea0ff; }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),14px) 14px max(env(safe-area-inset-bottom),14px) 14px}
 header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:13px;color:var(--muted)}
@@ -73,13 +73,18 @@ header button{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);paddin
 .route-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
 .route{font-weight:800;font-size:24px;color:var(--fg)}
 .dir{flex:1;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.etas{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
-.eta{font-weight:700;font-size:28px;line-height:1;}
+.eta-main{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.eta{font-weight:800;font-size:34px;line-height:1.05;letter-spacing:-.5px}
 .eta.run{color:var(--run)}
 .eta.hurry{color:var(--hurry)}
 .eta.walk{color:var(--walk)}
-.eta.sched{color:var(--sched);font-weight:500}
-.eta.next{font-size:16px;color:var(--muted);font-weight:500}
+.eta.calm{color:var(--fg)}
+.eta.sched{color:var(--sched);font-weight:600}
+.eta.next{font-size:18px;color:var(--muted);font-weight:500}
+.hint{display:block;font-size:13px;line-height:1;margin-top:6px;letter-spacing:.2px;text-transform:uppercase;font-weight:600}
+.hint.run{color:var(--run)}
+.hint.hurry{color:var(--hurry)}
+.hint.walk{color:var(--walk)}
 .empty{color:var(--muted);font-style:italic;font-size:14px;padding:6px 0}
 .error{color:#ff6b6b;font-size:13px;padding:6px 0}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:4px}
@@ -98,11 +103,12 @@ const root = $('#root');
 const statusEl = $('#status');
 const MAX_ARRIVALS_PER_ROUTE = 3;
 
-function urgencyClass(secs) {
-  if (secs == null) return 'sched';
-  if (secs < 120) return 'run';
-  if (secs < 300) return 'hurry';
-  return 'walk';
+function urgencyInfo(secs) {
+  if (secs == null) return { cls: 'sched', hint: '' };
+  if (secs <= 180) return { cls: 'run', hint: 'подъезжает' };
+  if (secs <= 300) return { cls: 'hurry', hint: 'скоро будет' };
+  if (secs <= 420) return { cls: 'walk', hint: 'можно не торопиться' };
+  return { cls: 'calm', hint: '' };
 }
 
 function groupByRoute(arrivals) {
@@ -123,16 +129,19 @@ function renderRoute(group) {
   const items = group.slice(0, MAX_ARRIVALS_PER_ROUTE);
   const main = items[0];
   const rest = items.slice(1);
+  const u = urgencyInfo(main.eta_seconds);
+  const hint = u.hint ? `<span class="hint ${u.cls}">${u.hint}</span>` : '';
   return `
     <div class="route-block">
       <div class="route-head">
         <span class="route">${head.route || '—'}</span>
         <span class="dir">${head.direction || ''}</span>
       </div>
-      <div class="etas">
-        <span class="eta ${urgencyClass(main.eta_seconds)}">${main.eta_local || main.eta_text || ''}</span>
+      <div class="eta-main">
+        <span class="eta ${u.cls}">${main.eta_local || main.eta_text || ''}</span>
         ${rest.map(a => `<span class="eta next">${a.eta_local || a.eta_text || ''}</span>`).join('')}
       </div>
+      ${hint}
     </div>`;
 }
 
