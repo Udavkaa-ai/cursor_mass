@@ -1,16 +1,16 @@
-"""Клиент к неофициальному masstransit API Яндекс.Карт.
+"""Клиент для прогнозов прибытия с Яндекс.Карт.
 
-Эндпоинт `https://yandex.ru/maps/api/masstransit/getStopInfo` отдаёт прогнозы
-прибытия по идентификатору остановки (`stop__NNNNNNN`). Без csrfToken+sessionId
-из бутстрап-страницы и нужных cookie API возвращает пустой ответ
-`{"csrfToken":"<rotation>"}`. Поэтому каждый запрос идёт через тот же httpx
-client (общий cookie jar), а csrf+session мы выдираем регуляркой из HTML
-страницы `https://yandex.ru/maps/`.
+Подход через `api/masstransit/getStopInfo` теперь блокируется Антиботом
+(возвращает только `{csrfToken: ...}` без данных). Поэтому сейчас работаем
+скрейпом HTML-страницы остановки `https://yandex.ru/maps/213/moscow/stops/<n>/`
+и достаём встроенный state из тега `<script class="config-view">`.
 """
 
 from __future__ import annotations
 
 import asyncio
+import html as html_lib
+import json
 import re
 import time
 from typing import Any
@@ -26,6 +26,7 @@ USER_AGENT = (
 )
 SESSION_TTL_SECONDS = 30 * 60
 BOOTSTRAP_URL = "https://yandex.ru/maps/"
+STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{numeric}/"
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
 
@@ -39,6 +40,10 @@ def normalize_stop_id(value: str) -> str:
     return value
 
 
+def _numeric_id(stop_id: str) -> str:
+    return normalize_stop_id(stop_id).removeprefix("stop__")
+
+
 class YandexError(RuntimeError):
     pass
 
@@ -49,9 +54,8 @@ class YandexMasstransit:
             headers={
                 "User-Agent": USER_AGENT,
                 "Accept-Language": "ru,en;q=0.9",
-                "Accept": "application/json, text/plain, */*",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Referer": BOOTSTRAP_URL,
-                "Origin": "https://yandex.ru",
             },
             timeout=settings.request_timeout,
             follow_redirects=True,
@@ -65,6 +69,7 @@ class YandexMasstransit:
         await self._client.aclose()
 
     async def _ensure_session(self, force: bool = False) -> tuple[str, str]:
+        """Старая API-логика на случай если когда-нибудь снова заработает."""
         async with self._lock:
             if (
                 not force
@@ -78,9 +83,7 @@ class YandexMasstransit:
             csrf_match = re.search(r'"csrfToken"\s*:\s*"([^"]+)"', r.text)
             session_match = re.search(r'"sessionId"\s*:\s*"([^"]+)"', r.text)
             if not csrf_match:
-                raise YandexError(
-                    "csrfToken не найден на yandex.ru/maps/. Возможно, изменилась вёрстка."
-                )
+                raise YandexError("csrfToken не найден на yandex.ru/maps/.")
             self._csrf = csrf_match.group(1)
             self._session_id = (
                 session_match.group(1) if session_match else str(int(time.time() * 1000))
@@ -88,44 +91,95 @@ class YandexMasstransit:
             self._session_ts = time.time()
             return self._csrf, self._session_id
 
-    async def _get_json(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
-        csrf, session_id = await self._ensure_session()
-        full = {**params, "csrfToken": csrf, "sessionId": session_id}
-        r = await self._client.get(url, params=full)
-        # API может вернуть 200 с одним лишь csrfToken (это сигнал "обнови сессию")
-        looks_empty = False
-        try:
-            body = r.json() if r.headers.get("content-type", "").startswith("application/json") or r.text.startswith("{") else None
-        except ValueError:
-            body = None
-        if isinstance(body, dict) and set(body.keys()) <= {"csrfToken"}:
-            looks_empty = True
-        if r.status_code in (401, 403) or looks_empty:
-            csrf, session_id = await self._ensure_session(force=True)
-            full = {**params, "csrfToken": csrf, "sessionId": session_id}
-            r = await self._client.get(url, params=full)
+    async def fetch_stop_html(self, stop_id: str) -> str:
+        """Сырая HTML-страница остановки. Полезно для отладки."""
+        url = STOP_PAGE_URL.format(numeric=_numeric_id(stop_id))
+        r = await self._client.get(url)
         if r.status_code >= 400:
             raise YandexError(f"{url} -> {r.status_code}: {r.text[:300]}")
+        return r.text
+
+    async def get_stop_state(self, stop_id: str) -> dict[str, Any]:
+        """HTML-страница → встроенный state из <script class="config-view">."""
+        html = await self.fetch_stop_html(stop_id)
+        return _extract_state(html)
+
+    # старое API-обращение, оставляю на всякий случай (сейчас возвращает пустоту)
+    async def get_stop_info_api(self, stop_id: str) -> dict[str, Any]:
+        csrf, session_id = await self._ensure_session()
+        params = {
+            "id": normalize_stop_id(stop_id),
+            "lang": settings.yandex_lang,
+            "locale": settings.yandex_lang,
+            "csrfToken": csrf,
+            "sessionId": session_id,
+        }
+        r = await self._client.get(STOP_INFO_URL, params=params)
+        if r.status_code >= 400:
+            raise YandexError(f"{STOP_INFO_URL} -> {r.status_code}: {r.text[:300]}")
         try:
             return r.json()
         except ValueError as e:
             raise YandexError(f"Ответ не JSON: {r.text[:300]}") from e
 
-    async def get_stop_info(self, stop_id: str) -> dict[str, Any]:
-        return await self._get_json(
-            STOP_INFO_URL,
-            {
-                "id": normalize_stop_id(stop_id),
-                "lang": settings.yandex_lang,
-                "locale": settings.yandex_lang,
-            },
-        )
-
     async def search(self, query: str) -> dict[str, Any]:
-        return await self._get_json(
-            SEARCH_URL,
-            {"text": query, "lang": settings.yandex_lang, "type": "biz", "results": 10},
-        )
+        csrf, session_id = await self._ensure_session()
+        params = {
+            "text": query,
+            "lang": settings.yandex_lang,
+            "type": "biz",
+            "results": 10,
+            "csrfToken": csrf,
+            "sessionId": session_id,
+        }
+        r = await self._client.get(SEARCH_URL, params=params)
+        if r.status_code >= 400:
+            raise YandexError(f"{SEARCH_URL} -> {r.status_code}: {r.text[:300]}")
+        try:
+            return r.json()
+        except ValueError as e:
+            raise YandexError(f"Ответ не JSON: {r.text[:300]}") from e
+
+
+_STATE_PATTERNS = [
+    # стандартный для Я.Карт script с initial state
+    re.compile(
+        r'<script[^>]*class="[^"]*config-view[^"]*"[^>]*>(.*?)</script>',
+        re.DOTALL,
+    ),
+    re.compile(
+        r'<script[^>]*data-name="config"[^>]*>(.*?)</script>',
+        re.DOTALL,
+    ),
+    re.compile(
+        r'window\.__APP_STATE__\s*=\s*(\{.*?\});\s*</script>',
+        re.DOTALL,
+    ),
+    re.compile(
+        r'window\.__INITIAL_STATE__\s*=\s*(\{.*?\});\s*</script>',
+        re.DOTALL,
+    ),
+]
+
+
+def _extract_state(html: str) -> dict[str, Any]:
+    last_err: str | None = None
+    for pattern in _STATE_PATTERNS:
+        m = pattern.search(html)
+        if not m:
+            continue
+        content = m.group(1).strip()
+        if "&quot;" in content or "&amp;" in content:
+            content = html_lib.unescape(content)
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            last_err = str(e)
+            continue
+    raise YandexError(
+        "Не нашёл встроенный state в HTML. "
+        f"Возможно, Антиробот вернул заглушку. {('Ошибка парсинга: ' + last_err) if last_err else ''}"
+    )
 
 
 def _walk(obj: Any, key: str) -> list[Any]:

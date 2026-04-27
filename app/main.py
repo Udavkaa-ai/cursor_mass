@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 from . import storage, yandex
 from .config import settings
@@ -89,7 +89,7 @@ async def all_arrivals_endpoint() -> list[StopArrivals]:
     out: list[StopArrivals] = []
     for s in storage.list_stops():
         try:
-            payload = await masstransit.get_stop_info(s.stop_id)
+            payload = await masstransit.get_stop_state(s.stop_id)
         except yandex.YandexError as e:
             out.append(
                 StopArrivals(
@@ -118,7 +118,7 @@ async def stop_arrivals_endpoint(
     routes: str | None = Query(default=None, description="CSV маршрутов: 925,907"),
 ) -> StopArrivals:
     assert masstransit is not None
-    payload = await masstransit.get_stop_info(stop_id)
+    payload = await masstransit.get_stop_state(stop_id)
     name, arrivals = yandex.parse_arrivals(payload)
     routes_list = [r for r in (routes.split(",") if routes else [])]
     return StopArrivals(
@@ -131,9 +131,25 @@ async def stop_arrivals_endpoint(
 
 @app.get("/raw/{stop_id}", dependencies=[Depends(require_api_key)])
 async def raw_stop_endpoint(stop_id: str) -> JSONResponse:
-    """Сырой ответ Яндекса для отладки парсера."""
+    """Распарсенный встроенный state из HTML-страницы остановки."""
     assert masstransit is not None
-    payload = await masstransit.get_stop_info(stop_id)
+    payload = await masstransit.get_stop_state(stop_id)
+    return JSONResponse(payload)
+
+
+@app.get("/raw_html/{stop_id}", dependencies=[Depends(require_api_key)])
+async def raw_html_endpoint(stop_id: str) -> PlainTextResponse:
+    """Сырая HTML-страница (первые 50 КБ) — для отладки скрейпинга."""
+    assert masstransit is not None
+    html = await masstransit.fetch_stop_html(stop_id)
+    return PlainTextResponse(html[:50_000], media_type="text/plain; charset=utf-8")
+
+
+@app.get("/raw_api/{stop_id}", dependencies=[Depends(require_api_key)])
+async def raw_api_endpoint(stop_id: str) -> JSONResponse:
+    """Старое API-обращение (сейчас обычно пусто; оставлено для проверки)."""
+    assert masstransit is not None
+    payload = await masstransit.get_stop_info_api(stop_id)
     return JSONResponse(payload)
 
 
