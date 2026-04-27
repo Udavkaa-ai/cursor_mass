@@ -1,8 +1,11 @@
 """Клиент к неофициальному masstransit API Яндекс.Карт.
 
 Эндпоинт `https://yandex.ru/maps/api/masstransit/getStopInfo` отдаёт прогнозы
-прибытия по идентификатору остановки (`stop__NNNNNNN`) без ключа, но требует
-csrfToken и Session cookie, которые выдаёт обычная страница `/maps/`.
+прибытия по идентификатору остановки (`stop__NNNNNNN`). Без csrfToken+sessionId
+из бутстрап-страницы и нужных cookie API возвращает пустой ответ
+`{"csrfToken":"<rotation>"}`. Поэтому каждый запрос идёт через тот же httpx
+client (общий cookie jar), а csrf+session мы выдираем регуляркой из HTML
+страницы `https://yandex.ru/maps/`.
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
-CSRF_TTL_SECONDS = 30 * 60
+SESSION_TTL_SECONDS = 30 * 60
 BOOTSTRAP_URL = "https://yandex.ru/maps/"
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
@@ -47,46 +50,62 @@ class YandexMasstransit:
                 "User-Agent": USER_AGENT,
                 "Accept-Language": "ru,en;q=0.9",
                 "Accept": "application/json, text/plain, */*",
+                "Referer": BOOTSTRAP_URL,
+                "Origin": "https://yandex.ru",
             },
             timeout=settings.request_timeout,
             follow_redirects=True,
         )
         self._csrf: str | None = None
-        self._csrf_ts: float = 0.0
+        self._session_id: str | None = None
+        self._session_ts: float = 0.0
         self._lock = asyncio.Lock()
 
     async def close(self) -> None:
         await self._client.aclose()
 
-    async def _ensure_csrf(self, force: bool = False) -> str:
+    async def _ensure_session(self, force: bool = False) -> tuple[str, str]:
         async with self._lock:
             if (
                 not force
                 and self._csrf
-                and (time.time() - self._csrf_ts) < CSRF_TTL_SECONDS
+                and self._session_id
+                and (time.time() - self._session_ts) < SESSION_TTL_SECONDS
             ):
-                return self._csrf
+                return self._csrf, self._session_id
             r = await self._client.get(BOOTSTRAP_URL)
             r.raise_for_status()
-            match = re.search(r'"csrfToken"\s*:\s*"([^"]+)"', r.text)
-            if not match:
+            csrf_match = re.search(r'"csrfToken"\s*:\s*"([^"]+)"', r.text)
+            session_match = re.search(r'"sessionId"\s*:\s*"([^"]+)"', r.text)
+            if not csrf_match:
                 raise YandexError(
-                    "csrfToken не найден на yandex.ru/maps/. Возможно, изменился вёрстка."
+                    "csrfToken не найден на yandex.ru/maps/. Возможно, изменилась вёрстка."
                 )
-            self._csrf = match.group(1)
-            self._csrf_ts = time.time()
-            return self._csrf
+            self._csrf = csrf_match.group(1)
+            self._session_id = (
+                session_match.group(1) if session_match else str(int(time.time() * 1000))
+            )
+            self._session_ts = time.time()
+            return self._csrf, self._session_id
 
     async def _get_json(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
-        params = {**params, "csrfToken": await self._ensure_csrf()}
-        r = await self._client.get(url, params=params)
-        if r.status_code in (401, 403):
-            params["csrfToken"] = await self._ensure_csrf(force=True)
-            r = await self._client.get(url, params=params)
+        csrf, session_id = await self._ensure_session()
+        full = {**params, "csrfToken": csrf, "sessionId": session_id}
+        r = await self._client.get(url, params=full)
+        # API может вернуть 200 с одним лишь csrfToken (это сигнал "обнови сессию")
+        looks_empty = False
+        try:
+            body = r.json() if r.headers.get("content-type", "").startswith("application/json") or r.text.startswith("{") else None
+        except ValueError:
+            body = None
+        if isinstance(body, dict) and set(body.keys()) <= {"csrfToken"}:
+            looks_empty = True
+        if r.status_code in (401, 403) or looks_empty:
+            csrf, session_id = await self._ensure_session(force=True)
+            full = {**params, "csrfToken": csrf, "sessionId": session_id}
+            r = await self._client.get(url, params=full)
         if r.status_code >= 400:
-            raise YandexError(
-                f"{url} -> {r.status_code}: {r.text[:300]}"
-            )
+            raise YandexError(f"{url} -> {r.status_code}: {r.text[:300]}")
         try:
             return r.json()
         except ValueError as e:
