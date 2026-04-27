@@ -69,6 +69,8 @@ header{display:flex;justify-content:space-between;align-items:center;margin-bott
 header button{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);padding:8px 14px;border-radius:10px;font:inherit;font-size:14px}
 .stop{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px}
 .stop h2{margin:0 0 12px;font-size:17px;font-weight:600;color:var(--muted);letter-spacing:.2px}
+.stop h2 a{color:inherit;text-decoration:none}
+.stop h2 a:active{opacity:.6}
 .route-block{margin-top:14px}
 .route-block:first-of-type{margin-top:0}
 .route-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
@@ -149,7 +151,8 @@ function renderRoute(group) {
 }
 
 function renderStop(s) {
-  const title = `<h2>${s.name || s.stop_id}</h2>`;
+  const link = `/stop/${encodeURIComponent(s.stop_id)}`;
+  const title = `<h2><a href="${link}">${s.name || s.stop_id} →</a></h2>`;
   if (s.error) {
     return `<section class="stop">${title}<div class="stale">данные сейчас недоступны</div></section>`;
   }
@@ -177,12 +180,170 @@ async function load(force) {
 }
 
 load(true);
-setInterval(load, 45000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 </script>
 </body>
 </html>
 """
+
+
+_STOP_HTML = """<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>__TITLE__</title>
+<style>
+:root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#7a7a80; --fg:#f4f4f6;
+        --run:#ff4d4d; --hurry:#ffaa33; --walk:#42d883; --calm:#9aa1aa; --sched:#7ea0ff; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),18px) 16px max(env(safe-area-inset-bottom),18px) 16px;display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.title{font-size:18px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:10px}
+.refresh{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);padding:10px 18px;border-radius:12px;font:inherit;font-size:15px;font-weight:500;flex-shrink:0}
+.refresh:active{background:#2a2a2e}
+main{flex:1}
+.route-block{margin-top:22px;padding-bottom:22px;border-bottom:1px solid #232328}
+.route-block:first-of-type{margin-top:6px}
+.route-block:last-of-type{border-bottom:none}
+.route-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.route{font-weight:800;font-size:30px;color:var(--fg);letter-spacing:-.5px}
+.dir{flex:1;color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eta-main{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.eta{font-weight:800;font-size:48px;line-height:1.05;letter-spacing:-1px}
+.eta.run{color:var(--run)}
+.eta.hurry{color:var(--hurry)}
+.eta.walk{color:var(--walk)}
+.eta.calm{color:var(--fg)}
+.eta.sched{color:var(--sched);font-weight:600;font-size:34px}
+.eta.next{font-size:20px;color:var(--muted);font-weight:500}
+.hint{display:block;font-size:14px;line-height:1;margin-top:10px;letter-spacing:.4px;text-transform:uppercase;font-weight:700}
+.hint.run{color:var(--run)}
+.hint.hurry{color:var(--hurry)}
+.hint.walk{color:var(--walk)}
+.empty{color:var(--muted);font-style:italic;font-size:15px;padding:40px 0;text-align:center}
+.stale{color:var(--muted);font-size:14px;padding:40px 0;text-align:center}
+.error{color:#ff6b6b;font-size:14px;padding:40px 0;text-align:center}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px}
+.footer{margin-top:auto;padding-top:18px;color:var(--muted);font-size:12px;text-align:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="title" id="title">__TITLE__</div>
+  <button class="refresh" id="refresh">Обновить</button>
+</header>
+<main id="root"><div class="empty">загрузка<span class="spinner"></span></div></main>
+<div class="footer" id="footer">—</div>
+<script>
+const STOP_ID = "__STOP_ID__";
+const ROUTES = "__ROUTES__"; // CSV
+const root = document.getElementById('root');
+const footer = document.getElementById('footer');
+const btn = document.getElementById('refresh');
+const titleEl = document.getElementById('title');
+const MAX_NEXT = 2;
+
+function urgencyInfo(secs) {
+  if (secs == null) return { cls: 'sched', hint: '' };
+  if (secs <= 180) return { cls: 'run', hint: 'подъезжает' };
+  if (secs <= 300) return { cls: 'hurry', hint: 'скоро будет' };
+  if (secs <= 420) return { cls: 'walk', hint: 'можно не торопиться' };
+  return { cls: 'calm', hint: '' };
+}
+
+function groupByRoute(arrivals) {
+  const map = new Map();
+  for (const a of arrivals) {
+    const key = (a.route || '?') + '|' + (a.direction || '');
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(a);
+  }
+  for (const list of map.values()) {
+    list.sort((x, y) => (x.eta_seconds ?? 1e12) - (y.eta_seconds ?? 1e12));
+  }
+  return [...map.values()].sort((a, b) => (a[0].eta_seconds ?? 1e12) - (b[0].eta_seconds ?? 1e12));
+}
+
+function renderRoute(group) {
+  const head = group[0];
+  const items = group.slice(0, MAX_NEXT + 1);
+  const main = items[0];
+  const rest = items.slice(1);
+  const u = urgencyInfo(main.eta_seconds);
+  const hint = u.hint ? `<span class="hint ${u.cls}">${u.hint}</span>` : '';
+  return `
+    <div class="route-block">
+      <div class="route-head">
+        <span class="route">${head.route || '—'}</span>
+        <span class="dir">${head.direction || ''}</span>
+      </div>
+      <div class="eta-main">
+        <span class="eta ${u.cls}">${main.eta_local || main.eta_text || ''}</span>
+        ${rest.map(a => `<span class="eta next">${a.eta_local || a.eta_text || ''}</span>`).join('')}
+      </div>
+      ${hint}
+    </div>`;
+}
+
+async function load() {
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '…';
+  try {
+    const url = '/arrivals/' + STOP_ID + (ROUTES ? '?routes=' + encodeURIComponent(ROUTES) : '');
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (data.name) titleEl.textContent = data.name;
+    const arrivals = data.arrivals || [];
+    if (!arrivals.length) {
+      root.innerHTML = '<div class="empty">прибытий нет</div>';
+    } else {
+      const groups = groupByRoute(arrivals);
+      root.innerHTML = groups.map(renderRoute).join('');
+    }
+    const now = new Date();
+    footer.textContent = 'обновлено ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    root.innerHTML = '<div class="stale">данные недоступны: ' + e.message + '</div>';
+    footer.textContent = '—';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+btn.addEventListener('click', load);
+load();
+</script>
+</body>
+</html>
+"""
+
+
+@app.get("/stop/{stop_id}", response_class=HTMLResponse)
+async def stop_page(stop_id: str) -> HTMLResponse:
+    canonical = yandex.normalize_stop_id(stop_id)
+    name = ""
+    routes_filter: list[str] = []
+    for s in storage.list_stops():
+        if s.stop_id == canonical:
+            name = s.name
+            routes_filter = s.routes
+            break
+    title = name or canonical
+    routes_csv = ",".join(routes_filter)
+    html = (
+        _STOP_HTML.replace("__STOP_ID__", canonical)
+        .replace("__ROUTES__", routes_csv)
+        .replace("__TITLE__", title)
+    )
+    return HTMLResponse(html)
 
 
 @app.get("/", response_class=HTMLResponse)
