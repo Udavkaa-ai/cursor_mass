@@ -137,6 +137,79 @@ async def raw_stop_endpoint(stop_id: str) -> JSONResponse:
     return JSONResponse(payload)
 
 
+@app.get("/state/{stop_id}", dependencies=[Depends(require_api_key)])
+async def state_navigate_endpoint(
+    stop_id: str,
+    path: str = Query(default="", description="Точечный путь по JSON: 'data.stop.transport[0]'"),
+    keys_only: bool = Query(default=True, description="True = только список ключей; False = всё значение"),
+    max_chars: int = Query(default=8000, ge=100, le=200_000),
+) -> JSONResponse:
+    """Навигатор по большому SSR-state. Сначала смотришь верхние ключи
+    (`?path=`), потом углубляешься (`?path=data.stop&keys_only=false`)."""
+    assert masstransit is not None
+    state = await masstransit.get_stop_state(stop_id)
+
+    cur: object = state
+    for token in [t for t in path.split(".") if t]:
+        idx_match = None
+        if "[" in token and token.endswith("]"):
+            idx_match = token[token.index("[") + 1 : -1]
+            token = token[: token.index("[")]
+        if isinstance(cur, dict):
+            if token not in cur:
+                return JSONResponse(
+                    {"error": f"ключ '{token}' не найден", "available": sorted(cur.keys())[:50]},
+                    status_code=404,
+                )
+            cur = cur[token]
+        elif isinstance(cur, list):
+            try:
+                cur = cur[int(token)]
+            except (ValueError, IndexError):
+                return JSONResponse(
+                    {"error": f"индекс '{token}' невалиден", "list_len": len(cur)},
+                    status_code=404,
+                )
+        else:
+            return JSONResponse(
+                {"error": f"невозможно зайти в '{token}': значение не объект/список", "type": type(cur).__name__},
+                status_code=404,
+            )
+        if idx_match is not None and isinstance(cur, list):
+            try:
+                cur = cur[int(idx_match)]
+            except (ValueError, IndexError):
+                return JSONResponse(
+                    {"error": f"индекс [{idx_match}] невалиден", "list_len": len(cur)},
+                    status_code=404,
+                )
+
+    summary: dict[str, object] = {"path": path, "type": type(cur).__name__}
+    if isinstance(cur, dict):
+        summary["keys"] = sorted(cur.keys())
+        summary["size"] = len(cur)
+        if not keys_only:
+            import json as _json
+
+            dumped = _json.dumps(cur, ensure_ascii=False)
+            summary["truncated"] = len(dumped) > max_chars
+            summary["value"] = (
+                _json.loads(dumped[:max_chars] + ("..." if len(dumped) > max_chars else ""))
+                if False
+                else cur
+                if len(dumped) <= max_chars
+                else dumped[:max_chars] + "..."
+            )
+    elif isinstance(cur, list):
+        summary["len"] = len(cur)
+        summary["item_types"] = list({type(x).__name__ for x in cur[:20]})
+        if not keys_only:
+            summary["value"] = cur
+    else:
+        summary["value"] = cur
+    return JSONResponse(summary)
+
+
 @app.get("/raw_html/{stop_id}", dependencies=[Depends(require_api_key)])
 async def raw_html_endpoint(stop_id: str) -> PlainTextResponse:
     """Сырая HTML-страница (первые 50 КБ) — для отладки скрейпинга."""
