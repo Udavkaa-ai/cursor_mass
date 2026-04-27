@@ -19,6 +19,7 @@ class Arrival(BaseModel):
     direction: str | None = None
     eta_text: str
     eta_seconds: int | None = None
+    eta_local: str = ""  # человекочитаемое: "через 5 мин", "через 1ч 12м", "12:31"
 
 
 class StopArrivals(BaseModel):

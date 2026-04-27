@@ -50,6 +50,92 @@ async def health() -> dict[str, bool]:
     return {"ok": True}
 
 
+_INDEX_HTML = """<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f10">
+<title>Автобусы</title>
+<style>
+:root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#8a8a90; --fg:#f4f4f6; --accent:#42d883; --warn:#ffaa33; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),12px) 12px max(env(safe-area-inset-bottom),12px) 12px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px;color:var(--muted)}
+header button{background:none;border:1px solid #333;color:var(--fg);padding:6px 12px;border-radius:8px;font:inherit;font-size:13px}
+.stop{background:var(--card);border-radius:14px;padding:14px 14px 6px;margin-bottom:12px}
+.stop h2{margin:0 0 8px;font-size:17px;font-weight:600}
+.row{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid #232328}
+.row:first-of-type{border-top:none}
+.route{font-weight:700;font-size:18px;min-width:54px;color:var(--accent)}
+.dir{flex:1;color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eta{font-weight:600;font-size:17px}
+.eta.scheduled{color:var(--warn);font-weight:500}
+.empty{color:var(--muted);font-style:italic;font-size:14px;padding:6px 0}
+.error{color:#ff6b6b;font-size:13px;padding:6px 0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #333;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <span id="status">обновляется… <span class="spinner"></span></span>
+  <button onclick="load(true)">Обновить</button>
+</header>
+<main id="root"></main>
+<script>
+const $ = (sel) => document.querySelector(sel);
+const root = $('#root');
+const status = $('#status');
+
+function eta_class(a) {
+  if (a.eta_seconds == null) return 'eta scheduled';
+  return 'eta';
+}
+
+function renderStop(s) {
+  const arrivals = (s.arrivals || []);
+  let body = arrivals.length
+    ? arrivals.map(a => `
+        <div class="row">
+          <span class="route">${a.route || '—'}</span>
+          <span class="dir">${a.direction || ''}</span>
+          <span class="${eta_class(a)}">${a.eta_local || a.eta_text || ''}</span>
+        </div>`).join('')
+    : '<div class="empty">нет прибытий</div>';
+  return `<section class="stop"><h2>${s.name || s.stop_id}</h2>${body}</section>`;
+}
+
+async function load(force) {
+  if (force) status.innerHTML = 'обновляется… <span class="spinner"></span>';
+  try {
+    const r = await fetch('/arrivals', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    root.innerHTML = data.length
+      ? data.map(renderStop).join('')
+      : '<div class="empty">остановок не задано (см. STOPS env)</div>';
+    const now = new Date();
+    status.textContent = 'обновлено ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch (e) {
+    status.innerHTML = '<span class="error">ошибка: ' + e.message + '</span>';
+  }
+}
+
+load(true);
+setInterval(load, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
+"""
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index_page() -> HTMLResponse:
+    return HTMLResponse(_INDEX_HTML)
+
+
 @app.get("/stops", dependencies=[Depends(require_api_key)])
 async def list_stops_endpoint() -> list[Stop]:
     return storage.list_stops()

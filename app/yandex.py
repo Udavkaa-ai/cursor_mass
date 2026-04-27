@@ -213,6 +213,33 @@ def _server_now(state: dict[str, Any]) -> int:
     return int(time.time())
 
 
+def _format_eta_local(eta_seconds: int | None, fallback_text: str) -> str:
+    """Формирует короткий русский текст ETA для UI.
+
+    < 1 мин   → 'сейчас'
+    < 1 час   → 'через N мин'
+    < 24 ч    → 'через Hч Mм'
+    больше    → HH:MM по МСК
+    """
+    if eta_seconds is None:
+        return fallback_text or ""
+    if eta_seconds < 0:
+        return "уехал"
+    if eta_seconds < 60:
+        return "сейчас"
+    if eta_seconds < 3600:
+        return f"через {eta_seconds // 60} мин"
+    if eta_seconds < 24 * 3600:
+        h = eta_seconds // 3600
+        m = (eta_seconds % 3600) // 60
+        return f"через {h}ч {m:02d}м"
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+
+    msk = _tz(_td(hours=3))
+    when = _dt.fromtimestamp(time.time() + eta_seconds, tz=msk)
+    return when.strftime("%H:%M")
+
+
 def _eta_from_value(value: Any, now_ts: int) -> int | None:
     """Поле .value у Scheduled/Estimated может быть строкой/числом, абс. unix-time
     (предпочитают это) или секундами от сейчас."""
@@ -310,6 +337,7 @@ def parse_arrivals(state: dict[str, Any]) -> tuple[str, list[Arrival]]:
                         direction=direction,
                         eta_text=text or "по расписанию",
                         eta_seconds=eta_seconds,
+                        eta_local=_format_eta_local(eta_seconds, text or ""),
                     )
                 )
                 wrote_any = True
