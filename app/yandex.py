@@ -142,7 +142,11 @@ class YandexMasstransit:
 
 
 _STATE_PATTERNS = [
-    # стандартный для Я.Карт script с initial state
+    # Главный — Я.Карты прячут initial state в <script class="state-view">
+    re.compile(
+        r'<script[^>]*class="[^"]*state-view[^"]*"[^>]*>(.*?)</script>',
+        re.DOTALL,
+    ),
     re.compile(
         r'<script[^>]*class="[^"]*config-view[^"]*"[^>]*>(.*?)</script>',
         re.DOTALL,
