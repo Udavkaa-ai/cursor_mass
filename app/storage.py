@@ -9,6 +9,44 @@ from .models import Stop, StopCreate
 from .yandex import normalize_stop_id
 
 
+class ReadOnlyError(RuntimeError):
+    """Бросается при попытке мутировать остановки в env-режиме."""
+
+
+def env_mode() -> bool:
+    return bool(settings.stops_env.strip())
+
+
+def _parse_env_stops() -> list[Stop]:
+    raw = settings.stops_env.strip()
+    if not raw:
+        return []
+    try:
+        items = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(
+            f"Переменная STOPS должна быть JSON-массивом, ошибка: {e}"
+        ) from e
+    if not isinstance(items, list):
+        raise RuntimeError("STOPS должна быть JSON-массивом объектов")
+    out: list[Stop] = []
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            raise RuntimeError(f"STOPS[{idx-1}] не объект")
+        try:
+            out.append(
+                Stop(
+                    id=idx,
+                    stop_id=normalize_stop_id(str(item["stop_id"])),
+                    name=str(item.get("name") or item["stop_id"]),
+                    routes=[str(r) for r in (item.get("routes") or [])],
+                )
+            )
+        except KeyError as e:
+            raise RuntimeError(f"STOPS[{idx-1}] пропущен ключ {e}") from e
+    return out
+
+
 def _connect() -> sqlite3.Connection:
     Path(settings.database_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(settings.database_path)
@@ -17,6 +55,10 @@ def _connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
+    if env_mode():
+        # Прогоняем парсинг чтобы упасть рано, если STOPS невалиден
+        _parse_env_stops()
+        return
     with _connect() as conn:
         conn.execute(
             """
@@ -40,12 +82,18 @@ def _row_to_stop(row: sqlite3.Row) -> Stop:
 
 
 def list_stops() -> list[Stop]:
+    if env_mode():
+        return _parse_env_stops()
     with _connect() as conn:
         rows = conn.execute("SELECT * FROM stops ORDER BY id").fetchall()
     return [_row_to_stop(r) for r in rows]
 
 
 def upsert_stop(payload: StopCreate) -> Stop:
+    if env_mode():
+        raise ReadOnlyError(
+            "Сервис в env-режиме (задана переменная STOPS). Редактируй её в Railway → Variables."
+        )
     routes_json = json.dumps(payload.routes, ensure_ascii=False)
     canonical_id = normalize_stop_id(payload.stop_id)
     with _connect() as conn:
@@ -61,6 +109,10 @@ def upsert_stop(payload: StopCreate) -> Stop:
 
 
 def delete_stop(stop_id: str) -> bool:
+    if env_mode():
+        raise ReadOnlyError(
+            "Сервис в env-режиме (задана переменная STOPS). Редактируй её в Railway → Variables."
+        )
     with _connect() as conn:
         cur = conn.execute(
             "DELETE FROM stops WHERE stop_id = ?", (normalize_stop_id(stop_id),)

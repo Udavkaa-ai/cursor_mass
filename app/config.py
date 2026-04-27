@@ -8,6 +8,7 @@ class Settings:
     database_path: str
     yandex_lang: str
     request_timeout: float
+    stops_env: str
 
 
 def _load() -> Settings:
@@ -16,6 +17,7 @@ def _load() -> Settings:
         database_path=os.environ.get("DATABASE_PATH", "./data/db.sqlite3"),
         yandex_lang=os.environ.get("YANDEX_LANG", "ru_RU"),
         request_timeout=float(os.environ.get("REQUEST_TIMEOUT", "10")),
+        stops_env=os.environ.get("STOPS", ""),
     )
 
 

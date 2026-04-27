@@ -61,7 +61,10 @@ async def list_stops_endpoint() -> list[Stop]:
     status_code=201,
 )
 async def add_stop_endpoint(payload: StopCreate) -> Stop:
-    return storage.upsert_stop(payload)
+    try:
+        return storage.upsert_stop(payload)
+    except storage.ReadOnlyError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 @app.delete(
@@ -71,7 +74,11 @@ async def add_stop_endpoint(payload: StopCreate) -> Stop:
     response_class=Response,
 )
 async def delete_stop_endpoint(stop_id: str) -> Response:
-    if not storage.delete_stop(stop_id):
+    try:
+        deleted = storage.delete_stop(stop_id)
+    except storage.ReadOnlyError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    if not deleted:
         raise HTTPException(status_code=404, detail="stop not found")
     return Response(status_code=204)
 
