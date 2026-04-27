@@ -27,3 +27,4 @@ class StopArrivals(BaseModel):
     name: str
     arrivals: list[Arrival]
     fetched_at: str
+    error: str | None = None

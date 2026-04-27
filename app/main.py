@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -86,6 +87,8 @@ header button{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);paddin
 .hint.hurry{color:var(--hurry)}
 .hint.walk{color:var(--walk)}
 .empty{color:var(--muted);font-style:italic;font-size:14px;padding:6px 0}
+.stale{color:var(--muted);font-size:13px;padding:6px 0;display:flex;align-items:center;gap:6px}
+.stale::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .error{color:#ff6b6b;font-size:13px;padding:6px 0}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -146,11 +149,15 @@ function renderRoute(group) {
 }
 
 function renderStop(s) {
+  const title = `<h2>${s.name || s.stop_id}</h2>`;
+  if (s.error) {
+    return `<section class="stop">${title}<div class="stale">данные сейчас недоступны</div></section>`;
+  }
   if (!s.arrivals || !s.arrivals.length) {
-    return `<section class="stop"><h2>${s.name || s.stop_id}</h2><div class="empty">нет прибытий</div></section>`;
+    return `<section class="stop">${title}<div class="empty">нет прибытий</div></section>`;
   }
   const groups = groupByRoute(s.arrivals);
-  return `<section class="stop"><h2>${s.name || s.stop_id}</h2>${groups.map(renderRoute).join('')}</section>`;
+  return `<section class="stop">${title}${groups.map(renderRoute).join('')}</section>`;
 }
 
 async function load(force) {
@@ -170,7 +177,7 @@ async function load(force) {
 }
 
 load(true);
-setInterval(load, 30000);
+setInterval(load, 45000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 </script>
 </body>
@@ -219,30 +226,30 @@ async def delete_stop_endpoint(stop_id: str) -> Response:
 @app.get("/arrivals", dependencies=[Depends(require_api_key)])
 async def all_arrivals_endpoint() -> list[StopArrivals]:
     assert masstransit is not None
-    out: list[StopArrivals] = []
-    for s in storage.list_stops():
+    stops = storage.list_stops()
+    if not stops:
+        return []
+
+    async def _fetch(stop: Stop) -> StopArrivals:
         try:
-            payload = await masstransit.get_stop_state(s.stop_id)
+            payload = await masstransit.get_stop_state(stop.stop_id)
         except yandex.YandexError as e:
-            out.append(
-                StopArrivals(
-                    stop_id=s.stop_id,
-                    name=s.name,
-                    arrivals=[Arrival(route="", eta_text=f"ошибка: {e}")],
-                    fetched_at=_now_iso(),
-                )
-            )
-            continue
-        name, arrivals = yandex.parse_arrivals(payload)
-        out.append(
-            StopArrivals(
-                stop_id=s.stop_id,
-                name=s.name or name,
-                arrivals=_filter(arrivals, s.routes),
+            return StopArrivals(
+                stop_id=stop.stop_id,
+                name=stop.name,
+                arrivals=[],
                 fetched_at=_now_iso(),
+                error=str(e),
             )
+        name, arrivals = yandex.parse_arrivals(payload)
+        return StopArrivals(
+            stop_id=stop.stop_id,
+            name=stop.name or name,
+            arrivals=_filter(arrivals, stop.routes),
+            fetched_at=_now_iso(),
         )
-    return out
+
+    return list(await asyncio.gather(*(_fetch(s) for s in stops)))
 
 
 @app.get("/arrivals/{stop_id}", dependencies=[Depends(require_api_key)])

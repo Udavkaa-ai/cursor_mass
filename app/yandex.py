@@ -25,6 +25,7 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
 SESSION_TTL_SECONDS = 30 * 60
+STATE_CACHE_TTL_SECONDS = 45.0
 BOOTSTRAP_URL = "https://yandex.ru/maps/"
 STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{numeric}/?lang=ru"
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
@@ -64,6 +65,8 @@ class YandexMasstransit:
         self._session_id: str | None = None
         self._session_ts: float = 0.0
         self._lock = asyncio.Lock()
+        self._state_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+        self._state_cache_lock = asyncio.Lock()
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -99,10 +102,25 @@ class YandexMasstransit:
             raise YandexError(f"{url} -> {r.status_code}: {r.text[:300]}")
         return r.text
 
-    async def get_stop_state(self, stop_id: str) -> dict[str, Any]:
-        """HTML-страница → встроенный state из <script class="config-view">."""
+    async def get_stop_state(
+        self, stop_id: str, use_cache: bool = True
+    ) -> dict[str, Any]:
+        """HTML-страница → встроенный state из <script class="state-view">.
+
+        При use_cache=True результат хранится 45 сек, чтобы не долбить Яндекс при
+        частых обновлениях UI и не получить заглушку от Антиробота.
+        """
+        canonical = normalize_stop_id(stop_id)
+        if use_cache:
+            async with self._state_cache_lock:
+                entry = self._state_cache.get(canonical)
+                if entry and (time.monotonic() - entry[0]) < STATE_CACHE_TTL_SECONDS:
+                    return entry[1]
         html = await self.fetch_stop_html(stop_id)
-        return _extract_state(html)
+        state = _extract_state(html)
+        async with self._state_cache_lock:
+            self._state_cache[canonical] = (time.monotonic(), state)
+        return state
 
     # старое API-обращение, оставляю на всякий случай (сейчас возвращает пустоту)
     async def get_stop_info_api(self, stop_id: str) -> dict[str, Any]:
