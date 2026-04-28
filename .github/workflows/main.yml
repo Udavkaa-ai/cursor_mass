@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-global-ubuntu22-v2
+          key: buildozer-global-ubuntu22-v3
 
       - name: Install system deps
         run: |
@@ -45,10 +45,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      # python-for-android явно: старая версия из зависимостей buildozer
-      # искала sdkmanager по пути tools/bin/ (устарел), новая — cmdline-tools/latest/bin/
       - name: Install buildozer + p4a + cython
         run: pip install --upgrade buildozer python-for-android cython
+
+      # Система уже имеет Android SDK с принятыми лицензиями.
+      # Используем её sdkmanager с --sdk_root чтобы заранее установить
+      # build-tools/platforms в папку buildozer — aidl будет найден.
+      - name: Pre-populate buildozer Android SDK
+        run: |
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK"
+          # Принимаем лицензии и копируем их
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
+          cp -r "$ANDROID_HOME/licenses" "$SDK/"
+          # Копируем cmdline-tools (sdkmanager) в SDK buildozer
+          mkdir -p "$SDK/cmdline-tools"
+          cp -r "$ANDROID_HOME/cmdline-tools/latest" "$SDK/cmdline-tools/"
+          # Устанавливаем build-tools и платформу через скопированный sdkmanager
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            --sdk_root="$SDK" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" \
+            "platform-tools"
 
       - name: Build APK
         working-directory: android_widget
