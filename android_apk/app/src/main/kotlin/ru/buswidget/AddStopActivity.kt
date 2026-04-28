@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
@@ -17,11 +18,16 @@ import java.net.URLEncoder
 
 class AddStopActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_EDIT_STOP_ID = "edit_stop_id"
+    }
+
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var etUrl:    EditText
     private lateinit var etId:     EditText
     private lateinit var etName:   EditText
     private lateinit var etRoutes: EditText
+    private var editingId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +37,21 @@ class AddStopActivity : AppCompatActivity() {
         etId     = findViewById(R.id.etStopId)
         etName   = findViewById(R.id.etStopName)
         etRoutes = findViewById(R.id.etRoutes)
+
+        editingId = intent.getStringExtra(EXTRA_EDIT_STOP_ID)
+        if (editingId != null) {
+            // Edit mode: pre-fill and lock ID
+            findViewById<TextView>(R.id.tvTitle).text = "Редактировать"
+            StopStorage.load(this).find { it.id == editingId }?.let { stop ->
+                etId.setText(stop.id)
+                etId.isEnabled = false
+                etId.alpha = 0.5f
+                etName.setText(stop.name)
+                etRoutes.setText(stop.routes)
+            }
+            etUrl.visibility = android.view.View.GONE
+            findViewById<Button>(R.id.btnParseUrl).visibility = android.view.View.GONE
+        }
 
         findViewById<Button>(R.id.btnParseUrl).setOnClickListener  { parseUrl() }
         findViewById<Button>(R.id.btnFetchName).setOnClickListener { fetchName() }
@@ -76,10 +97,14 @@ class AddStopActivity : AppCompatActivity() {
         val name   = etName.text.toString().trim()
         val routes = etRoutes.text.toString().trim()
         if (id.isBlank()) { toast("ID остановки обязателен"); return }
-        StopStorage.add(this, Stop(id = id, name = name.ifBlank { id }, routes = routes))
+        val stop = Stop(id = id, name = name.ifBlank { id }, routes = routes)
+        if (editingId != null) {
+            StopStorage.update(this, stop)
+        } else {
+            StopStorage.add(this, stop)
+        }
         finish()
     }
 
-    private fun toast(msg: String) =
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }

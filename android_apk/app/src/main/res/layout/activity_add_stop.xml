@@ -15,6 +15,7 @@
         android:paddingBottom="28dp">
 
         <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Добавить остановку"
@@ -38,7 +39,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="💡 Как найти остановку"
+                android:text="Как найти остановку"
                 android:textSize="13sp"
                 android:textStyle="bold"
                 android:textColor="#4382FF"
@@ -47,7 +48,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Откройте Яндекс Карты → найдите остановку → нажмите «Поделиться» → скопируйте ссылку → вставьте ниже и нажмите «→ ID»"
+                android:text="Откройте Яндекс Карты, найдите остановку, нажмите Поделиться, скопируйте ссылку, вставьте ниже и нажмите «Извлечь ID»"
                 android:textSize="12sp"
                 android:textColor="#AAAAAA"
                 android:lineSpacingExtra="2dp"/>
@@ -72,7 +73,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="https://yandex.ru/maps/…/stops/…"
+                android:hint="https://yandex.ru/maps/..."
                 android:textSize="13sp"
                 android:textColor="#F4F4F6"
                 android:textColorHint="#444455"
@@ -89,13 +90,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="→ ID"
-                android:textSize="13sp"
+                android:text="Извлечь ID"
+                android:textSize="12sp"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/bg_btn"
                 android:stateListAnimator="@null"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"/>
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"/>
         </LinearLayout>
 
         <!-- OR divider -->
@@ -211,7 +212,6 @@
             android:inputType="text"
             android:singleLine="true"/>
 
-        <!-- Save -->
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"

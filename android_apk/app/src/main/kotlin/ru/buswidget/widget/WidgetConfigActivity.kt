@@ -35,7 +35,7 @@ class WidgetConfigActivity : AppCompatActivity() {
             return
         }
 
-        val adapter = StopAdapter(::pickStop) {}
+        val adapter = StopAdapter(::pickStop, {}, {})
         adapter.submit(stops)
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)

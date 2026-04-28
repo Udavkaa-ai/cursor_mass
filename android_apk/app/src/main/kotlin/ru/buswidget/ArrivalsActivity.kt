@@ -133,7 +133,7 @@ class ArrivalsActivity : AppCompatActivity() {
         val m = timeLeft / 60; val s = timeLeft % 60
         btnStart.text = "СТОП   $m:${s.toString().padStart(2, '0')}"
         progressBar.progress = timeLeft
-        tvNextPoll.text = "→ ${nextPoll}с"
+        tvNextPoll.text = "обн ${nextPoll}с"
     }
 
     private fun fetchArrivals() {

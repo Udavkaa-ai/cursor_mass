@@ -12,7 +12,7 @@ import ru.buswidget.data.StopStorage
 
 class MainActivity : AppCompatActivity() {
 
-    private val adapter = StopAdapter(::openArrivals, ::deleteStop)
+    private val adapter = StopAdapter(::openArrivals, ::editStop, ::deleteStop)
     private lateinit var rvStops: RecyclerView
     private lateinit var vEmpty:  View
 
@@ -44,6 +44,12 @@ class MainActivity : AppCompatActivity() {
             putExtra(ArrivalsActivity.EXTRA_STOP_ID,   stop.id)
             putExtra(ArrivalsActivity.EXTRA_STOP_NAME, stop.name)
             putExtra(ArrivalsActivity.EXTRA_ROUTES,    stop.routes)
+        })
+    }
+
+    private fun editStop(stop: Stop) {
+        startActivity(Intent(this, AddStopActivity::class.java).apply {
+            putExtra(AddStopActivity.EXTRA_EDIT_STOP_ID, stop.id)
         })
     }
 
