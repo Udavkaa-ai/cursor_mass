@@ -27,7 +27,7 @@ USER_AGENT = (
 SESSION_TTL_SECONDS = 30 * 60
 STATE_CACHE_TTL_SECONDS = 45.0
 BOOTSTRAP_URL = "https://yandex.ru/maps/"
-STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{numeric}/?lang=ru"
+STOP_PAGE_URL = "https://yandex.ru/maps/213/moscow/stops/{canonical}/?lang=ru"
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
 
@@ -96,7 +96,7 @@ class YandexMasstransit:
 
     async def fetch_stop_html(self, stop_id: str) -> str:
         """Сырая HTML-страница остановки. Полезно для отладки."""
-        url = STOP_PAGE_URL.format(numeric=_numeric_id(stop_id))
+        url = STOP_PAGE_URL.format(canonical=normalize_stop_id(stop_id))
         r = await self._client.get(url)
         if r.status_code >= 400:
             raise YandexError(f"{url} -> {r.status_code}: {r.text[:300]}")
