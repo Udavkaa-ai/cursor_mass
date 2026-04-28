@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
-from . import mosgortrans, storage, yandex
+from . import mosgortrans, storage, visits, yandex
 from .config import settings
 from .models import Arrival, Stop, StopArrivals, StopCreate
 from pathlib import Path
@@ -22,6 +22,7 @@ _YC_PROXY_PATH = Path(__file__).parent.parent / "proxy" / "yc_function.py"
 async def lifespan(app: FastAPI):
     global masstransit, mos_client
     storage.init_db()
+    visits.init()
     masstransit = yandex.YandexMasstransit()
     if settings.mos_api_key:
         mos_client = mosgortrans.MosClient()
@@ -247,6 +248,7 @@ main{flex:1}
 </header>
 <main id="root"><div class="empty">загрузка<span class="spinner"></span></div></main>
 <div class="footer" id="footer">—</div>
+<div class="footer">открывали __VISITS__ раз</div>
 <script>
 const STOP_ID = "__STOP_ID__";
 const ROUTES = "__ROUTES__"; // CSV
@@ -350,10 +352,12 @@ async def stop_page(stop_id: str) -> HTMLResponse:
             break
     title = name or canonical
     routes_csv = ",".join(routes_filter)
+    visit_count = visits.increment(f"stop:{canonical}")
     html = (
         _STOP_HTML.replace("__STOP_ID__", canonical)
         .replace("__ROUTES__", routes_csv)
         .replace("__TITLE__", title)
+        .replace("__VISITS__", str(visit_count))
     )
     return HTMLResponse(html)
 
