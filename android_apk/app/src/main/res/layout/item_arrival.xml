@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_card"
+    android:paddingStart="16dp"
+    android:paddingEnd="14dp"
+    android:layout_marginBottom="8dp">
+
+    <!-- Номер маршрута -->
+    <TextView
+        android:id="@+id/tvRoute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="72dp"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#F4F4F6"/>
+
+    <!-- Направление (конечная) -->
+    <TextView
+        android:id="@+id/tvDirection"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:textSize="12sp"
+        android:textColor="#7A7A80"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+
+    <!-- Время до прибытия -->
+    <TextView
+        android:id="@+id/tvEta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="120dp"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="end"
+        android:textColor="#F4F4F6"/>
+
+</LinearLayout>
