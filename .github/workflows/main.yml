@@ -28,9 +28,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-global-ubuntu22-v1
+          key: buildozer-global-ubuntu22-v2
 
-      # Ubuntu 22.04: libncurses-dev вместо libncurses5-dev, нет libtinfo5
       - name: Install system deps
         run: |
           sudo apt-get update -qq
@@ -46,17 +45,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install buildozer + cython
-        run: pip install --upgrade buildozer cython
-
-      # GitHub runner уже имеет Android SDK с принятыми лицензиями.
-      # Копируем файлы лицензий в папку buildozer ДО того как он
-      # запустит sdkmanager — тогда интерактивный вопрос не появляется.
-      - name: Pre-accept Android SDK licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
-          mkdir -p "$HOME/.buildozer/android/platform/android-sdk"
-          cp -r "$ANDROID_HOME/licenses" "$HOME/.buildozer/android/platform/android-sdk/"
+      # python-for-android явно: старая версия из зависимостей buildozer
+      # искала sdkmanager по пути tools/bin/ (устарел), новая — cmdline-tools/latest/bin/
+      - name: Install buildozer + p4a + cython
+        run: pip install --upgrade buildozer python-for-android cython
 
       - name: Build APK
         working-directory: android_widget
