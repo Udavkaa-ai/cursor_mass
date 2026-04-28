@@ -12,7 +12,11 @@ import httpx
 
 from .config import settings
 
-API_BASE = "https://apidata.mos.ru/v1"
+API_HOSTS = [
+    "https://apidata.mos.ru/v1",
+    "https://apidata.mos.ru/v2",
+    "https://api.data.mos.ru/v1",
+]
 
 
 class MosError(RuntimeError):
@@ -25,8 +29,9 @@ class MosClient:
             raise MosError(
                 "MOS_API_KEY не задан. Получить ключ на https://apidata.mos.ru"
             )
+        # data.mos.ru бывает медленный, +щедрый таймаут
         self._client = httpx.AsyncClient(
-            timeout=settings.request_timeout,
+            timeout=httpx.Timeout(30.0, connect=15.0),
             follow_redirects=True,
             headers={"Accept": "application/json"},
         )
@@ -37,14 +42,24 @@ class MosClient:
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         full_params = {**(params or {}), "api_key": self._key}
-        url = f"{API_BASE}{path}"
-        r = await self._client.get(url, params=full_params)
-        if r.status_code >= 400:
-            raise MosError(f"{r.status_code} {url}: {r.text[:400]}")
-        try:
-            return r.json()
-        except ValueError as e:
-            raise MosError(f"Ответ не JSON: {r.text[:300]}") from e
+        last_err: str | None = None
+        for base in API_HOSTS:
+            url = f"{base}{path}"
+            try:
+                r = await self._client.get(url, params=full_params)
+            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as e:
+                last_err = f"{type(e).__name__} {url}: {e}"
+                continue
+            if r.status_code == 404:
+                last_err = f"404 {url}"
+                continue
+            if r.status_code >= 400:
+                raise MosError(f"{r.status_code} {url}: {r.text[:400]}")
+            try:
+                return r.json()
+            except ValueError as e:
+                raise MosError(f"{url} ответ не JSON: {r.text[:300]}") from e
+        raise MosError(last_err or "не удалось достучаться ни до одного хоста")
 
     async def list_datasets(self) -> Any:
         """Каталог всех датасетов. Возвращает большой массив."""
