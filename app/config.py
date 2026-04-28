@@ -9,6 +9,7 @@ class Settings:
     yandex_lang: str
     request_timeout: float
     stops_env: str
+    mos_api_key: str
 
 
 def _load() -> Settings:
@@ -18,6 +19,7 @@ def _load() -> Settings:
         yandex_lang=os.environ.get("YANDEX_LANG", "ru_RU"),
         request_timeout=float(os.environ.get("REQUEST_TIMEOUT", "10")),
         stops_env=os.environ.get("STOPS", ""),
+        mos_api_key=os.environ.get("MOS_API_KEY", ""),
     )
 
 

@@ -7,22 +7,27 @@ from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
-from . import storage, yandex
+from . import mosgortrans, storage, yandex
 from .config import settings
 from .models import Arrival, Stop, StopArrivals, StopCreate
 
 masstransit: yandex.YandexMasstransit | None = None
+mos_client: mosgortrans.MosClient | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global masstransit
+    global masstransit, mos_client
     storage.init_db()
     masstransit = yandex.YandexMasstransit()
+    if settings.mos_api_key:
+        mos_client = mosgortrans.MosClient()
     try:
         yield
     finally:
         await masstransit.close()
+        if mos_client is not None:
+            await mos_client.close()
 
 
 app = FastAPI(title="Bus Arrival Tracker", lifespan=lifespan)
@@ -579,3 +584,76 @@ async def search_endpoint(q: str = Query(..., min_length=2)) -> JSONResponse:
     assert masstransit is not None
     payload = await masstransit.search(q)
     return JSONResponse(payload)
+
+
+def _require_mos() -> mosgortrans.MosClient:
+    if mos_client is None:
+        raise HTTPException(
+            status_code=503,
+            detail="MOS_API_KEY не задан в Railway Variables",
+        )
+    return mos_client
+
+
+@app.get("/mos/datasets", dependencies=[Depends(require_api_key)])
+async def mos_datasets_endpoint(
+    q: str = Query(default="", description="Подстрока в названии датасета"),
+    limit: int = Query(default=30, ge=1, le=200),
+) -> JSONResponse:
+    """Каталог датасетов data.mos.ru. Без q возвращает первые N (всего ~5000),
+    с q фильтрует по подстроке в Caption."""
+    cli = _require_mos()
+    catalog = await cli.list_datasets()
+    if not isinstance(catalog, list):
+        return JSONResponse({"error": "ожидался список", "raw_type": type(catalog).__name__, "preview": str(catalog)[:500]})
+    if q:
+        results = mosgortrans.search_datasets_by_name(catalog, q)
+        return JSONResponse({"total_in_catalog": len(catalog), "matched": len(results), "results": results[:limit]})
+    return JSONResponse(
+        {
+            "total": len(catalog),
+            "first_n": [
+                {
+                    "id": ds.get("Id") or ds.get("id"),
+                    "caption": ds.get("Caption") or ds.get("name"),
+                }
+                for ds in catalog[:limit] if isinstance(ds, dict)
+            ],
+        }
+    )
+
+
+@app.get("/mos/dataset/{dataset_id}", dependencies=[Depends(require_api_key)])
+async def mos_dataset_meta_endpoint(dataset_id: int) -> JSONResponse:
+    """Метаданные одного датасета — название, описание, схема полей."""
+    return JSONResponse(await _require_mos().dataset_meta(dataset_id))
+
+
+@app.get("/mos/sample/{dataset_id}", dependencies=[Depends(require_api_key)])
+async def mos_dataset_sample_endpoint(
+    dataset_id: int,
+    top: int = Query(default=3, ge=1, le=20),
+    odata: str | None = Query(default=None, description="Опциональный $filter (OData)"),
+) -> JSONResponse:
+    """Несколько строк датасета — посмотреть какие поля и значения."""
+    return JSONResponse(
+        await _require_mos().dataset_rows(dataset_id, odata_filter=odata, top=top)
+    )
+
+
+@app.get("/mos/probe", dependencies=[Depends(require_api_key)])
+async def mos_probe_endpoint() -> JSONResponse:
+    """Делает несколько диагностических запросов чтобы понять что доступно."""
+    cli = _require_mos()
+    out: dict[str, Any] = {"key_set": True}
+    try:
+        catalog = await cli.list_datasets()
+        out["catalog_size"] = len(catalog) if isinstance(catalog, list) else "не список"
+        if isinstance(catalog, list):
+            queries = ["прогноз прибытия", "остановки наземного", "маршруты наземного"]
+            out["matches"] = {
+                q: mosgortrans.search_datasets_by_name(catalog, q)[:5] for q in queries
+            }
+    except mosgortrans.MosError as e:
+        out["error"] = str(e)
+    return JSONResponse(out)
