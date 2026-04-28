@@ -11,3 +11,6 @@ data/
 .idea/
 .vscode/
 .DS_Store
+
+# Y.Cloud
+env.yc

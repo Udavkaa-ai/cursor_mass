@@ -21,8 +21,14 @@ _YC_PROXY_PATH = Path(__file__).parent.parent / "proxy" / "yc_function.py"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global masstransit, mos_client
-    storage.init_db()
-    visits.init()
+    try:
+        storage.init_db()
+    except Exception as e:
+        print(f"[startup] storage.init_db failed: {e}")
+    try:
+        visits.init()
+    except Exception as e:
+        print(f"[startup] visits.init failed: {e}")
     masstransit = yandex.YandexMasstransit()
     if settings.mos_api_key:
         mos_client = mosgortrans.MosClient()
@@ -420,8 +426,13 @@ async def stop_page(stop_id: str) -> HTMLResponse:
     title = name or canonical
     routes_csv = ",".join(routes_filter)
     visit_key = f"stop:{canonical}"
-    visit_count = visits.increment(visit_key)
-    sparkline = _render_sparkline(visits.hourly_buckets(visit_key, hours=24))
+    try:
+        visit_count = visits.increment(visit_key)
+        sparkline = _render_sparkline(visits.hourly_buckets(visit_key, hours=24))
+    except Exception as e:
+        print(f"[visits] {e}")
+        visit_count = 0
+        sparkline = ""
     html = (
         _STOP_HTML.replace("__STOP_ID__", canonical)
         .replace("__ROUTES__", routes_csv)
