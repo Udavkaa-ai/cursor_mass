@@ -41,7 +41,11 @@ class MosClient:
         await self._client.aclose()
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
-        full_params = {**(params or {}), "api_key": self._key}
+        # apidata.mos.ru без явного $format отдаёт XML — просим JSON
+        full_params = {**(params or {}), "api_key": self._key, "$format": "json"}
+        proxy = settings.mos_proxy_url
+        if proxy:
+            return await self._call_via_proxy(proxy, path, full_params)
         last_err: str | None = None
         for base in API_HOSTS:
             url = f"{base}{path}"
@@ -60,6 +64,21 @@ class MosClient:
             except ValueError as e:
                 raise MosError(f"{url} ответ не JSON: {r.text[:300]}") from e
         raise MosError(last_err or "не удалось достучаться ни до одного хоста")
+
+    async def _call_via_proxy(
+        self, proxy_url: str, path: str, params: dict[str, Any]
+    ) -> Any:
+        proxy_params = {**params, "_path": path, "_host": "apidata.mos.ru"}
+        try:
+            r = await self._client.get(proxy_url, params=proxy_params)
+        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as e:
+            raise MosError(f"{type(e).__name__} к прокси {proxy_url}: {e}") from e
+        if r.status_code >= 400:
+            raise MosError(f"{r.status_code} {proxy_url} (proxy): {r.text[:400]}")
+        try:
+            return r.json()
+        except ValueError as e:
+            raise MosError(f"proxy ответ не JSON: {r.text[:300]}") from e
 
     async def list_datasets(self) -> Any:
         """Каталог всех датасетов. Возвращает большой массив."""

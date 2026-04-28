@@ -10,9 +10,12 @@ from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from . import mosgortrans, storage, yandex
 from .config import settings
 from .models import Arrival, Stop, StopArrivals, StopCreate
+from pathlib import Path
 
 masstransit: yandex.YandexMasstransit | None = None
 mos_client: mosgortrans.MosClient | None = None
+
+_YC_PROXY_PATH = Path(__file__).parent.parent / "proxy" / "yc_function.py"
 
 
 @asynccontextmanager
@@ -584,6 +587,16 @@ async def search_endpoint(q: str = Query(..., min_length=2)) -> JSONResponse:
     assert masstransit is not None
     payload = await masstransit.search(q)
     return JSONResponse(payload)
+
+
+@app.get("/yc_proxy.py", response_class=PlainTextResponse)
+async def yc_proxy_code() -> PlainTextResponse:
+    """Код функции для деплоя на Yandex.Cloud Functions. Открой на телефоне,
+    выдели всё, скопируй и вставь в редактор Я.Облака."""
+    return PlainTextResponse(
+        _YC_PROXY_PATH.read_text(encoding="utf-8"),
+        media_type="text/plain; charset=utf-8",
+    )
 
 
 def _require_mos() -> mosgortrans.MosClient:

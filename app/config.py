@@ -10,6 +10,7 @@ class Settings:
     request_timeout: float
     stops_env: str
     mos_api_key: str
+    mos_proxy_url: str
 
 
 def _load() -> Settings:
@@ -20,6 +21,7 @@ def _load() -> Settings:
         request_timeout=float(os.environ.get("REQUEST_TIMEOUT", "10")),
         stops_env=os.environ.get("STOPS", ""),
         mos_api_key=os.environ.get("MOS_API_KEY", ""),
+        mos_proxy_url=os.environ.get("MOS_PROXY_URL", "").strip(),
     )
 
 
