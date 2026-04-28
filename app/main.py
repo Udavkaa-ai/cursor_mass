@@ -343,39 +343,65 @@ load();
 
 
 def _render_sparkline(buckets: list[tuple[str, int]]) -> str:
-    """Узкий 24-столбиковый SVG-график активности."""
+    """Узкий 24-столбиковый SVG-график активности с подписями.
+
+    Сверху над каждым ненулевым столбиком — число визитов.
+    Снизу подписи часов через каждые 4 часа (00/04/08/12/16/20)."""
     if not buckets:
         return ""
     n = len(buckets)
     counts = [c for _, c in buckets]
     max_c = max(counts) or 1
-    width = 300
-    height = 40
+    width = 320
+    bar_area_h = 50
+    label_top_h = 12
+    label_bot_h = 12
+    height_total = label_top_h + bar_area_h + label_bot_h
     bar_w = width / n
-    gap = max(1.0, bar_w * 0.15)
+    gap = max(1.0, bar_w * 0.18)
     inner_w = bar_w - gap
+
     bars: list[str] = []
     for i, (_, c) in enumerate(buckets):
-        h = (c / max_c) * (height - 2) if c else 0
+        h = (c / max_c) * (bar_area_h - 2) if c else 0
         x = i * bar_w + gap / 2
-        y = height - h
-        opacity = 0.85 if c else 0.15
+        y = label_top_h + bar_area_h - h
+        is_now = i == n - 1
+        opacity = 0.95 if c else (0.25 if is_now else 0.12)
+        fill = "#42d883"
         bars.append(
-            f'<rect x="{x:.1f}" y="{y:.1f}" width="{inner_w:.1f}" height="{h:.1f}"'
-            f' rx="1" fill="#42d883" opacity="{opacity}"/>'
+            f'<rect x="{x:.1f}" y="{y:.1f}" width="{inner_w:.1f}" height="{max(h, 1):.1f}"'
+            f' rx="1.5" fill="{fill}" opacity="{opacity}"/>'
         )
-    # Подписи через каждые 6 часов
-    labels: list[str] = []
-    for i in (0, 6, 12, 18):
-        if i < n:
-            hr = int(buckets[i][0][-2:])
-            x = i * bar_w + bar_w / 2
-            labels.append(
-                f'<text x="{x:.1f}" y="{height + 11}" font-size="9" fill="#7a7a80"'
-                f' text-anchor="middle">{hr:02d}</text>'
+        if c > 0:
+            cx = i * bar_w + bar_w / 2
+            bars.append(
+                f'<text x="{cx:.1f}" y="{y - 2:.1f}" font-size="9" fill="#f4f4f6"'
+                f' text-anchor="middle" font-weight="600">{c}</text>'
             )
+
+    # Подписи часов снизу — каждые 4 часа
+    labels: list[str] = []
+    for i in range(n):
+        hr = int(buckets[i][0][-2:])
+        if hr % 4 != 0:
+            continue
+        cx = i * bar_w + bar_w / 2
+        labels.append(
+            f'<text x="{cx:.1f}" y="{height_total - 2}" font-size="9"'
+            f' fill="#7a7a80" text-anchor="middle">{hr:02d}</text>'
+        )
+    # Метка «сейчас» под последним столбиком, если час не совпал с метками выше
+    last_hr = int(buckets[-1][0][-2:])
+    if last_hr % 4 != 0:
+        cx = (n - 1) * bar_w + bar_w / 2
+        labels.append(
+            f'<text x="{cx:.1f}" y="{height_total - 2}" font-size="9"'
+            f' fill="#42d883" text-anchor="middle" font-weight="600">сейчас</text>'
+        )
+
     return (
-        f'<svg viewBox="0 0 {width} {height + 14}" '
+        f'<svg viewBox="0 0 {width} {height_total}" '
         f'preserveAspectRatio="xMidYMid meet" class="spark">'
         f'{"".join(bars)}{"".join(labels)}</svg>'
     )
