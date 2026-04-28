@@ -1,0 +1,304 @@
+#:kivy 2.2
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+# ──────────────────── Палитра (dark theme) ────────────────────────────────────
+#:set C_BG    [0.059, 0.059, 0.063, 1]
+#:set C_CARD  [0.102, 0.102, 0.114, 1]
+#:set C_LINE  [0.165, 0.165, 0.176, 1]
+#:set C_MUTED [0.478, 0.478, 0.502, 1]
+#:set C_FG    [0.957, 0.957, 0.965, 1]
+#:set C_ACC   [0.267, 0.510, 1.000, 1]
+#:set C_RED   [1.000, 0.302, 0.302, 1]
+
+# ──────────────────── Переиспользуемые правила ───────────────────────────────
+
+<StyledInput@TextInput>:
+    background_normal: ''
+    background_active: ''
+    background_color: 0, 0, 0, 0
+    foreground_color: C_FG
+    cursor_color: C_ACC
+    hint_text_color: C_MUTED
+    font_size: sp(16)
+    multiline: False
+    padding: [dp(14), dp(15)]
+    size_hint_y: None
+    height: dp(52)
+    canvas.before:
+        Color:
+            rgba: C_CARD
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(12)]
+        Color:
+            rgba: C_LINE
+        Line:
+            rounded_rectangle: [self.x, self.y, self.width, self.height, dp(12)]
+            width: 1
+
+# ──────────────────── Строка прибытия ────────────────────────────────────────
+
+<ArrivalRow>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(62)
+    padding: [dp(16), 0, dp(14), 0]
+    spacing: dp(8)
+    canvas.before:
+        Color:
+            rgba: C_CARD
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(14)]
+
+    # Номер маршрута
+    Label:
+        text: root.route
+        font_size: sp(26)
+        bold: True
+        color: C_FG
+        size_hint_x: None
+        width: dp(78)
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+
+    # Направление (конечная)
+    Label:
+        text: root.direction
+        font_size: sp(12)
+        color: C_MUTED
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        shorten: True
+        shorten_from: 'right'
+
+    # Время до прибытия — цветовое кодирование
+    Label:
+        text: root.eta
+        font_size: sp(30)
+        bold: True
+        color: root.eta_color
+        size_hint_x: None
+        width: dp(148)
+        halign: 'right'
+        valign: 'middle'
+        text_size: self.size
+
+# ──────────────────── Экран настроек ─────────────────────────────────────────
+
+<SettingsScreen>:
+    ScrollView:
+        do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            padding: [dp(20), dp(54), dp(20), dp(28)]
+            spacing: dp(10)
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: 'Настройки'
+                font_size: sp(26)
+                bold: True
+                color: C_FG
+                size_hint_y: None
+                height: dp(46)
+                halign: 'left'
+                text_size: self.size
+
+            Widget:
+                size_hint_y: None
+                height: dp(8)
+
+            # URL сервера
+            Label:
+                text: 'URL сервера'
+                font_size: sp(12)
+                color: C_MUTED
+                size_hint_y: None
+                height: dp(18)
+                halign: 'left'
+                text_size: self.size
+            StyledInput:
+                id: url
+                hint_text: 'https://…containers.yandexcloud.net'
+
+            # ID остановки
+            Label:
+                text: 'ID остановки'
+                font_size: sp(12)
+                color: C_MUTED
+                size_hint_y: None
+                height: dp(18)
+                halign: 'left'
+                text_size: self.size
+            StyledInput:
+                id: stop
+                hint_text: '5854295457'
+
+            # Фильтр маршрутов
+            Label:
+                text: 'Маршруты (через запятую, необязательно)'
+                font_size: sp(12)
+                color: C_MUTED
+                size_hint_y: None
+                height: dp(18)
+                halign: 'left'
+                text_size: self.size
+            StyledInput:
+                id: routes
+                hint_text: '925,907  (пусто = все)'
+
+            # API-ключ
+            Label:
+                text: 'API-ключ (если сервер защищён)'
+                font_size: sp(12)
+                color: C_MUTED
+                size_hint_y: None
+                height: dp(18)
+                halign: 'left'
+                text_size: self.size
+            StyledInput:
+                id: key
+                hint_text: 'не обязательно'
+                password: True
+
+            Widget:
+                size_hint_y: None
+                height: dp(18)
+
+            Button:
+                text: 'СОХРАНИТЬ'
+                bold: True
+                font_size: sp(16)
+                color: C_FG
+                background_normal: ''
+                background_color: 0, 0, 0, 0
+                size_hint_y: None
+                height: dp(58)
+                on_press: root.save()
+                canvas.before:
+                    Color:
+                        rgba: C_ACC
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(16)]
+
+# ──────────────────── Главный экран ──────────────────────────────────────────
+
+<MainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [dp(16), dp(52), dp(16), dp(20)]
+        spacing: dp(12)
+
+        # ── Заголовок (название остановки + кнопка настроек) ──────────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            spacing: dp(8)
+
+            Label:
+                text: root.stop_name
+                font_size: sp(19)
+                bold: True
+                color: C_FG
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Button:
+                text: 'Настройки'
+                font_size: sp(13)
+                color: C_MUTED
+                background_normal: ''
+                background_color: 0, 0, 0, 0
+                size_hint_x: None
+                width: dp(92)
+                on_press: root.go_settings()
+                canvas.before:
+                    Color:
+                        rgba: C_CARD
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(10)]
+
+        # ── Главная кнопка (ЗАПУСТИТЬ / СТОП + таймер) ────────────────────
+        Button:
+            text: ('СТОП   ' + app.fmt(root.time_left)) if root.running else 'ЗАПУСТИТЬ'
+            font_size: sp(22)
+            bold: True
+            color: C_FG
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            size_hint_y: None
+            height: dp(74)
+            on_press: root.toggle()
+            canvas.before:
+                Color:
+                    rgba: C_RED if root.running else C_ACC
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(20)]
+
+        # ── Полоска прогресса (убывает за 5 минут) ────────────────────────
+        Widget:
+            size_hint_y: None
+            height: dp(6)
+            canvas.before:
+                # Фон
+                Color:
+                    rgba: C_CARD
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(3)]
+                # Заполнение
+                Color:
+                    rgba: C_RED if root.time_left < 60 else C_ACC
+                RoundedRectangle:
+                    pos: self.pos
+                    size: [self.width * (root.time_left / 300.0), self.height]
+                    radius: [dp(3)]
+
+        # ── Строка статуса + обратный отсчёт до следующего запроса ────────
+        BoxLayout:
+            size_hint_y: None
+            height: dp(22)
+
+            Label:
+                text: root.status
+                font_size: sp(13)
+                color: C_MUTED
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                text: ('-> ' + str(int(root.next_poll)) + 'с') if root.running else ''
+                font_size: sp(12)
+                color: C_ACC
+                size_hint_x: None
+                width: dp(56)
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+
+        # ── Список прибытий ───────────────────────────────────────────────
+        ScrollView:
+            do_scroll_x: False
+            BoxLayout:
+                id: arrivals_box
+                orientation: 'vertical'
+                spacing: dp(8)
+                padding: [0, dp(2), 0, 0]
+                size_hint_y: None
+                height: self.minimum_height
