@@ -10,66 +10,63 @@
         android:fillColor="#FFFFFF"
         android:pathData="M14,30 Q14,22 22,22 L86,22 Q94,22 94,30 L94,72 Q94,80 86,80 L22,80 Q14,80 14,72 Z"/>
 
-    <!-- Windows (blue = same as background, appears as cutouts) -->
+    <!-- Windows (same blue as bg = appear as transparent cutouts) -->
     <path
         android:fillColor="#2563EB"
         android:pathData="M20,27 L20,50 L38,50 L38,27 Z
                           M43,27 L43,50 L61,50 L61,27 Z
                           M66,27 L66,50 L84,50 L84,27 Z"/>
 
-    <!-- Door (right side) -->
+    <!-- Door -->
     <path
         android:fillColor="#2563EB"
         android:pathData="M66,54 L66,76 L84,76 L84,54 Z"/>
 
-    <!-- Door split line -->
+    <!-- Door split -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M75,54 L75,76 L76.5,76 L76.5,54 Z"/>
 
-    <!-- Front headlight strip -->
+    <!-- Front headlight -->
     <path
         android:fillColor="#FFF176"
         android:pathData="M91,56 L94,56 L94,64 L91,64 Z"/>
 
-    <!-- Rear lights -->
+    <!-- Rear light -->
     <path
         android:fillColor="#FF6B6B"
         android:pathData="M14,56 L17,56 L17,64 L14,64 Z"/>
 
-    <!-- Wheels -->
-    <circle
+    <!-- Wheel left outer (cx=28 cy=80 r=11) -->
+    <path
         android:fillColor="#1A1A2E"
-        android:cx="28"
-        android:cy="80"
-        android:r="11"/>
-    <circle
-        android:fillColor="#FFFFFF"
-        android:cx="28"
-        android:cy="80"
-        android:r="4.5"/>
+        android:pathData="M17,80 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0"/>
 
-    <circle
+    <!-- Wheel left hub (cx=28 cy=80 r=4.5) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23.5,80 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0"/>
+
+    <!-- Wheel right outer (cx=80 cy=80 r=11) -->
+    <path
         android:fillColor="#1A1A2E"
-        android:cx="80"
-        android:cy="80"
-        android:r="11"/>
-    <circle
-        android:fillColor="#FFFFFF"
-        android:cx="80"
-        android:cy="80"
-        android:r="4.5"/>
+        android:pathData="M69,80 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0"/>
 
-    <!-- Roof top stripe (electric bus charger hint) -->
+    <!-- Wheel right hub (cx=80 cy=80 r=4.5) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75.5,80 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0"/>
+
+    <!-- Roof top stripe + pantograph base -->
     <path
         android:fillColor="#2563EB"
         android:pathData="M40,15 L40,22 L68,22 L68,15 Q60,12 54,12 Q48,12 40,15 Z"/>
 
-    <!-- Pantograph (electric bus detail) -->
+    <!-- Pantograph arms (electric bus) -->
     <path
-        android:fillColor="#2563EB"
+        android:fillColor="#FFFFFF"
         android:strokeColor="#FFFFFF"
         android:strokeWidth="1.5"
-        android:pathData="M52,12 L54,6 M54,6 L60,8 M54,6 L48,8"/>
+        android:pathData="M54,12 L54,6 M54,6 L60,8 M54,6 L48,8"/>
 
 </vector>
