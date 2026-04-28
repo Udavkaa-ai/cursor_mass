@@ -2,9 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    paths:
-      - 'android_widget/**'
-  workflow_dispatch:   # ручной запуск из вкладки Actions
+    branches:
+      - claude/yandex-maps-widget-Zod7Y
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── Кэш buildozer / Android SDK / NDK ────────────────────────────────
       - name: Cache .buildozer
         uses: actions/cache@v4
         with:
@@ -28,7 +27,6 @@ jobs:
           path: ~/.buildozer
           key: buildozer-global-${{ runner.os }}
 
-      # ── Системные зависимости ─────────────────────────────────────────────
       - name: Install system deps
         run: |
           sudo apt-get update -qq
@@ -46,12 +44,10 @@ jobs:
       - name: Install buildozer + cython
         run: pip install --upgrade buildozer cython
 
-      # ── Сборка ───────────────────────────────────────────────────────────
       - name: Build APK (debug)
         working-directory: android_widget
         run: buildozer -v android debug 2>&1 | tee build.log
 
-      # ── Артефакты ─────────────────────────────────────────────────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
