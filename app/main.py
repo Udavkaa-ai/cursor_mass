@@ -208,14 +208,26 @@ _STOP_HTML = """<!doctype html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>__TITLE__</title>
 <style>
-:root { color-scheme: dark; --bg:#0f0f10; --card:#1a1a1d; --muted:#7a7a80; --fg:#f4f4f6;
-        --run:#ff4d4d; --hurry:#ffaa33; --walk:#42d883; --calm:#9aa1aa; --sched:#7ea0ff; }
+:root{color-scheme:dark;--bg:#0f0f10;--card:#1a1a1d;--muted:#7a7a80;--fg:#f4f4f6;
+      --run:#ff4d4d;--hurry:#ffaa33;--walk:#42d883;--calm:#9aa1aa;--sched:#7ea0ff;--acc:#4382ff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:max(env(safe-area-inset-top),18px) 16px max(env(safe-area-inset-bottom),18px) 16px;display:flex;flex-direction:column;min-height:100vh}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+     padding:max(env(safe-area-inset-top),18px) 16px max(env(safe-area-inset-bottom),18px) 16px;display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .title{font-size:18px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:10px}
-.refresh{background:#1a1a1d;border:1px solid #2a2a2e;color:var(--fg);padding:10px 18px;border-radius:12px;font:inherit;font-size:15px;font-weight:500;flex-shrink:0}
-.refresh:active{background:#2a2a2e}
+/* ── Большая кнопка запуска ── */
+.start-btn{width:100%;padding:18px;border:none;border-radius:20px;font:700 22px/1 inherit;
+           color:#fff;cursor:pointer;transition:background .2s;margin-bottom:10px}
+.start-btn.idle{background:var(--acc)}
+.start-btn.running{background:var(--run)}
+.start-btn:active{filter:brightness(.85)}
+/* ── Прогресс-бар ── */
+.progress-track{height:6px;background:var(--card);border-radius:3px;margin-bottom:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--acc);transition:width .9s linear,background .5s}
+.progress-fill.danger{background:var(--run)}
+/* ── Строка статуса ── */
+.statusbar{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:16px;min-height:18px}
+.statusbar .next{color:var(--acc)}
 main{flex:1}
 .route-block{margin-top:22px;padding-bottom:22px;border-bottom:1px solid #232328}
 .route-block:first-of-type{margin-top:6px}
@@ -225,116 +237,119 @@ main{flex:1}
 .dir{flex:1;color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .eta-main{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 .eta{font-weight:800;font-size:48px;line-height:1.05;letter-spacing:-1px}
-.eta.run{color:var(--run)}
-.eta.hurry{color:var(--hurry)}
-.eta.walk{color:var(--walk)}
-.eta.calm{color:var(--fg)}
-.eta.sched{color:var(--sched);font-weight:600;font-size:34px}
+.eta.run{color:var(--run)}.eta.hurry{color:var(--hurry)}.eta.walk{color:var(--walk)}
+.eta.calm{color:var(--fg)}.eta.sched{color:var(--sched);font-weight:600;font-size:34px}
 .eta.next{font-size:20px;color:var(--muted);font-weight:500}
 .hint{display:block;font-size:14px;line-height:1;margin-top:10px;letter-spacing:.4px;text-transform:uppercase;font-weight:700}
-.hint.run{color:var(--run)}
-.hint.hurry{color:var(--hurry)}
-.hint.walk{color:var(--walk)}
+.hint.run{color:var(--run)}.hint.hurry{color:var(--hurry)}.hint.walk{color:var(--walk)}
 .empty{color:var(--muted);font-style:italic;font-size:15px;padding:40px 0;text-align:center}
 .stale{color:var(--muted);font-size:14px;padding:40px 0;text-align:center}
-.error{color:#ff6b6b;font-size:14px;padding:40px 0;text-align:center}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px}
 .footer{margin-top:auto;padding-top:18px;color:var(--muted);font-size:12px;text-align:center}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #2a2a2e;border-top-color:var(--fg);
+         border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <header>
   <div class="title" id="title">__TITLE__</div>
-  <button class="refresh" id="refresh">Обновить</button>
 </header>
+<button class="start-btn idle" id="startBtn">ЗАПУСТИТЬ</button>
+<div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<div class="statusbar"><span id="statusText">нажми кнопку</span><span class="next" id="nextText"></span></div>
 <main id="root"><div class="empty">загрузка<span class="spinner"></span></div></main>
 <div class="footer" id="footer">—</div>
 <script>
 const STOP_ID = "__STOP_ID__";
-const ROUTES = "__ROUTES__"; // CSV
-const root = document.getElementById('root');
-const footer = document.getElementById('footer');
-const btn = document.getElementById('refresh');
-const titleEl = document.getElementById('title');
-const MAX_NEXT = 2;
+const ROUTES  = "__ROUTES__";
+const SESSION = 300, POLL = 30;
 
-function urgencyInfo(secs) {
-  if (secs == null) return { cls: 'sched', hint: '' };
-  if (secs <= 180) return { cls: 'run', hint: 'подъезжает' };
-  if (secs <= 300) return { cls: 'hurry', hint: 'скоро будет' };
-  if (secs <= 420) return { cls: 'walk', hint: 'можно не торопиться' };
-  return { cls: 'calm', hint: '' };
+const root       = document.getElementById('root');
+const footer     = document.getElementById('footer');
+const titleEl    = document.getElementById('title');
+const startBtn   = document.getElementById('startBtn');
+const fill       = document.getElementById('progressFill');
+const statusText = document.getElementById('statusText');
+const nextText   = document.getElementById('nextText');
+
+let running = false, timeLeft = 0, nextPoll = 0, tickId = null;
+
+function fmt(s){ const m=Math.floor(s/60),ss=s%60; return m+':'+(ss<10?'0':'')+ss }
+
+function urgencyInfo(secs){
+  if(secs==null) return{cls:'sched',hint:''};
+  if(secs<=180)  return{cls:'run',hint:'подъезжает'};
+  if(secs<=300)  return{cls:'hurry',hint:'скоро будет'};
+  if(secs<=420)  return{cls:'walk',hint:'можно не торопиться'};
+  return{cls:'calm',hint:''};
+}
+function groupByRoute(arrivals){
+  const map=new Map();
+  for(const a of arrivals){const k=(a.route||'?')+'|'+(a.direction||'');if(!map.has(k))map.set(k,[]);map.get(k).push(a);}
+  for(const l of map.values())l.sort((x,y)=>(x.eta_seconds??1e12)-(y.eta_seconds??1e12));
+  return[...map.values()].sort((a,b)=>(a[0].eta_seconds??1e12)-(b[0].eta_seconds??1e12));
+}
+function renderRoute(group){
+  const head=group[0],items=group.slice(0,3),main=items[0],rest=items.slice(1);
+  const u=urgencyInfo(main.eta_seconds),hint=u.hint?`<span class="hint ${u.cls}">${u.hint}</span>`:'';
+  return`<div class="route-block"><div class="route-head"><span class="route">${head.route||'—'}</span>
+    <span class="dir">${head.direction||''}</span></div>
+    <div class="eta-main"><span class="eta ${u.cls}">${main.eta_local||main.eta_text||''}</span>
+    ${rest.map(a=>`<span class="eta next">${a.eta_local||a.eta_text||''}</span>`).join('')}</div>${hint}</div>`;
 }
 
-function groupByRoute(arrivals) {
-  const map = new Map();
-  for (const a of arrivals) {
-    const key = (a.route || '?') + '|' + (a.direction || '');
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(a);
-  }
-  for (const list of map.values()) {
-    list.sort((x, y) => (x.eta_seconds ?? 1e12) - (y.eta_seconds ?? 1e12));
-  }
-  return [...map.values()].sort((a, b) => (a[0].eta_seconds ?? 1e12) - (b[0].eta_seconds ?? 1e12));
-}
-
-function renderRoute(group) {
-  const head = group[0];
-  const items = group.slice(0, MAX_NEXT + 1);
-  const main = items[0];
-  const rest = items.slice(1);
-  const u = urgencyInfo(main.eta_seconds);
-  const hint = u.hint ? `<span class="hint ${u.cls}">${u.hint}</span>` : '';
-  return `
-    <div class="route-block">
-      <div class="route-head">
-        <span class="route">${head.route || '—'}</span>
-        <span class="dir">${head.direction || ''}</span>
-      </div>
-      <div class="eta-main">
-        <span class="eta ${u.cls}">${main.eta_local || main.eta_text || ''}</span>
-        ${rest.map(a => `<span class="eta next">${a.eta_local || a.eta_text || ''}</span>`).join('')}
-      </div>
-      ${hint}
-    </div>`;
-}
-
-async function load() {
-  btn.disabled = true;
-  const oldText = btn.textContent;
-  btn.textContent = '…';
-  try {
-    const url = '/arrivals/' + STOP_ID + (ROUTES ? '?routes=' + encodeURIComponent(ROUTES) : '');
-    const r = await fetch(url, { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    if (data.name) titleEl.textContent = data.name;
-    if (data.error) {
-      root.innerHTML = '<div class="stale">данные временно недоступны<br>попробуй ещё раз через минуту</div>';
-    } else {
-      const arrivals = data.arrivals || [];
-      if (!arrivals.length) {
-        root.innerHTML = '<div class="empty">прибытий нет</div>';
-      } else {
-        const groups = groupByRoute(arrivals);
-        root.innerHTML = groups.map(renderRoute).join('');
-      }
+async function fetchData(){
+  try{
+    const url='/arrivals/'+STOP_ID+(ROUTES?'?routes='+encodeURIComponent(ROUTES):'');
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(data.name)titleEl.textContent=data.name;
+    if(data.error){root.innerHTML='<div class="stale">данные временно недоступны</div>';}
+    else{
+      const arr=data.arrivals||[];
+      root.innerHTML=arr.length?groupByRoute(arr).map(renderRoute).join(''):'<div class="empty">прибытий нет</div>';
     }
-    const now = new Date();
-    footer.textContent = 'обновлено ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  } catch (e) {
-    root.innerHTML = '<div class="stale">данные недоступны: ' + e.message + '</div>';
-    footer.textContent = '—';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = oldText;
+    const now=new Date();
+    footer.textContent='обновлено '+now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    statusText.textContent='обновлено '+now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }catch(e){
+    root.innerHTML='<div class="stale">ошибка: '+e.message+'</div>';
+    statusText.textContent='ошибка';
   }
 }
 
-btn.addEventListener('click', load);
-load();
+function tick(){
+  timeLeft=Math.max(0,timeLeft-1);
+  nextPoll=Math.max(0,nextPoll-1);
+  const pct=timeLeft/SESSION*100;
+  fill.style.width=pct+'%';
+  fill.className='progress-fill'+(timeLeft<60?' danger':'');
+  startBtn.textContent='СТОП   '+fmt(timeLeft);
+  nextText.textContent=running?'→ '+nextPoll+'с обновление':'';
+  if(timeLeft===0){stopSession();return;}
+  if(nextPoll===0){nextPoll=POLL;fetchData();}
+}
+
+function startSession(){
+  running=true; timeLeft=SESSION; nextPoll=0;
+  startBtn.className='start-btn running';
+  statusText.textContent='загрузка...';
+  tickId=setInterval(tick,1000);
+  fetchData();
+}
+function stopSession(){
+  running=false;
+  clearInterval(tickId);
+  startBtn.className='start-btn idle';
+  startBtn.textContent='ЗАПУСТИТЬ';
+  fill.style.width='0%';
+  nextText.textContent='';
+  if(timeLeft===0)statusText.textContent='сессия завершена';
+}
+
+startBtn.addEventListener('click',()=>{ if(running)stopSession(); else startSession(); });
+fetchData();
 </script>
 </body>
 </html>
