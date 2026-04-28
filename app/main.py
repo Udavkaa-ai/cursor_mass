@@ -238,6 +238,7 @@ main{flex:1}
 .error{color:#ff6b6b;font-size:14px;padding:40px 0;text-align:center}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #2a2a2e;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px}
 .footer{margin-top:auto;padding-top:18px;color:var(--muted);font-size:12px;text-align:center}
+.spark{display:block;margin:8px auto 4px;width:100%;max-width:320px;height:auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -248,7 +249,8 @@ main{flex:1}
 </header>
 <main id="root"><div class="empty">загрузка<span class="spinner"></span></div></main>
 <div class="footer" id="footer">—</div>
-<div class="footer">открывали __VISITS__ раз</div>
+__SPARKLINE__
+<div class="footer">открывали __VISITS__ раз — последние 24 часа по МСК</div>
 <script>
 const STOP_ID = "__STOP_ID__";
 const ROUTES = "__ROUTES__"; // CSV
@@ -340,6 +342,45 @@ load();
 """
 
 
+def _render_sparkline(buckets: list[tuple[str, int]]) -> str:
+    """Узкий 24-столбиковый SVG-график активности."""
+    if not buckets:
+        return ""
+    n = len(buckets)
+    counts = [c for _, c in buckets]
+    max_c = max(counts) or 1
+    width = 300
+    height = 40
+    bar_w = width / n
+    gap = max(1.0, bar_w * 0.15)
+    inner_w = bar_w - gap
+    bars: list[str] = []
+    for i, (_, c) in enumerate(buckets):
+        h = (c / max_c) * (height - 2) if c else 0
+        x = i * bar_w + gap / 2
+        y = height - h
+        opacity = 0.85 if c else 0.15
+        bars.append(
+            f'<rect x="{x:.1f}" y="{y:.1f}" width="{inner_w:.1f}" height="{h:.1f}"'
+            f' rx="1" fill="#42d883" opacity="{opacity}"/>'
+        )
+    # Подписи через каждые 6 часов
+    labels: list[str] = []
+    for i in (0, 6, 12, 18):
+        if i < n:
+            hr = int(buckets[i][0][-2:])
+            x = i * bar_w + bar_w / 2
+            labels.append(
+                f'<text x="{x:.1f}" y="{height + 11}" font-size="9" fill="#7a7a80"'
+                f' text-anchor="middle">{hr:02d}</text>'
+            )
+    return (
+        f'<svg viewBox="0 0 {width} {height + 14}" '
+        f'preserveAspectRatio="xMidYMid meet" class="spark">'
+        f'{"".join(bars)}{"".join(labels)}</svg>'
+    )
+
+
 @app.get("/stop/{stop_id}", response_class=HTMLResponse)
 async def stop_page(stop_id: str) -> HTMLResponse:
     canonical = yandex.normalize_stop_id(stop_id)
@@ -352,12 +393,15 @@ async def stop_page(stop_id: str) -> HTMLResponse:
             break
     title = name or canonical
     routes_csv = ",".join(routes_filter)
-    visit_count = visits.increment(f"stop:{canonical}")
+    visit_key = f"stop:{canonical}"
+    visit_count = visits.increment(visit_key)
+    sparkline = _render_sparkline(visits.hourly_buckets(visit_key, hours=24))
     html = (
         _STOP_HTML.replace("__STOP_ID__", canonical)
         .replace("__ROUTES__", routes_csv)
         .replace("__TITLE__", title)
         .replace("__VISITS__", str(visit_count))
+        .replace("__SPARKLINE__", sparkline)
     )
     return HTMLResponse(html)
 
