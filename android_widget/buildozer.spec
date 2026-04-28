@@ -18,7 +18,7 @@ version = 1.0
 entrypoint = main.py
 
 # Python/Kivy
-requirements = python3==3.11.6,kivy==2.3.0
+requirements = python3,kivy==2.3.0,sdl2,sdl2_image,sdl2_mixer,sdl2_ttf
 
 # Ориентация
 orientation = portrait
