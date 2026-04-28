@@ -300,12 +300,16 @@ async function load() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     if (data.name) titleEl.textContent = data.name;
-    const arrivals = data.arrivals || [];
-    if (!arrivals.length) {
-      root.innerHTML = '<div class="empty">прибытий нет</div>';
+    if (data.error) {
+      root.innerHTML = '<div class="stale">данные временно недоступны<br>попробуй ещё раз через минуту</div>';
     } else {
-      const groups = groupByRoute(arrivals);
-      root.innerHTML = groups.map(renderRoute).join('');
+      const arrivals = data.arrivals || [];
+      if (!arrivals.length) {
+        root.innerHTML = '<div class="empty">прибытий нет</div>';
+      } else {
+        const groups = groupByRoute(arrivals);
+        root.innerHTML = groups.map(renderRoute).join('');
+      }
     }
     const now = new Date();
     footer.textContent = 'обновлено ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -419,7 +423,16 @@ async def stop_arrivals_endpoint(
     routes: str | None = Query(default=None, description="CSV маршрутов: 925,907"),
 ) -> StopArrivals:
     assert masstransit is not None
-    payload = await masstransit.get_stop_state(stop_id)
+    try:
+        payload = await masstransit.get_stop_state(stop_id)
+    except yandex.YandexError as e:
+        return StopArrivals(
+            stop_id=stop_id,
+            name="",
+            arrivals=[],
+            fetched_at=_now_iso(),
+            error=str(e),
+        )
     name, arrivals = yandex.parse_arrivals(payload)
     routes_list = [r for r in (routes.split(",") if routes else [])]
     return StopArrivals(
