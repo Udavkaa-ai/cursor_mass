@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-global-ubuntu22-v3
+          key: buildozer-global-ubuntu22-v4
 
       - name: Install system deps
         run: |
