@@ -62,21 +62,30 @@ ENV_FILE="env.yc"
 ENV_ARGS=()
 if [ -f "$ENV_FILE" ]; then
   echo "→ применяю переменные из $ENV_FILE"
+  echo "── DEBUG: содержимое env.yc (с маркерами LF/CRLF) ──"
+  cat -A "$ENV_FILE"
+  echo "── /DEBUG ──"
   while IFS='=' read -r key val; do
     [[ -z "$key" || "$key" == \#* ]] && continue
-    # Удаляем CR (если файл сохранён в Windows-кодировке)
     val="${val%$'\r'}"
     if [[ "$val" == *,* ]]; then
-      # yc --environment разделяет пары запятой → base64-кодим, в приложении
-      # config._maybe_b64 распакует {name}_B64
-      b64="$(printf '%s' "$val" | base64 -w0 2>/dev/null || printf '%s' "$val" | base64)"
+      b64="$(printf '%s' "$val" | base64 -w0 2>/dev/null || printf '%s' "$val" | base64 | tr -d '\n')"
       b64="${b64//$'\n'/}"
-      echo "   ${key}: содержит запятые → отправляю как ${key}_B64 (base64)"
+      b64="${b64//$'\r'/}"
+      echo "   ${key}: содержит запятые → отправляю как ${key}_B64"
+      echo "      исходных байт: ${#val}, в base64: ${#b64}"
+      echo "      первые 60 символов b64: ${b64:0:60}"
       ENV_ARGS+=(--environment "${key}_B64=${b64}")
     else
+      echo "   ${key}: без запятых, отправляю как есть"
       ENV_ARGS+=(--environment "${key}=${val}")
     fi
   done < "$ENV_FILE"
+  echo "── DEBUG: итоговые --environment аргументы ──"
+  for a in "${ENV_ARGS[@]}"; do
+    echo "      $a"
+  done
+  echo "── /DEBUG ──"
 else
   echo "⚠ нет env.yc — деплой без STOPS! Создай env.yc в формате KEY=value"
 fi
