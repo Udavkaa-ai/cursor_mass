@@ -49,6 +49,15 @@ jobs:
       - name: Install buildozer + cython
         run: pip install --upgrade buildozer cython
 
+      # GitHub runner уже имеет Android SDK с принятыми лицензиями.
+      # Копируем файлы лицензий в папку buildozer ДО того как он
+      # запустит sdkmanager — тогда интерактивный вопрос не появляется.
+      - name: Pre-accept Android SDK licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          mkdir -p "$HOME/.buildozer/android/platform/android-sdk"
+          cp -r "$ANDROID_HOME/licenses" "$HOME/.buildozer/android/platform/android-sdk/"
+
       - name: Build APK
         working-directory: android_widget
         run: |
