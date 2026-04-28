@@ -21,20 +21,18 @@ import java.net.URLEncoder
 class PollService : Service() {
 
     companion object {
-        private const val ACTION_STOP   = "ru.buswidget.STOP_POLL"
-        private const val EXTRA_ID      = "widget_id"
-        private const val EXTRA_STOP    = "stop_id"
-        private const val EXTRA_NAME    = "stop_name"
-        private const val EXTRA_ROUTES  = "routes"
-        private const val NOTIF_ID      = 42
-        private const val CHANNEL_ID    = "bus_poll"
+        private const val ACTION_STOP  = "ru.buswidget.STOP_POLL"
+        private const val EXTRA_ID     = "widget_id"
+        private const val EXTRA_STOP   = "stop_id"
+        private const val EXTRA_NAME   = "stop_name"
+        private const val EXTRA_ROUTES = "routes"
+        private const val NOTIF_ID     = 42
+        private const val CHANNEL_ID   = "bus_poll"
 
         fun startFor(ctx: Context, widgetId: Int, stopId: String, stopName: String, routes: String) {
             val i = Intent(ctx, PollService::class.java).apply {
-                putExtra(EXTRA_ID,     widgetId)
-                putExtra(EXTRA_STOP,   stopId)
-                putExtra(EXTRA_NAME,   stopName)
-                putExtra(EXTRA_ROUTES, routes)
+                putExtra(EXTRA_ID, widgetId); putExtra(EXTRA_STOP, stopId)
+                putExtra(EXTRA_NAME, stopName); putExtra(EXTRA_ROUTES, routes)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
             else ctx.startService(i)
@@ -42,23 +40,39 @@ class PollService : Service() {
 
         fun stopFor(ctx: Context, widgetId: Int) {
             ctx.startService(Intent(ctx, PollService::class.java).apply {
-                action = ACTION_STOP
-                putExtra(EXTRA_ID, widgetId)
+                action = ACTION_STOP; putExtra(EXTRA_ID, widgetId)
             })
+        }
+
+        fun formatEta(secs: Int): String = when {
+            secs <= 0   -> "подъезж."
+            secs < 60   -> "< 1 мин"
+            secs < 3600 -> "${secs / 60} мин"
+            else        -> "${secs / 3600}ч"
+        }
+
+        fun etaColor(secs: Int?): Int = when {
+            secs == null -> 0xFF7EA0FF.toInt()
+            secs <= 0    -> 0xFFFF4D4D.toInt()
+            secs <= 180  -> 0xFFFF4D4D.toInt()
+            secs <= 300  -> 0xFFFFAA33.toInt()
+            secs <= 420  -> 0xFF42D883.toInt()
+            else         -> 0xFFF4F4F6.toInt()
         }
     }
 
     private data class Session(
-        val stopId:   String,
-        val stopName: String,
-        val routes:   String,
+        val stopId: String, val stopName: String, val routes: String,
         var timeLeft: Int = Config.SESSION_SEC,
         var nextPoll: Int = 0,
     )
 
-    private val handler      = Handler(Looper.getMainLooper())
-    private val sessions     = mutableMapOf<Int, Session>()
-    private val lastArrivals = mutableMapOf<Int, List<WidgetArrival>>()
+    // Fetched arrivals with timestamp for live countdown
+    private data class Snapshot(val fetchedAt: Long, val arrivals: List<WidgetArrival>)
+
+    private val handler   = Handler(Looper.getMainLooper())
+    private val sessions  = mutableMapOf<Int, Session>()
+    private val snapshots = mutableMapOf<Int, Snapshot>()
 
     private val tick = object : Runnable {
         override fun run() {
@@ -68,16 +82,13 @@ class PollService : Service() {
                 s.nextPoll--
                 if (s.nextPoll <= 0) { s.nextPoll = Config.POLL_SEC; fetchAndUpdate(widgetId, s) }
                 if (s.timeLeft <= 0) endSession(widgetId)
-                else pushTimerUpdate(widgetId, s)
+                else pushUpdate(widgetId, s)
             }
             if (sessions.isNotEmpty()) handler.postDelayed(this, 1000)
         }
     }
 
-    override fun onCreate() {
-        super.onCreate()
-        postForegroundNotification()
-    }
+    override fun onCreate() { super.onCreate(); postForegroundNotification() }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
@@ -99,25 +110,38 @@ class PollService : Service() {
 
     private fun endSession(widgetId: Int) {
         sessions.remove(widgetId)
-        lastArrivals.remove(widgetId)
-        val awm = AppWidgetManager.getInstance(this)
-        BusWidgetProvider.showIdle(this, awm, widgetId)
+        snapshots.remove(widgetId)
+        BusWidgetProvider.showIdle(this, AppWidgetManager.getInstance(this), widgetId)
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
 
-    private fun pushTimerUpdate(widgetId: Int, s: Session) {
-        val awm = AppWidgetManager.getInstance(this)
+    private fun pushUpdate(widgetId: Int, s: Session) {
         BusWidgetProvider.updateActive(
-            this, awm, widgetId, s.stopName, s.timeLeft,
-            lastArrivals[widgetId] ?: emptyList(),
+            this, AppWidgetManager.getInstance(this),
+            widgetId, s.stopName, s.timeLeft,
+            liveArrivals(widgetId),
         )
+    }
+
+    // Re-compute ETAs each second from stored etaSeconds + elapsed time
+    private fun liveArrivals(widgetId: Int): List<WidgetArrival> {
+        val snap = snapshots[widgetId] ?: return emptyList()
+        val elapsed = ((System.currentTimeMillis() - snap.fetchedAt) / 1000).toInt()
+        return snap.arrivals.mapNotNull { a ->
+            val liveSecs = a.etaSeconds?.minus(elapsed)
+            if (liveSecs != null && liveSecs < -30) return@mapNotNull null
+            a.copy(
+                eta   = liveSecs?.let { formatEta(it) } ?: a.eta,
+                color = etaColor(liveSecs ?: a.etaSeconds),
+            )
+        }
     }
 
     private fun fetchAndUpdate(widgetId: Int, s: Session) {
         Thread {
             try {
                 val base = Config.SERVER_URL.trimEnd('/')
-                val qs   = if (s.routes.isNotBlank()) "?routes=${URLEncoder.encode(s.routes, "UTF-8")}" else ""
+                val qs = if (s.routes.isNotBlank()) "?routes=${URLEncoder.encode(s.routes, "UTF-8")}" else ""
                 val conn = URL("$base/arrivals/${URLEncoder.encode(s.stopId, "UTF-8")}$qs")
                     .openConnection() as HttpURLConnection
                 conn.apply { connectTimeout = 15_000; readTimeout = 15_000 }
@@ -125,12 +149,10 @@ class PollService : Service() {
                 conn.disconnect()
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
                 handler.post {
-                    val sess = sessions[widgetId] ?: return@post
-                    lastArrivals[widgetId] = arrivals
-                    val awm = AppWidgetManager.getInstance(this)
-                    BusWidgetProvider.updateActive(this, awm, widgetId, sess.stopName, sess.timeLeft, arrivals)
+                    snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
+                    sessions[widgetId]?.let { pushUpdate(widgetId, it) }
                 }
-            } catch (_: Exception) { /* retry on next tick */ }
+            } catch (_: Exception) { /* next poll will retry */ }
         }.start()
     }
 
@@ -139,18 +161,11 @@ class PollService : Service() {
         return (0 until arr.length()).map { i ->
             val a    = arr.getJSONObject(i)
             val secs = if (a.isNull("eta_seconds")) null else a.getInt("eta_seconds")
-            val eta  = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") }
             WidgetArrival(
                 route      = a.optString("route", "?"),
-                eta        = eta,
+                eta        = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") },
                 etaSeconds = secs,
-                color      = when {
-                    secs == null -> 0xFF7EA0FF.toInt()
-                    secs <= 180  -> 0xFFFF4D4D.toInt()
-                    secs <= 300  -> 0xFFFFAA33.toInt()
-                    secs <= 420  -> 0xFF42D883.toInt()
-                    else         -> 0xFFF4F4F6.toInt()
-                },
+                color      = etaColor(secs),
             )
         }.sortedBy { it.etaSeconds ?: Int.MAX_VALUE }
     }
@@ -167,11 +182,9 @@ class PollService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIF_ID, notif,
-                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            startForeground(NOTIF_ID, notif, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        else
             startForeground(NOTIF_ID, notif)
-        }
     }
 }

@@ -26,9 +26,10 @@ class MainActivity : AppCompatActivity() {
         rvStops.layoutManager = LinearLayoutManager(this)
         rvStops.adapter = adapter
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
-            startActivity(Intent(this, AddStopActivity::class.java))
-        }
+        val openAdd = View.OnClickListener { startActivity(Intent(this, AddStopActivity::class.java)) }
+        findViewById<Button>(R.id.btnAdd).setOnClickListener(openAdd)
+        // CTA button in empty state
+        findViewById<View>(R.id.btnAddEmpty).setOnClickListener(openAdd)
     }
 
     override fun onResume() {

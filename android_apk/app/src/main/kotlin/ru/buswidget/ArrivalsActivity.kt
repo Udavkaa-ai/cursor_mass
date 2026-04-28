@@ -41,9 +41,11 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var stopName: String
     private lateinit var routes:   String
 
-    private var running  = false
-    private var timeLeft = 0
-    private var nextPoll = 0
+    private var running        = false
+    private var timeLeft       = 0
+    private var nextPoll       = 0
+    private var lastFetchAt    = 0L
+    private var lastFetched:   List<Arrival> = emptyList()
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -53,8 +55,28 @@ class ArrivalsActivity : AppCompatActivity() {
             updateTimerUI()
             if (timeLeft == 0) { stopSession(); return }
             if (nextPoll == 0) { nextPoll = POLL; fetchArrivals() }
+            // live countdown: re-compute ETAs from stored etaSeconds every tick
+            if (lastFetchAt > 0) refreshLiveEtas()
             handler.postDelayed(this, 1000)
         }
+    }
+
+    private fun refreshLiveEtas() {
+        val elapsed = ((System.currentTimeMillis() - lastFetchAt) / 1000).toInt()
+        val live = lastFetched.mapNotNull { a ->
+            val liveSecs = a.etaSeconds?.minus(elapsed)
+            if (liveSecs != null && liveSecs < -30) return@mapNotNull null
+            a.copy(etaLocal = liveSecs?.let { formatEta(it) } ?: a.etaLocal,
+                   etaSeconds = liveSecs)
+        }
+        adapter.submit(live)
+    }
+
+    private fun formatEta(secs: Int): String = when {
+        secs <= 0   -> "подъезжает"
+        secs < 60   -> "< 1 мин"
+        secs < 3600 -> "${secs / 60} мин"
+        else        -> "${secs / 3600}ч"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -133,7 +155,10 @@ class ArrivalsActivity : AppCompatActivity() {
                 val json     = JSONObject(body)
                 val name     = json.optString("name")
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
+                val fetchedAt = System.currentTimeMillis()
                 handler.post {
+                    lastFetchAt  = fetchedAt
+                    lastFetched  = arrivals
                     if (name.isNotBlank()) {
                         tvStopName.text = name
                         StopStorage.load(this).find { it.id == stopId }?.let { stop ->
