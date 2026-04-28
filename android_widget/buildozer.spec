@@ -59,6 +59,9 @@ android.archs = arm64-v8a, armeabi-v7a
 # Разрешить резервное копирование (можно отключить)
 android.allow_backup = True
 
+# Автоматически принять лицензии Android SDK (нужно для CI)
+android.accept_sdk_license = True
+
 # Gradle-плагин (оставить по умолчанию если нет особых нужд)
 # android.gradle_dependencies =
 
