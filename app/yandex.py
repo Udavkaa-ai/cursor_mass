@@ -99,11 +99,13 @@ class YandexMasstransit:
 
     async def fetch_stop_html(self, stop_id: str) -> str:
         """Сырая HTML-страница остановки. Пробует оба формата URL Я.Карт
-        (со stop__ и без), возвращает первый успешный с непустым state."""
+        (со stop__ и без). Предпочитает страницу, в которой state содержит
+        stack[0].stops.data — это значит, открыта именно карточка остановки,
+        а не общий список или список регионов."""
         canonical = normalize_stop_id(stop_id)
         numeric = canonical.removeprefix("stop__")
         last_err: str | None = None
-        last_html: str | None = None
+        fallback_html: str | None = None
         for tmpl in STOP_PAGE_URL_TEMPLATES:
             url = tmpl.format(canonical=canonical, numeric=numeric)
             try:
@@ -115,13 +117,18 @@ class YandexMasstransit:
                 last_err = f"{url} -> {r.status_code}: {r.text[:200]}"
                 continue
             html = r.text
-            if 'class="state-view"' in html or "state-view" in html:
+            try:
+                state = _extract_state(html)
+            except YandexError as e:
+                last_err = f"{url} -> {e}"
+                continue
+            if _state_has_stop_data(state):
                 return html
-            # 200, но без state — попробуем следующий формат URL
-            last_err = f"{url} -> 200 без state ({len(html)} байт)"
-            last_html = html
-        if last_html is not None:
-            return last_html
+            last_err = f"{url} -> state без stack[0].stops.data ({len(html)} байт)"
+            if fallback_html is None:
+                fallback_html = html
+        if fallback_html is not None:
+            return fallback_html
         raise YandexError(last_err or "не удалось получить страницу остановки")
 
     async def get_stop_state(
@@ -204,6 +211,23 @@ _STATE_PATTERNS = [
         re.DOTALL,
     ),
 ]
+
+
+def _state_has_stop_data(state: dict[str, Any]) -> bool:
+    """state[stack][0][stops][data] непустой → это карточка одной остановки."""
+    stack = state.get("stack")
+    if not isinstance(stack, list) or not stack:
+        return False
+    first = stack[0]
+    if not isinstance(first, dict):
+        return False
+    stops_obj = first.get("stops")
+    if not isinstance(stops_obj, dict):
+        return False
+    data = stops_obj.get("data")
+    if not isinstance(data, dict):
+        return False
+    return bool(data.get("transports") or data.get("name") or data.get("id"))
 
 
 def _extract_state(html: str) -> dict[str, Any]:
