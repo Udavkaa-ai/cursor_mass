@@ -62,12 +62,12 @@ ENV_FILE="env.yc"
 ENV_ARGS=()
 if [ -f "$ENV_FILE" ]; then
   echo "→ применяю переменные из $ENV_FILE"
-  echo "── DEBUG: содержимое env.yc (с маркерами LF/CRLF) ──"
-  cat -A "$ENV_FILE"
-  echo "── /DEBUG ──"
-  while IFS='=' read -r key val; do
-    [[ -z "$key" || "$key" == \#* ]] && continue
-    val="${val%$'\r'}"
+  while IFS= read -r line; do
+    line="${line%$'\r'}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    key="${line%%=*}"
+    val="${line#*=}"
+    [[ -z "$key" || -z "$val" ]] && continue
     if [[ "$val" == *,* ]]; then
       b64="$(printf '%s' "$val" | base64 -w0 2>/dev/null || printf '%s' "$val" | base64 | tr -d '\n')"
       b64="${b64//$'\n'/}"
