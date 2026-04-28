@@ -1,0 +1,68 @@
+name: Build Android APK
+
+on:
+  push:
+    paths:
+      - 'android_widget/**'
+  workflow_dispatch:   # ручной запуск из вкладки Actions
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Кэш buildozer / Android SDK / NDK ────────────────────────────────
+      - name: Cache .buildozer
+        uses: actions/cache@v4
+        with:
+          path: android_widget/.buildozer
+          key: buildozer-${{ hashFiles('android_widget/buildozer.spec') }}
+          restore-keys: buildozer-
+
+      - name: Cache ~/.buildozer (global SDK/NDK)
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-global-${{ runner.os }}
+
+      # ── Системные зависимости ─────────────────────────────────────────────
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
+            cmake libffi-dev libssl-dev build-essential
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install buildozer + cython
+        run: pip install --upgrade buildozer cython
+
+      # ── Сборка ───────────────────────────────────────────────────────────
+      - name: Build APK (debug)
+        working-directory: android_widget
+        run: buildozer -v android debug 2>&1 | tee build.log
+
+      # ── Артефакты ─────────────────────────────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: buswidget-debug-apk
+          path: android_widget/bin/*.apk
+          retention-days: 30
+
+      - name: Upload build log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: android_widget/build.log
+          retention-days: 7
