@@ -643,17 +643,36 @@ async def mos_dataset_sample_endpoint(
 
 @app.get("/mos/probe", dependencies=[Depends(require_api_key)])
 async def mos_probe_endpoint() -> JSONResponse:
-    """Делает несколько диагностических запросов чтобы понять что доступно."""
-    cli = _require_mos()
-    out: dict[str, Any] = {"key_set": True}
+    """Делает несколько диагностических запросов чтобы понять что доступно.
+    Любая ошибка — в JSON, не 500."""
+    out: dict[str, Any] = {
+        "key_set": bool(settings.mos_api_key),
+        "key_len": len(settings.mos_api_key),
+        "client_initialized": mos_client is not None,
+    }
+    if mos_client is None:
+        out["error"] = "MOS_API_KEY не задан или сервис не передеплоился"
+        return JSONResponse(out, status_code=200)
+
+    # 1) Маленькая проверка — count одного датасета
     try:
-        catalog = await cli.list_datasets()
-        out["catalog_size"] = len(catalog) if isinstance(catalog, list) else "не список"
+        out["count_622"] = await mos_client.dataset_count(622)
+    except Exception as e:
+        out["count_622_error"] = f"{type(e).__name__}: {e}"
+
+    # 2) Каталог
+    try:
+        catalog = await mos_client.list_datasets()
         if isinstance(catalog, list):
+            out["catalog_size"] = len(catalog)
             queries = ["прогноз прибытия", "остановки наземного", "маршруты наземного"]
             out["matches"] = {
                 q: mosgortrans.search_datasets_by_name(catalog, q)[:5] for q in queries
             }
-    except mosgortrans.MosError as e:
-        out["error"] = str(e)
-    return JSONResponse(out)
+        else:
+            out["catalog_type"] = type(catalog).__name__
+            out["catalog_preview"] = str(catalog)[:500]
+    except Exception as e:
+        out["catalog_error"] = f"{type(e).__name__}: {e}"
+
+    return JSONResponse(out, status_code=200)
