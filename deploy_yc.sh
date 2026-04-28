@@ -64,7 +64,18 @@ if [ -f "$ENV_FILE" ]; then
   echo "→ применяю переменные из $ENV_FILE"
   while IFS='=' read -r key val; do
     [[ -z "$key" || "$key" == \#* ]] && continue
-    ENV_ARGS+=(--environment "${key}=${val}")
+    # Удаляем CR (если файл сохранён в Windows-кодировке)
+    val="${val%$'\r'}"
+    if [[ "$val" == *,* ]]; then
+      # yc --environment разделяет пары запятой → base64-кодим, в приложении
+      # config._maybe_b64 распакует {name}_B64
+      b64="$(printf '%s' "$val" | base64 -w0 2>/dev/null || printf '%s' "$val" | base64)"
+      b64="${b64//$'\n'/}"
+      echo "   ${key}: содержит запятые → отправляю как ${key}_B64 (base64)"
+      ENV_ARGS+=(--environment "${key}_B64=${b64}")
+    else
+      ENV_ARGS+=(--environment "${key}=${val}")
+    fi
   done < "$ENV_FILE"
 else
   echo "⚠ нет env.yc — деплой без STOPS! Создай env.yc в формате KEY=value"
