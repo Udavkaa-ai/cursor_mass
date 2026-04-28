@@ -6,59 +6,29 @@ on:
       - claude/yandex-maps-widget-Zod7Y
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache .buildozer
-        uses: actions/cache@v4
+      # Docker-образ с предустановленными Android SDK/NDK/buildozer
+      # Самый надёжный способ — не зависит от apt-пакетов Ubuntu
+      - name: Build with Buildozer (Docker)
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
-          path: android_widget/.buildozer
-          key: buildozer-${{ hashFiles('android_widget/buildozer.spec') }}
-          restore-keys: buildozer-
-
-      - name: Cache ~/.buildozer (global SDK/NDK)
-        uses: actions/cache@v4
-        with:
-          path: ~/.buildozer
-          key: buildozer-global-${{ runner.os }}
-
-      - name: Install system deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            git zip unzip openjdk-17-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev build-essential
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install buildozer + cython
-        run: pip install --upgrade buildozer cython
-
-      - name: Build APK (debug)
-        working-directory: android_widget
-        run: buildozer -v android debug 2>&1 | tee build.log
+          workdir: android_widget
+          buildozer_version: stable
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: buswidget-debug-apk
-          path: android_widget/bin/*.apk
+          path: ${{ steps.buildozer.outputs.filename }}
           retention-days: 30
-
-      - name: Upload build log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: android_widget/build.log
-          retention-days: 7
