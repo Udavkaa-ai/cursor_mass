@@ -27,12 +27,15 @@
 
         <Button
             android:id="@+id/btnAdd"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:text="+"
             android:textSize="24sp"
             android:textColor="#FFFFFF"
-            android:background="@null"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:stateListAnimator="@null"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"/>
@@ -51,6 +54,11 @@
             android:src="@drawable/bg_main"
             android:scaleType="centerCrop"
             android:contentDescription="@null"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#99000000"/>
 
     <!-- Stops list -->
     <androidx.recyclerview.widget.RecyclerView
