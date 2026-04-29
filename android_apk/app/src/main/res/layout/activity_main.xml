@@ -3,25 +3,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0F0F10">
+    android:background="#F0F2F5">
 
-    <!-- Header -->
+    <!-- Dark blue header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:background="#1B3A6B"
         android:paddingStart="20dp"
-        android:paddingEnd="16dp">
+        android:paddingEnd="12dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🚌 Автобусы"
-            android:textSize="22sp"
+            android:text="ГДЕ АВТОБУС?"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FFFFFF"
+            android:letterSpacing="0.06"/>
 
         <Button
             android:id="@+id/btnAdd"
@@ -30,29 +32,27 @@
             android:text="+"
             android:textSize="24sp"
             android:textColor="#FFFFFF"
-            android:background="@drawable/bg_btn"
+            android:background="@null"
             android:stateListAnimator="@null"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"/>
+
     </LinearLayout>
 
-    <View android:layout_width="match_parent" android:layout_height="1dp"
-        android:background="#1E1E21"/>
-
-    <!-- Stops list (visible when non-empty) -->
+    <!-- Stops list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
+        android:paddingTop="12dp"
         android:paddingBottom="16dp"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:visibility="gone"/>
 
-    <!-- Empty state onboarding (visible when no stops) -->
+    <!-- Empty state onboarding -->
     <ScrollView
         android:id="@+id/tvEmpty"
         android:layout_width="match_parent"
@@ -75,7 +75,7 @@
                 android:text="Как начать"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#F4F4F6"
+                android:textColor="#1A1A2E"
                 android:layout_marginBottom="16dp"/>
 
             <!-- Step 1 -->
@@ -91,17 +91,17 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_btn"
+                    android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"
                     android:layout_marginTop="2dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Откройте Яндекс Карты"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:text="Нажмите + и выберите остановку"
+                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Найдите свою остановку, нажмите «Поделиться» и скопируйте ссылку"
-                        android:textSize="13sp" android:textColor="#7A7A80" android:layout_marginTop="2dp"/>
+                        android:text="Нажмите «Выбрать на карте» и тапните на остановку. Или вставьте адрес из адресной строки браузера yandex.ru/maps"
+                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -118,17 +118,17 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_btn"
+                    android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"
                     android:layout_marginTop="2dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Нажмите + и вставьте ссылку"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:text="Нажмите на остановку для отслеживания"
+                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="ID остановки определится автоматически. Нажмите «Загрузить» для имени"
-                        android:textSize="13sp" android:textColor="#7A7A80" android:layout_marginTop="2dp"/>
+                        android:text="Нажмите ЗАПУСТИТЬ — автобусы обновляются каждые 15 секунд"
+                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -145,24 +145,23 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_btn"
+                    android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"
                     android:layout_marginTop="2dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Фильтруйте маршруты (по желанию)"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Введите номера через запятую: 925,907 — или оставьте пустым чтобы видеть все"
-                        android:textSize="13sp" android:textColor="#7A7A80" android:layout_marginTop="2dp"/>
+                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
                 </LinearLayout>
             </LinearLayout>
 
             <!-- Step 4 -->
             <LinearLayout android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
                 <TextView
                     android:layout_width="32dp"
                     android:layout_height="32dp"
@@ -171,21 +170,21 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_btn"
+                    android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"
                     android:layout_marginTop="2dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Добавьте виджет на рабочий стол"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Долгое нажатие на экран → Виджеты → Автобусы. Можно добавить несколько для разных остановок"
-                        android:textSize="13sp" android:textColor="#7A7A80" android:layout_marginTop="2dp"/>
+                        android:text="Долгое нажатие на экран — Виджеты — Где автобус? Можно добавить несколько для разных остановок"
+                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- CTA button -->
+            <!-- CTA -->
             <Button
                 android:id="@+id/btnAddEmpty"
                 android:layout_width="match_parent"

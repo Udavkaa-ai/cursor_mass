@@ -1,45 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:background="@drawable/bg_card"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card_white"
+    android:elevation="2dp"
     android:paddingStart="16dp"
-    android:paddingEnd="14dp"
-    android:layout_marginBottom="8dp">
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:layout_marginBottom="10dp">
 
-    <!-- Номер маршрута -->
-    <TextView
-        android:id="@+id/tvRoute"
-        android:layout_width="wrap_content"
+    <!-- Route badge + direction -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minWidth="72dp"
-        android:textSize="26sp"
-        android:textStyle="bold"
-        android:textColor="#F4F4F6"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
 
-    <!-- Направление (конечная) -->
-    <TextView
-        android:id="@+id/tvDirection"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="8dp"
-        android:textSize="12sp"
-        android:textColor="#7A7A80"
-        android:maxLines="2"
-        android:ellipsize="end"/>
+        <TextView
+            android:id="@+id/tvRoute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="52dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:background="@drawable/bg_route_badge"
+            android:layout_marginEnd="14dp"/>
 
-    <!-- Время до прибытия -->
-    <TextView
-        android:id="@+id/tvEta"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/tvDirection"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textColor="#1A1A2E"
+            android:maxLines="2"
+            android:ellipsize="end"/>
+
+    </LinearLayout>
+
+    <!-- ETA label + value -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minWidth="120dp"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:gravity="end"
-        android:textColor="#F4F4F6"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="До прибытия:  "
+            android:textSize="13sp"
+            android:textColor="#8A8A9A"/>
+
+        <TextView
+            android:id="@+id/tvEta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#FF7722"/>
+
+    </LinearLayout>
 
 </LinearLayout>

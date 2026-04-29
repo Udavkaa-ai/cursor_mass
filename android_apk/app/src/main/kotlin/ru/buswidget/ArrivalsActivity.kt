@@ -95,6 +95,7 @@ class ArrivalsActivity : AppCompatActivity() {
         tvNextPoll  = findViewById(R.id.tvNextPoll)
 
         tvStopName.text = stopName
+        findViewById<android.view.View>(R.id.btnBack).setOnClickListener { finish() }
 
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)

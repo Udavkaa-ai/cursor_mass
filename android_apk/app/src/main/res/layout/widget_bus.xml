@@ -9,7 +9,7 @@
     android:paddingTop="10dp"
     android:paddingBottom="8dp">
 
-    <!-- Header: stop name + timer -->
+    <!-- Header: title + stop name + timer -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,41 +18,57 @@
         android:layout_marginBottom="2dp">
 
         <TextView
-            android:id="@+id/tw_stop"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Остановка"
-            android:textSize="12sp"
+            android:text="Где автобус?"
+            android:textSize="10sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
-            android:maxLines="1"
-            android:ellipsize="end"/>
+            android:textColor="#1B3A6B"
+            android:letterSpacing="0.04"/>
 
         <TextView
             android:id="@+id/tw_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
-            android:textColor="#4382FF"
+            android:textSize="10sp"
+            android:textColor="#1B3A6B"
             android:fontFamily="monospace"
             android:visibility="gone"/>
+
     </LinearLayout>
 
-    <!-- Idle: big "Где автобус?" button -->
-    <Button
+    <TextView
+        android:id="@+id/tw_stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Остановка"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#1A1A2E"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#D4D8E8"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- IDLE: transparent tap area -->
+    <TextView
         android:id="@+id/btn_start"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="4dp"
-        android:text="Где автобус?"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_widget_btn"/>
+        android:text="Нажмите для обновления"
+        android:textSize="11sp"
+        android:textColor="#9A9AB0"
+        android:gravity="center"/>
 
-    <!-- Active: arrival row 1 -->
+    <!-- ACTIVE: arrival row 1 -->
     <LinearLayout
         android:id="@+id/row1"
         android:layout_width="match_parent"
@@ -60,26 +76,47 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
+
         <TextView
             android:id="@+id/r1_route"
-            android:layout_width="48dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:minWidth="28dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:background="@drawable/bg_route_badge"
+            android:layout_marginEnd="7dp"/>
+
+        <TextView
+            android:id="@+id/r1_dir"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="9sp"
+            android:textColor="#6A6A7A"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
         <TextView
             android:id="@+id/r1_eta"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FF7722"
+            android:layout_marginStart="4dp"/>
+
     </LinearLayout>
 
-    <!-- Active: arrival row 2 -->
+    <!-- ACTIVE: arrival row 2 -->
     <LinearLayout
         android:id="@+id/row2"
         android:layout_width="match_parent"
@@ -87,26 +124,47 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
+
         <TextView
             android:id="@+id/r2_route"
-            android:layout_width="48dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:minWidth="28dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:background="@drawable/bg_route_badge"
+            android:layout_marginEnd="7dp"/>
+
+        <TextView
+            android:id="@+id/r2_dir"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="9sp"
+            android:textColor="#6A6A7A"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
         <TextView
             android:id="@+id/r2_eta"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FF7722"
+            android:layout_marginStart="4dp"/>
+
     </LinearLayout>
 
-    <!-- Active: arrival row 3 -->
+    <!-- ACTIVE: arrival row 3 -->
     <LinearLayout
         android:id="@+id/row3"
         android:layout_width="match_parent"
@@ -114,63 +172,56 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
+
         <TextView
             android:id="@+id/r3_route"
-            android:layout_width="48dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:minWidth="28dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:background="@drawable/bg_route_badge"
+            android:layout_marginEnd="7dp"/>
+
+        <TextView
+            android:id="@+id/r3_dir"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="9sp"
+            android:textColor="#6A6A7A"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
         <TextView
             android:id="@+id/r3_eta"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#FF7722"
+            android:layout_marginStart="4dp"/>
+
     </LinearLayout>
 
-    <!-- Active: arrival row 4 -->
-    <LinearLayout
-        android:id="@+id/row4"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
-        android:visibility="gone">
-        <TextView
-            android:id="@+id/r4_route"
-            android:layout_width="48dp"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
-        <TextView
-            android:id="@+id/r4_eta"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="end"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
-    </LinearLayout>
-
-    <!-- Stop button -->
-    <Button
+    <!-- Stop button: subtle text, no background -->
+    <TextView
         android:id="@+id/btn_stop"
         android:layout_width="match_parent"
-        android:layout_height="26dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="18dp"
+        android:layout_marginTop="2dp"
         android:text="Стоп"
-        android:textSize="11sp"
-        android:letterSpacing="0.08"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_widget_btn_stop"
+        android:textSize="10sp"
+        android:textColor="#9A9AB0"
+        android:gravity="center"
         android:visibility="gone"/>
 
 </LinearLayout>
