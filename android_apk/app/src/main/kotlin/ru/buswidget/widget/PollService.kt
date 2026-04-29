@@ -149,7 +149,10 @@ class PollService : Service() {
                 conn.disconnect()
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
                 handler.post {
-                    snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
+                    val prev = snapshots[widgetId]
+                    if (arrivals.isNotEmpty() && arrivals != prev?.arrivals) {
+                        snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
+                    }
                     sessions[widgetId]?.let { pushUpdate(widgetId, it) }
                 }
             } catch (_: Exception) { /* next poll will retry */ }
