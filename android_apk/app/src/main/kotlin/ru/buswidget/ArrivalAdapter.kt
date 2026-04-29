@@ -39,10 +39,11 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
     }
 
     private fun etaColor(secs: Int?): Int = when {
-        secs == null -> 0xFF8A8A9A.toInt()  // grey  — scheduled/unknown
-        secs <= 0    -> 0xFFD32F2F.toInt()  // red   — arriving now
-        secs <= 180  -> 0xFFE53935.toInt()  // red   — < 3 min
-        secs <= 300  -> 0xFFF57C00.toInt()  // dark orange — < 5 min
-        else         -> 0xFFFF7722.toInt()  // orange — normal
+        secs == null -> 0xFF8A8A9A.toInt()  // grey   — scheduled/unknown
+        secs <= 0    -> 0xFFD32F2F.toInt()  // red    — arriving now
+        secs <= 300  -> 0xFFE53935.toInt()  // red    — < 5 min
+        secs <= 420  -> 0xFFFF7722.toInt()  // orange — 5-7 min
+        secs <= 600  -> 0xFF2ECC71.toInt()  // green  — 7-10 min
+        else         -> 0xFF8A8A9A.toInt()  // grey   — > 10 min
     }
 }

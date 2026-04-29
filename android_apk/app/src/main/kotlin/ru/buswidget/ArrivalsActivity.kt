@@ -75,8 +75,8 @@ class ArrivalsActivity : AppCompatActivity() {
     private fun formatEta(secs: Int): String = when {
         secs <= 0   -> "подъезжает"
         secs < 60   -> "< 1 мин"
-        secs < 3600 -> "${secs / 60} мин"
-        else        -> "${secs / 3600}ч"
+        secs < 3600 -> "через ${secs / 60} мин"
+        else        -> "через ${secs / 3600}ч"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

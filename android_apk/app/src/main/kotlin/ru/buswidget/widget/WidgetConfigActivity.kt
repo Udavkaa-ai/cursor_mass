@@ -26,6 +26,15 @@ class WidgetConfigActivity : AppCompatActivity() {
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
 
+        // Already configured (e.g. after APK update Samsung re-invokes config) — just restore.
+        val existingStop = BusWidgetProvider.widgetPrefs(this).getString("${widgetId}_stopId", "")
+        if (!existingStop.isNullOrBlank()) {
+            BusWidgetProvider.showIdle(this, AppWidgetManager.getInstance(this), widgetId)
+            setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_widget_config)
 
         val stops = StopStorage.load(this)
