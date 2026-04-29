@@ -4,12 +4,23 @@
     android:layout_height="match_parent"
     android:background="#0F0F10">
 
-    <com.yandex.mapkit.mapview.MapView
-        android:id="@+id/mapView"
+    <WebView
+        android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- Top bar with close button -->
+    <!-- Loading progress bar (sits at top, over the web content) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_gravity="top"
+        android:max="100"
+        android:progressTint="#4382FF"
+        android:visibility="gone"/>
+
+    <!-- Top bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,7 +37,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:text="X"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textColor="#AAAAAA"
             android:gravity="center"
             android:background="@drawable/bg_card"
@@ -73,6 +84,7 @@
             android:textColor="#FFFFFF"
             android:background="@drawable/bg_btn"
             android:stateListAnimator="@null"/>
+
     </LinearLayout>
 
 </FrameLayout>

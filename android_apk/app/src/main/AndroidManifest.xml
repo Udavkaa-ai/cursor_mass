@@ -15,10 +15,6 @@
         android:supportsRtl="true"
         android:name=".App">
 
-        <meta-data
-            android:name="com.yandex.android.maps.MAPKIT_API_KEY"
-            android:value="bf1da5ff-0a6b-4056-a5ea-6435b6bb85f8"/>
-
         <!-- Main stops list screen -->
         <activity
             android:name=".MainActivity"
