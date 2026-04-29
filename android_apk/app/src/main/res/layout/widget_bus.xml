@@ -39,7 +39,7 @@
             android:visibility="gone"/>
     </LinearLayout>
 
-    <!-- Idle: big "Где автобус?" button -->
+    <!-- Idle: tap area -->
     <Button
         android:id="@+id/btn_start"
         android:layout_width="match_parent"
@@ -47,9 +47,8 @@
         android:layout_weight="1"
         android:layout_marginTop="4dp"
         android:text="Где автобус?"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:textColor="#99FFFFFF"
         android:background="@drawable/bg_widget_btn"/>
 
     <!-- Active: arrival row 1 -->
