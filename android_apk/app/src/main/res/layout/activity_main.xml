@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F2F5">
+    android:background="#000000">
 
     <!-- Dark blue header -->
     <LinearLayout
@@ -39,12 +39,24 @@
 
     </LinearLayout>
 
+    <!-- Content area with background image -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/bg_main"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"/>
+
     <!-- Stops list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingTop="12dp"
         android:paddingBottom="16dp"
@@ -56,8 +68,7 @@
     <ScrollView
         android:id="@+id/tvEmpty"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:visibility="visible">
 
         <LinearLayout
@@ -199,5 +210,7 @@
 
         </LinearLayout>
     </ScrollView>
+
+    </FrameLayout>
 
 </LinearLayout>
