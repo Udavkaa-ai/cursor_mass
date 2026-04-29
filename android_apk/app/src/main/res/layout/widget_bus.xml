@@ -3,13 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/bg_widget"
+    android:background="#F4F6FA"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
     android:paddingTop="10dp"
     android:paddingBottom="8dp">
 
-    <!-- Header: title + stop name + timer -->
+    <!-- Header: title + timer -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,8 +24,7 @@
             android:text="Где автобус?"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:textColor="#1B3A6B"
-            android:letterSpacing="0.04"/>
+            android:textColor="#1B3A6B"/>
 
         <TextView
             android:id="@+id/tw_timer"
@@ -33,7 +32,6 @@
             android:layout_height="wrap_content"
             android:textSize="10sp"
             android:textColor="#1B3A6B"
-            android:fontFamily="monospace"
             android:visibility="gone"/>
 
     </LinearLayout>
@@ -92,7 +90,7 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:gravity="center"
-            android:background="@drawable/bg_route_badge"
+            android:background="#1A3A8F"
             android:layout_marginEnd="7dp"/>
 
         <TextView
@@ -140,7 +138,7 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:gravity="center"
-            android:background="@drawable/bg_route_badge"
+            android:background="#1A3A8F"
             android:layout_marginEnd="7dp"/>
 
         <TextView
@@ -188,7 +186,7 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:gravity="center"
-            android:background="@drawable/bg_route_badge"
+            android:background="#1A3A8F"
             android:layout_marginEnd="7dp"/>
 
         <TextView
@@ -212,7 +210,7 @@
 
     </LinearLayout>
 
-    <!-- Stop button: subtle text, no background -->
+    <!-- Stop button: subtle text -->
     <TextView
         android:id="@+id/btn_stop"
         android:layout_width="match_parent"
