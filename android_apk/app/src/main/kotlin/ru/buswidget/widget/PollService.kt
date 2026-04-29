@@ -166,7 +166,6 @@ class PollService : Service() {
             val secs = if (a.isNull("eta_seconds")) null else a.getInt("eta_seconds")
             WidgetArrival(
                 route      = a.optString("route", "?"),
-                direction  = a.optString("direction", ""),
                 eta        = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") },
                 etaSeconds = secs,
                 color      = etaColor(secs),

@@ -11,7 +11,6 @@ import ru.buswidget.R
 
 data class WidgetArrival(
     val route:      String,
-    val direction:  String,
     val eta:        String,
     val color:      Int,
     val etaSeconds: Int?,
@@ -23,22 +22,21 @@ class BusWidgetProvider : AppWidgetProvider() {
         const val ACTION_START = "ru.buswidget.action.START"
         const val ACTION_STOP  = "ru.buswidget.action.STOP"
 
-        private data class RowIds(val row: Int, val route: Int, val dir: Int, val eta: Int)
-
         private val ROW_IDS = listOf(
-            RowIds(R.id.row1, R.id.r1_route, R.id.r1_dir, R.id.r1_eta),
-            RowIds(R.id.row2, R.id.r2_route, R.id.r2_dir, R.id.r2_eta),
-            RowIds(R.id.row3, R.id.r3_route, R.id.r3_dir, R.id.r3_eta),
+            Triple(R.id.row1, R.id.r1_route, R.id.r1_eta),
+            Triple(R.id.row2, R.id.r2_route, R.id.r2_eta),
+            Triple(R.id.row3, R.id.r3_route, R.id.r3_eta),
+            Triple(R.id.row4, R.id.r4_route, R.id.r4_eta),
         )
 
         fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
             val stopName = widgetPrefs(ctx).getString("${widgetId}_name", "Остановка") ?: "Остановка"
             val rv = RemoteViews(ctx.packageName, R.layout.widget_bus)
             rv.setTextViewText(R.id.tw_stop, stopName)
-            rv.setViewVisibility(R.id.tw_timer,  View.GONE)
+            rv.setViewVisibility(R.id.tw_timer, View.GONE)
             rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_stop,  View.GONE)
-            ROW_IDS.forEach { ids -> rv.setViewVisibility(ids.row, View.GONE) }
+            ROW_IDS.forEach { (rowId, _, _) -> rv.setViewVisibility(rowId, View.GONE) }
             rv.setOnClickPendingIntent(R.id.btn_start, startPendingIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
@@ -58,14 +56,13 @@ class BusWidgetProvider : AppWidgetProvider() {
             rv.setViewVisibility(R.id.tw_timer,  View.VISIBLE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)
             rv.setViewVisibility(R.id.btn_stop,  View.VISIBLE)
-            ROW_IDS.forEachIndexed { i, ids ->
+            ROW_IDS.forEachIndexed { i, (rowId, routeId, etaId) ->
                 val a = arrivals.getOrNull(i)
-                rv.setViewVisibility(ids.row, if (a != null) View.VISIBLE else View.GONE)
+                rv.setViewVisibility(rowId, if (a != null) View.VISIBLE else View.GONE)
                 if (a != null) {
-                    rv.setTextViewText(ids.route, a.route)
-                    rv.setTextViewText(ids.dir,   a.direction)
-                    rv.setTextViewText(ids.eta,   a.eta)
-                    rv.setTextColor(ids.eta, a.color)
+                    rv.setTextViewText(routeId, a.route)
+                    rv.setTextViewText(etaId,   a.eta)
+                    rv.setTextColor(etaId, a.color)
                 }
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopPendingIntent(ctx, widgetId))
@@ -97,7 +94,7 @@ class BusWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { try { showIdle(ctx, awm, it) } catch (_: Exception) {} }
+        appWidgetIds.forEach { showIdle(ctx, awm, it) }
     }
 
     override fun onDeleted(ctx: Context, appWidgetIds: IntArray) {
