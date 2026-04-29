@@ -1,5 +1,6 @@
 package ru.buswidget
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -7,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 import ru.buswidget.data.Config
@@ -29,6 +31,19 @@ class AddStopActivity : AppCompatActivity() {
     private lateinit var etRoutes: EditText
     private var editingId: String? = null
 
+    private val mapPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val stopId   = data.getStringExtra(MapPickerActivity.RESULT_STOP_ID)   ?: return@registerForActivityResult
+            val stopName = data.getStringExtra(MapPickerActivity.RESULT_STOP_NAME) ?: stopId
+            etId.setText(stopId)
+            etName.setText(stopName)
+            toast("Остановка выбрана: $stopName")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_stop)
@@ -40,7 +55,6 @@ class AddStopActivity : AppCompatActivity() {
 
         editingId = intent.getStringExtra(EXTRA_EDIT_STOP_ID)
         if (editingId != null) {
-            // Edit mode: pre-fill and lock ID
             findViewById<TextView>(R.id.tvTitle).text = "Редактировать"
             StopStorage.load(this).find { it.id == editingId }?.let { stop ->
                 etId.setText(stop.id)
@@ -51,8 +65,12 @@ class AddStopActivity : AppCompatActivity() {
             }
             etUrl.visibility = android.view.View.GONE
             findViewById<Button>(R.id.btnParseUrl).visibility = android.view.View.GONE
+            findViewById<Button>(R.id.btnPickMap).visibility  = android.view.View.GONE
         }
 
+        findViewById<Button>(R.id.btnPickMap).setOnClickListener {
+            mapPickerLauncher.launch(Intent(this, MapPickerActivity::class.java))
+        }
         findViewById<Button>(R.id.btnParseUrl).setOnClickListener  { parseUrl() }
         findViewById<Button>(R.id.btnFetchName).setOnClickListener { fetchName() }
         findViewById<Button>(R.id.btnSave).setOnClickListener      { saveStop() }
@@ -65,7 +83,7 @@ class AddStopActivity : AppCompatActivity() {
             etId.setText(match.groupValues[1])
             toast("ID найден: ${match.groupValues[1]}")
         } else {
-            toast("ID остановки не найден в ссылке")
+            toast("ID не найден. Скопируйте адрес из адресной строки браузера")
         }
     }
 
