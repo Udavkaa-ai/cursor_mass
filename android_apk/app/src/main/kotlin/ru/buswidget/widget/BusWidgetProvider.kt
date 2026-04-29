@@ -97,7 +97,7 @@ class BusWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { showIdle(ctx, awm, it) }
+        appWidgetIds.forEach { try { showIdle(ctx, awm, it) } catch (_: Exception) {} }
     }
 
     override fun onDeleted(ctx: Context, appWidgetIds: IntArray) {

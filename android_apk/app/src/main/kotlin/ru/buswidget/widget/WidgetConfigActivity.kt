@@ -26,10 +26,9 @@ class WidgetConfigActivity : AppCompatActivity() {
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
 
-        // Already configured (e.g. after APK update Samsung re-invokes config) — just restore.
+        // If already configured (e.g. launcher re-invokes after reinstall), skip picker.
         val existingStop = BusWidgetProvider.widgetPrefs(this).getString("${widgetId}_stopId", "")
         if (!existingStop.isNullOrBlank()) {
-            BusWidgetProvider.showIdle(this, AppWidgetManager.getInstance(this), widgetId)
             setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId))
             finish()
             return
@@ -57,10 +56,8 @@ class WidgetConfigActivity : AppCompatActivity() {
             .putString("${widgetId}_name",   stop.name)
             .putString("${widgetId}_routes", stop.routes)
             .apply()
-
-        val awm = AppWidgetManager.getInstance(this)
-        BusWidgetProvider.showIdle(this, awm, widgetId)
-
+        // Do NOT call showIdle() here — it may throw before setResult(OK) is reached.
+        // onUpdate() is called automatically by the system after RESULT_OK is returned.
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId))
         finish()
     }
