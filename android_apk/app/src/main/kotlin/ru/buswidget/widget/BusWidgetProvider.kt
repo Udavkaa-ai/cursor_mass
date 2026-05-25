@@ -14,6 +14,7 @@ data class WidgetArrival(
     val eta:        String,
     val color:      Int,
     val etaSeconds: Int?,
+    val direction:  String = "",
 )
 
 class BusWidgetProvider : AppWidgetProvider() {
@@ -22,21 +23,45 @@ class BusWidgetProvider : AppWidgetProvider() {
         const val ACTION_START = "ru.buswidget.action.START"
         const val ACTION_STOP  = "ru.buswidget.action.STOP"
 
+        private data class RowIds(val row: Int, val route: Int, val eta: Int, val dir: Int, val unit: Int)
+
         private val ROW_IDS = listOf(
-            Triple(R.id.row1, R.id.r1_route, R.id.r1_eta),
-            Triple(R.id.row2, R.id.r2_route, R.id.r2_eta),
-            Triple(R.id.row3, R.id.r3_route, R.id.r3_eta),
-            Triple(R.id.row4, R.id.r4_route, R.id.r4_eta),
+            RowIds(R.id.row1, R.id.r1_route, R.id.r1_eta, R.id.r1_dir, R.id.r1_unit),
+            RowIds(R.id.row2, R.id.r2_route, R.id.r2_eta, R.id.r2_dir, R.id.r2_unit),
+            RowIds(R.id.row3, R.id.r3_route, R.id.r3_eta, R.id.r3_dir, R.id.r3_unit),
+            RowIds(R.id.row4, R.id.r4_route, R.id.r4_eta, R.id.r4_dir, R.id.r4_unit),
         )
 
+        private fun layoutFor(type: String) = when (type) {
+            "light" -> R.layout.widget_bus_light
+            "wide"  -> R.layout.widget_bus_wide
+            else    -> R.layout.widget_bus_dark
+        }
+
+        private fun typeFor(ctx: Context, widgetId: Int) =
+            widgetPrefs(ctx).getString("${widgetId}_type", "dark") ?: "dark"
+
+        private fun formatEtaNum(secs: Int?): String = when {
+            secs == null  -> "—"
+            secs <= 0     -> "→"
+            secs < 60     -> "<1"
+            else          -> "${secs / 60}"
+        }
+
         fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
+            val type = typeFor(ctx, widgetId)
             val stopName = widgetPrefs(ctx).getString("${widgetId}_name", "Остановка") ?: "Остановка"
-            val rv = RemoteViews(ctx.packageName, R.layout.widget_bus)
+            val rv = RemoteViews(ctx.packageName, layoutFor(type))
             rv.setTextViewText(R.id.tw_stop, stopName)
+            rv.setTextColor(R.id.tw_live, 0xFF9090B8.toInt())
             rv.setViewVisibility(R.id.tw_timer, View.GONE)
             rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
-            rv.setViewVisibility(R.id.btn_stop,  View.GONE)
-            ROW_IDS.forEach { (rowId, _, _) -> rv.setViewVisibility(rowId, View.GONE) }
+            rv.setViewVisibility(R.id.btn_stop, View.GONE)
+            if (type == "wide") {
+                rv.setViewVisibility(R.id.rows_active, View.GONE)
+            } else {
+                ROW_IDS.forEach { rv.setViewVisibility(it.row, View.GONE) }
+            }
             rv.setOnClickPendingIntent(R.id.btn_start, startPendingIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
@@ -49,20 +74,37 @@ class BusWidgetProvider : AppWidgetProvider() {
             timeLeft: Int,
             arrivals: List<WidgetArrival>,
         ) {
-            val rv = RemoteViews(ctx.packageName, R.layout.widget_bus)
+            val type = typeFor(ctx, widgetId)
+            val rv = RemoteViews(ctx.packageName, layoutFor(type))
             val m = timeLeft / 60; val s = timeLeft % 60
-            rv.setTextViewText(R.id.tw_stop,  stopName)
+            rv.setTextViewText(R.id.tw_stop, stopName)
             rv.setTextViewText(R.id.tw_timer, "$m:${s.toString().padStart(2, '0')}")
-            rv.setViewVisibility(R.id.tw_timer,  View.VISIBLE)
+            rv.setTextColor(R.id.tw_live, 0xFF2ED87A.toInt())
+            rv.setViewVisibility(R.id.tw_timer, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)
-            rv.setViewVisibility(R.id.btn_stop,  View.VISIBLE)
-            ROW_IDS.forEachIndexed { i, (rowId, routeId, etaId) ->
-                val a = arrivals.getOrNull(i)
-                rv.setViewVisibility(rowId, if (a != null) View.VISIBLE else View.GONE)
-                if (a != null) {
-                    rv.setTextViewText(routeId, a.route)
-                    rv.setTextViewText(etaId,   a.eta)
-                    rv.setTextColor(etaId, a.color)
+            rv.setViewVisibility(R.id.btn_stop, View.VISIBLE)
+            if (type == "wide") {
+                rv.setViewVisibility(R.id.rows_active, View.VISIBLE)
+                ROW_IDS.forEachIndexed { i, ids ->
+                    val a = arrivals.getOrNull(i)
+                    val color = a?.color ?: 0xFF9090B8.toInt()
+                    rv.setTextViewText(ids.route, a?.route ?: "—")
+                    rv.setTextColor(ids.route, if (a != null) 0xFFF4F4F6.toInt() else 0xFF9090B8.toInt())
+                    rv.setTextViewText(ids.eta, if (a != null) formatEtaNum(a.etaSeconds) else "—")
+                    rv.setTextColor(ids.eta, color)
+                    rv.setTextViewText(ids.unit, if (a != null) "МИН" else "")
+                    rv.setTextColor(ids.unit, color)
+                }
+            } else {
+                ROW_IDS.forEachIndexed { i, ids ->
+                    val a = arrivals.getOrNull(i)
+                    rv.setViewVisibility(ids.row, if (a != null) View.VISIBLE else View.GONE)
+                    if (a != null) {
+                        rv.setTextViewText(ids.route, a.route)
+                        rv.setTextViewText(ids.eta, a.eta)
+                        rv.setTextColor(ids.eta, a.color)
+                        rv.setTextViewText(ids.dir, a.direction)
+                    }
                 }
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopPendingIntent(ctx, widgetId))
@@ -94,13 +136,16 @@ class BusWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
+        val prefs = widgetPrefs(ctx).edit()
+        appWidgetIds.forEach { prefs.putString("${it}_type", "dark") }
+        prefs.apply()
         appWidgetIds.forEach { showIdle(ctx, awm, it) }
     }
 
     override fun onDeleted(ctx: Context, appWidgetIds: IntArray) {
         val edit = widgetPrefs(ctx).edit()
         appWidgetIds.forEach { id ->
-            edit.remove("${id}_stopId").remove("${id}_name").remove("${id}_routes")
+            edit.remove("${id}_stopId").remove("${id}_name").remove("${id}_routes").remove("${id}_type")
             PollService.stopFor(ctx, id)
         }
         edit.apply()

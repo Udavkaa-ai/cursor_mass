@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_widget"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <!-- Header: live dot + stop name + timer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/tw_live"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="●"
+            android:textSize="8sp"
+            android:textColor="#9090B8"/>
+
+        <TextView
+            android:id="@+id/tw_stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.07"
+            android:textColor="#9090B8"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="5dp"/>
+
+        <TextView
+            android:id="@+id/tw_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="9sp"
+            android:textColor="#6496D0"
+            android:fontFamily="monospace"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- Idle: start button -->
+    <Button
+        android:id="@+id/btn_start"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Где автобус?"
+        android:textSize="12sp"
+        android:textColor="#99FFFFFF"
+        android:background="@drawable/bg_widget_btn"/>
+
+    <!-- Active: 4 columns container (visible when active) -->
+    <LinearLayout
+        android:id="@+id/rows_active"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <!-- Column 1 -->
+        <LinearLayout
+            android:id="@+id/row1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/r1_route"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#F4F4F6"/>
+
+            <TextView
+                android:id="@+id/r1_eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="#9090B8"/>
+
+            <TextView
+                android:id="@+id/r1_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="МИН"
+                android:textSize="9sp"
+                android:textColor="#9090B8"/>
+        </LinearLayout>
+
+        <!-- Divider -->
+        <LinearLayout
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_widget_col_divider"
+            android:orientation="vertical"/>
+
+        <!-- Column 2 -->
+        <LinearLayout
+            android:id="@+id/row2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/r2_route"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#F4F4F6"/>
+
+            <TextView
+                android:id="@+id/r2_eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="#9090B8"/>
+
+            <TextView
+                android:id="@+id/r2_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="МИН"
+                android:textSize="9sp"
+                android:textColor="#9090B8"/>
+        </LinearLayout>
+
+        <!-- Divider -->
+        <LinearLayout
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_widget_col_divider"
+            android:orientation="vertical"/>
+
+        <!-- Column 3 -->
+        <LinearLayout
+            android:id="@+id/row3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/r3_route"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#F4F4F6"/>
+
+            <TextView
+                android:id="@+id/r3_eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="#9090B8"/>
+
+            <TextView
+                android:id="@+id/r3_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="МИН"
+                android:textSize="9sp"
+                android:textColor="#9090B8"/>
+        </LinearLayout>
+
+        <!-- Divider -->
+        <LinearLayout
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_widget_col_divider"
+            android:orientation="vertical"/>
+
+        <!-- Column 4 -->
+        <LinearLayout
+            android:id="@+id/row4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/r4_route"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:textColor="#F4F4F6"/>
+
+            <TextView
+                android:id="@+id/r4_eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="#9090B8"/>
+
+            <TextView
+                android:id="@+id/r4_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="МИН"
+                android:textSize="9sp"
+                android:textColor="#9090B8"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Stop button -->
+    <Button
+        android:id="@+id/btn_stop"
+        android:layout_width="match_parent"
+        android:layout_height="18dp"
+        android:layout_marginTop="4dp"
+        android:text="СТОП"
+        android:textSize="9sp"
+        android:letterSpacing="0.08"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_widget_btn_stop"
+        android:visibility="gone"/>
+
+</LinearLayout>

@@ -43,10 +43,20 @@ class WidgetConfigActivity : AppCompatActivity() {
     }
 
     private fun pickStop(stop: Stop) {
+        // Detect type from provider class name
+        val providerClass = try {
+            AppWidgetManager.getInstance(this).getAppWidgetInfo(widgetId)?.provider?.className ?: ""
+        } catch (_: Exception) { "" }
+        val type = when {
+            providerClass.endsWith("Light") -> "light"
+            providerClass.endsWith("Wide")  -> "wide"
+            else -> "dark"
+        }
         BusWidgetProvider.widgetPrefs(this).edit()
             .putString("${widgetId}_stopId", stop.id)
             .putString("${widgetId}_name",   stop.name)
             .putString("${widgetId}_routes", stop.routes)
+            .putString("${widgetId}_type",   type)
             .apply()
 
         val awm = AppWidgetManager.getInstance(this)

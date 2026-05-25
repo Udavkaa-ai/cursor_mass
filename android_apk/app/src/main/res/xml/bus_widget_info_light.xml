@@ -5,7 +5,7 @@
     android:targetCellWidth="2"
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_bus_dark"
+    android:initialLayout="@layout/widget_bus_light"
     android:configure="ru.buswidget.widget.WidgetConfigActivity"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
