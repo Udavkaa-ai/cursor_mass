@@ -3,42 +3,61 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F2F5">
+    android:background="#13100C">
 
-    <!-- Dark blue header -->
+    <!-- App bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#1B3A6B"
-        android:paddingStart="20dp"
-        android:paddingEnd="12dp">
+        android:background="#1A1710"
+        android:paddingStart="18dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="10dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ГДЕ АВТОБУС?"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:letterSpacing="0.06"/>
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="МОИ ОСТАНОВКИ"
+                android:textSize="10sp"
+                android:textColor="#9090B8"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.12"
+                android:textAllCaps="true"
+                android:layout_marginBottom="2dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Где автобус?"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:textColor="#F4F4F6"/>
+
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnAdd"
             style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:text="+"
-            android:textSize="24sp"
-            android:textColor="#FFFFFF"
-            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="+ Добавить"
+            android:textSize="12sp"
+            android:textColor="#6B9FD4"
+            android:backgroundTint="#243555"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            android:stateListAnimator="@null"
-            android:paddingStart="0dp"
-            android:paddingEnd="0dp"/>
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:stateListAnimator="@null"/>
 
     </LinearLayout>
 
@@ -49,10 +68,10 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="12dp"
+        android:paddingTop="10dp"
         android:paddingBottom="16dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:visibility="gone"/>
 
     <!-- Empty state onboarding -->
@@ -67,19 +86,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="20dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="16dp"
             android:paddingBottom="24dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Как начать"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A2E"
-                android:layout_marginBottom="12dp"/>
+                android:textColor="#F4F4F6"
+                android:layout_marginBottom="10dp"
+                android:paddingStart="4dp"/>
 
             <!-- Step 1 -->
             <LinearLayout
@@ -87,31 +107,30 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/bg_card_white"
-                android:elevation="2dp"
+                android:background="@drawable/bg_stop_card"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:layout_marginBottom="8dp">
                 <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:text="1"
                     android:gravity="center"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#F4F4F6"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Нажмите + и выберите остановку"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
+                        android:text="Нажмите «+ Добавить» и выберите остановку"
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Нажмите «Выбрать на карте» и тапните на остановку"
-                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
+                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -121,31 +140,30 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/bg_card_white"
-                android:elevation="2dp"
+                android:background="@drawable/bg_stop_card"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:layout_marginBottom="8dp">
                 <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:text="2"
                     android:gravity="center"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#F4F4F6"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Нажмите на остановку для отслеживания"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
+                        android:text="Нажмите на остановку, нажмите ЗАПУСТИТЬ"
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Нажмите ЗАПУСТИТЬ — автобусы обновляются каждые 15 секунд"
-                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
+                        android:text="Автобусы обновляются каждые 15 секунд"
+                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -155,31 +173,30 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/bg_card_white"
-                android:elevation="2dp"
+                android:background="@drawable/bg_stop_card"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:layout_marginBottom="8dp">
                 <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:text="3"
                     android:gravity="center"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#F4F4F6"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Фильтруйте маршруты (по желанию)"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Введите номера через запятую: 925,907 — или оставьте пустым чтобы видеть все"
-                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
+                        android:text="Введите номера через запятую: 925,907 — или оставьте пустым"
+                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -189,41 +206,39 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/bg_card_white"
-                android:elevation="2dp"
+                android:background="@drawable/bg_stop_card"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:layout_marginBottom="20dp">
                 <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:text="4"
                     android:gravity="center"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#F4F4F6"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Добавьте виджет на рабочий стол"
-                        android:textSize="15sp" android:textStyle="bold" android:textColor="#1A1A2E"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Долгое нажатие на экран — Виджеты — Где автобус? Можно добавить несколько для разных остановок"
-                        android:textSize="13sp" android:textColor="#8A8A9A" android:layout_marginTop="2dp"/>
+                        android:text="Долгое нажатие на экран — Виджеты — Где автобус?"
+                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- CTA -->
             <Button
                 android:id="@+id/btnAddEmpty"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:text="Добавить остановку"
-                android:textSize="17sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/bg_btn"

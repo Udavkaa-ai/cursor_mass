@@ -3,71 +3,92 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:gravity="center_vertical"
     android:background="@drawable/bg_arrival_card"
-    android:paddingStart="18dp"
-    android:paddingEnd="18dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="14dp"
-    android:layout_marginBottom="8dp">
+    android:layout_marginBottom="9dp"
+    android:baselineAligned="false">
 
-    <!-- Left: route number + direction -->
+    <!-- Colored accent strip — color set programmatically via vAccent.setBackgroundColor() -->
+    <View
+        android:id="@+id/vAccent"
+        android:layout_width="4dp"
+        android:layout_height="match_parent"
+        android:background="#E53040"/>
+
+    <!-- Left: route number + direction (58% width) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_weight="58"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="13dp"
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/tvRoute"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="28sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
             android:fontFamily="monospace"
-            android:letterSpacing="-0.02"/>
+            android:textColor="#F4F4F6"
+            android:letterSpacing="0.01"
+            android:includeFontPadding="false"/>
 
         <TextView
             android:id="@+id/tvDirection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            android:textColor="#7878A0"
+            android:layout_marginTop="6dp"
+            android:textSize="11sp"
+            android:textColor="#9090B8"
             android:maxLines="2"
-            android:ellipsize="end"/>
+            android:ellipsize="end"
+            android:lineSpacingMultiplier="1.3"/>
 
     </LinearLayout>
 
-    <!-- Right: ETA number + unit -->
+    <!-- Column divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#1A1916"/>
+
+    <!-- Right: ETA number + unit (42% width) -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="42"
         android:orientation="vertical"
-        android:gravity="end"
-        android:paddingStart="16dp">
+        android:gravity="end|center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/tvEta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:textSize="48sp"
+            android:textSize="46sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
-            android:includeFontPadding="false"
-            android:lineSpacingExtra="-4dp"/>
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="#E53040"
+            android:includeFontPadding="false"/>
 
         <TextView
             android:id="@+id/tvEtaUnit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
             android:gravity="end"
             android:text="мин"
-            android:textSize="12sp"
-            android:textColor="#7878A0"/>
+            android:textSize="11sp"
+            android:fontFamily="sans-serif"
+            android:textColor="#E53040"
+            android:textAllCaps="true"
+            android:letterSpacing="0.06"/>
 
     </LinearLayout>
 

@@ -3,8 +3,8 @@ package ru.buswidget
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -32,7 +32,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private val adapter = ArrivalAdapter()
 
     private lateinit var tvStopName: TextView
-    private lateinit var btnStart:   Button
+    private lateinit var btnStart:   TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
@@ -90,13 +90,13 @@ class ArrivalsActivity : AppCompatActivity() {
         routes   = intent.getStringExtra(EXTRA_ROUTES)    ?: ""
 
         tvStopName  = findViewById(R.id.tvStopName)
-        btnStart    = findViewById(R.id.btnStart)
+        btnStart    = findViewById<TextView>(R.id.btnStart)
         progressBar = findViewById(R.id.progressBar)
         tvStatus    = findViewById(R.id.tvStatus)
         tvNextPoll  = findViewById(R.id.tvNextPoll)
 
         tvStopName.text = stopName
-        findViewById<android.view.View>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
 
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)
@@ -115,7 +115,9 @@ class ArrivalsActivity : AppCompatActivity() {
         timeLeft = SESSION
         nextPoll = 0
         @Suppress("DEPRECATION")
-        btnStart.background = getDrawable(R.drawable.bg_btn_stop)
+        btnStart.background = getDrawable(R.drawable.bg_btn_pill_stop)
+        btnStart.setTextColor(0xFFE53040.toInt())
+        progressBar.visibility = View.VISIBLE
         tvStatus.text = "загрузка..."
         handler.post(tickRunnable)
     }
@@ -124,17 +126,20 @@ class ArrivalsActivity : AppCompatActivity() {
         running = false
         handler.removeCallbacks(tickRunnable)
         @Suppress("DEPRECATION")
-        btnStart.background = getDrawable(R.drawable.bg_btn)
-        btnStart.text = "ЗАПУСТИТЬ"
+        btnStart.background = getDrawable(R.drawable.bg_btn_pill_run)
+        btnStart.setTextColor(0xFF2ED87A.toInt())
+        btnStart.text = "▶  ЗАПУСТИТЬ"
         progressBar.progress = 0
+        progressBar.visibility = View.INVISIBLE
         tvNextPoll.text = ""
         tvStatus.text = if (timeLeft == 0) "сессия завершена" else "остановлено"
     }
 
     private fun updateTimerUI() {
         val m = timeLeft / 60; val s = timeLeft % 60
-        btnStart.text = "СТОП   $m:${s.toString().padStart(2, '0')}"
+        btnStart.text = "⏹  СТОП  $m:${s.toString().padStart(2, '0')}"
         progressBar.progress = timeLeft
+        progressBar.visibility = View.VISIBLE
         tvNextPoll.text = "обн ${nextPoll}с"
     }
 

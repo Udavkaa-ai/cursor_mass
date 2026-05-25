@@ -3,24 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0F0F12">
+    android:background="#13100C">
 
-    <!-- Dark blue header -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#1B3A6B"
-        android:paddingBottom="16dp">
+        android:background="#1B3A6B">
 
-        <!-- Title bar -->
+        <!-- Title row: back + stop info + LIVE -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingStart="4dp"
-            android:paddingEnd="16dp">
+            android:paddingEnd="12dp">
 
             <TextView
                 android:id="@+id/btnBack"
@@ -28,84 +27,118 @@
                 android:layout_height="48dp"
                 android:text="&lt;"
                 android:textSize="22sp"
-                android:textColor="#FFFFFF"
+                android:textColor="rgba(255,255,255,0.7)"
                 android:gravity="center"/>
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ГДЕ АВТОБУС?"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:letterSpacing="0.06"/>
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvNextPoll"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ОСТАНОВКА"
+                    android:textSize="10sp"
+                    android:textColor="#707898"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.1"
+                    android:textAllCaps="true"
+                    android:layout_marginBottom="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvStopName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="остановка"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#F4F4F6"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+            </LinearLayout>
+
+            <!-- LIVE indicator pill -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="11sp"
-                android:textColor="#88BBFF"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_live_pill"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginStart="10dp">
+
+                <View
+                    android:id="@+id/vLiveDot"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/bg_live_dot"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:id="@+id/tvNextPoll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="rgba(255,255,255,0.8)"
+                    android:letterSpacing="0.08"
+                    android:textAllCaps="true"
+                    android:text="LIVE"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- Stop name -->
-        <TextView
-            android:id="@+id/tvStopName"
+        <!-- Controls row: pill stop/start button at right -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:text="остановка"
-            android:textSize="19sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:maxLines="2"
-            android:ellipsize="end"/>
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp">
+
+            <TextView
+                android:id="@+id/btnStart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▶  ЗАПУСТИТЬ"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold"
+                android:textColor="#2ED87A"
+                android:letterSpacing="0.08"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:background="@drawable/bg_btn_pill_run"
+                android:clickable="true"
+                android:focusable="true"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Start / Stop button -->
-    <Button
-        android:id="@+id/btnStart"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
-        android:text="ЗАПУСТИТЬ"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_btn"
-        android:stateListAnimator="@null"/>
-
-    <!-- Session progress bar -->
+    <!-- Thin progress bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="4dp"
+        android:layout_height="2dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:max="300"
         android:progress="0"
-        android:progressDrawable="@drawable/progress_drawable"/>
-
-    <!-- Status -->
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="4dp"
-        android:text="нажми ЗАПУСТИТЬ"
-        android:textSize="12sp"
-        android:textColor="#8A8A9A"/>
+        android:progressDrawable="@drawable/progress_drawable"
+        android:visibility="invisible"/>
 
     <!-- Arrivals list -->
     <androidx.recyclerview.widget.RecyclerView
@@ -113,10 +146,26 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"/>
+
+    <!-- Status -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="16dp"
-        android:clipToPadding="false"/>
+        android:paddingTop="4dp"
+        android:paddingBottom="10dp"
+        android:text="нажми ЗАПУСТИТЬ"
+        android:textSize="10sp"
+        android:fontFamily="monospace"
+        android:textColor="#7878A0"
+        android:gravity="center"
+        android:letterSpacing="0.08"/>
 
 </LinearLayout>

@@ -52,12 +52,12 @@ class PollService : Service() {
         }
 
         fun etaColor(secs: Int?): Int = when {
-            secs == null -> 0xFF9090A0.toInt()  // grey   — unknown
-            secs <= 0    -> 0xFFFF4D4D.toInt()  // red    — arriving
-            secs <= 300  -> 0xFFFF4D4D.toInt()  // red    — < 5 min
-            secs <= 420  -> 0xFFFFAA33.toInt()  // orange — 5-7 min
-            secs <= 600  -> 0xFF42D883.toInt()  // green  — 7-10 min
-            else         -> 0xFF6A6A7A.toInt()  // grey   — > 10 min
+            secs == null -> 0xFF7878A0.toInt()  // grey   — unknown
+            secs <= 0    -> 0xFFE53040.toInt()  // red    — arriving now
+            secs < 300   -> 0xFFE53040.toInt()  // red    — < 5 min
+            secs < 480   -> 0xFFFF8C00.toInt()  // orange — 5-8 min
+            secs < 660   -> 0xFF2ED87A.toInt()  // green  — 8-11 min
+            else         -> 0xFF7878A0.toInt()  // grey   — > 11 min
         }
     }
 
