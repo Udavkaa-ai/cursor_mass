@@ -2,72 +2,72 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/bg_card_white"
-    android:elevation="2dp"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_arrival_card"
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp"
     android:paddingTop="14dp"
     android:paddingBottom="14dp"
-    android:layout_marginBottom="10dp">
+    android:layout_marginBottom="8dp">
 
-    <!-- Route badge + direction -->
+    <!-- Left: route number + direction -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvRoute"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="52dp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-            android:textSize="21sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:gravity="center"
-            android:background="@drawable/bg_route_badge"
-            android:layout_marginEnd="14dp"/>
+            android:textColor="#F4F4F6"
+            android:fontFamily="monospace"
+            android:letterSpacing="-0.02"/>
 
         <TextView
             android:id="@+id/tvDirection"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="15sp"
-            android:textColor="#1A1A2E"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textColor="#7878A0"
             android:maxLines="2"
             android:ellipsize="end"/>
 
     </LinearLayout>
 
-    <!-- ETA label + value -->
+    <!-- Right: ETA number + unit -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="До прибытия:  "
-            android:textSize="13sp"
-            android:textColor="#8A8A9A"/>
+        android:orientation="vertical"
+        android:gravity="end"
+        android:paddingStart="16dp">
 
         <TextView
             android:id="@+id/tvEta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="17sp"
+            android:gravity="end"
+            android:textSize="48sp"
             android:textStyle="bold"
-            android:textColor="#FF7722"/>
+            android:textColor="#F4F4F6"
+            android:includeFontPadding="false"
+            android:lineSpacingExtra="-4dp"/>
+
+        <TextView
+            android:id="@+id/tvEtaUnit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:gravity="end"
+            android:text="мин"
+            android:textSize="12sp"
+            android:textColor="#7878A0"/>
 
     </LinearLayout>
 

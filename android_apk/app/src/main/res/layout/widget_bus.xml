@@ -4,10 +4,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/bg_widget"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="8dp">
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="6dp">
 
     <!-- Header: stop name + timer -->
     <LinearLayout
@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="2dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:id="@+id/tw_stop"
@@ -23,9 +23,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Остановка"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
+            android:textColor="#B0B8D0"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -33,7 +33,7 @@
             android:id="@+id/tw_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textColor="#4382FF"
             android:fontFamily="monospace"
             android:visibility="gone"/>
@@ -45,7 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:text="Где автобус?"
         android:textSize="13sp"
         android:textColor="#99FFFFFF"
@@ -59,22 +59,27 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:background="@drawable/bg_widget_row"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
         android:layout_marginTop="3dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/r1_route"
-            android:layout_width="48dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
         <TextView
             android:id="@+id/r1_eta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
     </LinearLayout>
 
@@ -86,22 +91,27 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
+        android:background="@drawable/bg_widget_row"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/r2_route"
-            android:layout_width="48dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
         <TextView
             android:id="@+id/r2_eta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
     </LinearLayout>
 
@@ -113,22 +123,27 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
+        android:background="@drawable/bg_widget_row"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/r3_route"
-            android:layout_width="48dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
         <TextView
             android:id="@+id/r3_eta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
     </LinearLayout>
 
@@ -140,22 +155,27 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="1dp"
+        android:background="@drawable/bg_widget_row"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:layout_marginTop="2dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/r4_route"
-            android:layout_width="48dp"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
         <TextView
             android:id="@+id/r4_eta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:textSize="15sp"
+            android:textSize="17sp"
             android:textStyle="bold"
+            android:fontFamily="monospace"
             android:textColor="#F4F4F6"/>
     </LinearLayout>
 
@@ -163,10 +183,10 @@
     <Button
         android:id="@+id/btn_stop"
         android:layout_width="match_parent"
-        android:layout_height="26dp"
+        android:layout_height="22dp"
         android:layout_marginTop="4dp"
         android:text="Стоп"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:letterSpacing="0.08"
         android:textColor="#FFFFFF"
         android:background="@drawable/bg_widget_btn_stop"
