@@ -17,7 +17,7 @@ data class WidgetArrival(
     val direction:  String = "",
 )
 
-class BusWidgetProvider : AppWidgetProvider() {
+open class BusWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_START = "ru.buswidget.action.START"
