@@ -42,6 +42,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var routes:   String
 
     private var running        = false
+    private var fetching       = false
     private var timeLeft       = 0
     private var nextPoll       = 0
     private var lastFetchAt    = 0L
@@ -138,17 +139,19 @@ class ArrivalsActivity : AppCompatActivity() {
     }
 
     private fun fetchArrivals() {
+        if (fetching) return  // skip if previous request still in flight
         val base = Config.SERVER_URL.trimEnd('/')
         if (base.isBlank() || stopId.isBlank()) {
             tvStatus.text = "SERVER_URL не задан в Config.kt"; return
         }
+        fetching = true
         Thread {
             try {
                 val qs = if (routes.isNotBlank()) "?routes=${URLEncoder.encode(routes, "UTF-8")}" else ""
                 val conn = URL("$base/arrivals/${URLEncoder.encode(stopId, "UTF-8")}$qs")
                     .openConnection() as HttpURLConnection
                 conn.apply {
-                    connectTimeout = 15_000; readTimeout = 15_000
+                    connectTimeout = 10_000; readTimeout = 10_000
                     setRequestProperty("Accept", "application/json")
                 }
                 val body = conn.inputStream.bufferedReader().readText()
@@ -158,6 +161,7 @@ class ArrivalsActivity : AppCompatActivity() {
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
                 val fetchedAt = System.currentTimeMillis()
                 handler.post {
+                    fetching    = false
                     lastFetchAt  = fetchedAt
                     lastFetched  = arrivals
                     if (name.isNotBlank()) {
@@ -172,7 +176,7 @@ class ArrivalsActivity : AppCompatActivity() {
                     tvStatus.text = "обновлено $t"
                 }
             } catch (e: Exception) {
-                handler.post { tvStatus.text = "ошибка: ${e.message?.take(60)}" }
+                handler.post { fetching = false; tvStatus.text = "ошибка: ${e.message?.take(60)}" }
             }
         }.start()
     }

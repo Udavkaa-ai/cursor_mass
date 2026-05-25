@@ -73,6 +73,7 @@ class PollService : Service() {
     private val handler   = Handler(Looper.getMainLooper())
     private val sessions  = mutableMapOf<Int, Session>()
     private val snapshots = mutableMapOf<Int, Snapshot>()
+    private val fetching  = mutableSetOf<Int>()  // widgetIds with in-flight requests
 
     private val tick = object : Runnable {
         override fun run() {
@@ -138,24 +139,27 @@ class PollService : Service() {
     }
 
     private fun fetchAndUpdate(widgetId: Int, s: Session) {
+        if (widgetId in fetching) return  // skip if previous request still in flight
+        fetching += widgetId
         Thread {
             try {
                 val base = Config.SERVER_URL.trimEnd('/')
                 val qs = if (s.routes.isNotBlank()) "?routes=${URLEncoder.encode(s.routes, "UTF-8")}" else ""
                 val conn = URL("$base/arrivals/${URLEncoder.encode(s.stopId, "UTF-8")}$qs")
                     .openConnection() as HttpURLConnection
-                conn.apply { connectTimeout = 15_000; readTimeout = 15_000 }
+                conn.apply { connectTimeout = 10_000; readTimeout = 10_000 }
                 val json     = JSONObject(conn.inputStream.bufferedReader().readText())
                 conn.disconnect()
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
                 handler.post {
+                    fetching -= widgetId
                     val prev = snapshots[widgetId]
                     if (arrivals.isNotEmpty() && arrivals != prev?.arrivals) {
                         snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
                     }
                     sessions[widgetId]?.let { pushUpdate(widgetId, it) }
                 }
-            } catch (_: Exception) { /* next poll will retry */ }
+            } catch (_: Exception) { handler.post { fetching -= widgetId } }
         }.start()
     }
 
