@@ -9,7 +9,7 @@
     android:paddingTop="6dp"
     android:paddingBottom="6dp">
 
-    <!-- Header: live dot + stop name + timer -->
+    <!-- Header: live dot + stop name + timer + СТОП (active only) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -46,7 +46,25 @@
             android:textSize="9sp"
             android:textColor="#6496D0"
             android:fontFamily="monospace"
+            android:layout_marginStart="6dp"
             android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:text="СТОП"
+            android:textSize="8sp"
+            android:letterSpacing="0.08"
+            android:textColor="#FFFFFF"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:background="@drawable/bg_widget_btn_stop"
+            android:visibility="gone"/>
+
     </LinearLayout>
 
     <!-- Idle: start button -->
@@ -252,17 +270,5 @@
 
     </LinearLayout>
 
-    <!-- Stop button -->
-    <Button
-        android:id="@+id/btn_stop"
-        android:layout_width="match_parent"
-        android:layout_height="14dp"
-        android:layout_marginTop="2dp"
-        android:text="СТОП"
-        android:textSize="8sp"
-        android:letterSpacing="0.08"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_widget_btn_stop"
-        android:visibility="gone"/>
 
 </LinearLayout>
