@@ -4,10 +4,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/bg_widget"
-    android:paddingStart="14dp"
-    android:paddingEnd="14dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <!-- Header: live dot + stop name + timer -->
     <LinearLayout
@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="3dp">
 
         <TextView
             android:id="@+id/tw_live"
@@ -79,14 +79,14 @@
             android:gravity="center"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/r1_route"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
                 android:textColor="#F4F4F6"/>
@@ -95,7 +95,7 @@
                 android:id="@+id/r1_eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
                 android:textColor="#9090B8"/>
@@ -105,7 +105,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="МИН"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:textColor="#9090B8"/>
         </LinearLayout>
 
@@ -126,14 +126,14 @@
             android:gravity="center"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/r2_route"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
                 android:textColor="#F4F4F6"/>
@@ -142,7 +142,7 @@
                 android:id="@+id/r2_eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
                 android:textColor="#9090B8"/>
@@ -152,7 +152,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="МИН"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:textColor="#9090B8"/>
         </LinearLayout>
 
@@ -173,14 +173,14 @@
             android:gravity="center"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/r3_route"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
                 android:textColor="#F4F4F6"/>
@@ -189,7 +189,7 @@
                 android:id="@+id/r3_eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
                 android:textColor="#9090B8"/>
@@ -199,7 +199,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="МИН"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:textColor="#9090B8"/>
         </LinearLayout>
 
@@ -220,14 +220,14 @@
             android:gravity="center"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/r4_route"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
                 android:textColor="#F4F4F6"/>
@@ -236,7 +236,7 @@
                 android:id="@+id/r4_eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
                 android:textColor="#9090B8"/>
@@ -246,7 +246,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="МИН"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:textColor="#9090B8"/>
         </LinearLayout>
 
@@ -256,10 +256,10 @@
     <Button
         android:id="@+id/btn_stop"
         android:layout_width="match_parent"
-        android:layout_height="18dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="14dp"
+        android:layout_marginTop="2dp"
         android:text="СТОП"
-        android:textSize="9sp"
+        android:textSize="8sp"
         android:letterSpacing="0.08"
         android:textColor="#FFFFFF"
         android:background="@drawable/bg_widget_btn_stop"
