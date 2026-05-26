@@ -1,24 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#0F0F10">
-
-    <WebView
-        android:id="@+id/webView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-    <!-- Loading progress bar (sits at top, over the web content) -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_gravity="top"
-        android:max="100"
-        android:progressTint="#4382FF"
-        android:visibility="gone"/>
 
     <!-- Top bar -->
     <LinearLayout
@@ -51,13 +36,36 @@
             android:textSize="17sp"
             android:textStyle="bold"
             android:textColor="#F4F4F6"/>
+
     </LinearLayout>
+
+    <!-- WebView + progress bar -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="top"
+            android:max="100"
+            android:progressTint="#4382FF"
+            android:visibility="gone"/>
+
+    </FrameLayout>
 
     <!-- Bottom confirm panel -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:orientation="vertical"
         android:background="#EE0F0F10"
         android:paddingStart="16dp"
@@ -87,4 +95,4 @@
 
     </LinearLayout>
 
-</FrameLayout>
+</LinearLayout>
