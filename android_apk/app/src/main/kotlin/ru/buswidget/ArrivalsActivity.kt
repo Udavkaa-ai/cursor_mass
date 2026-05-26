@@ -109,6 +109,8 @@ class ArrivalsActivity : AppCompatActivity() {
         loadStopMap()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
+
+        startSession()
     }
 
     override fun onDestroy() {

@@ -174,7 +174,7 @@
         android:paddingEnd="16dp"
         android:paddingTop="4dp"
         android:paddingBottom="10dp"
-        android:text="нажми ЗАПУСТИТЬ"
+        android:text=""
         android:textSize="10sp"
         android:fontFamily="monospace"
         android:textColor="#7878A0"
