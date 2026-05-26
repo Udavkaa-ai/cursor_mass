@@ -6,11 +6,20 @@
     android:gravity="center_vertical"
     android:layout_marginBottom="9dp"
     android:background="@drawable/bg_stop_card"
-    android:elevation="0dp"
-    android:paddingStart="14dp"
+    android:paddingStart="10dp"
     android:paddingEnd="4dp"
-    android:paddingTop="13dp"
-    android:paddingBottom="13dp">
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <ImageView
+        android:id="@+id/ivMap"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:scaleType="centerCrop"
+        android:background="@drawable/bg_map_card"
+        android:clipToOutline="true"
+        android:layout_marginEnd="12dp"
+        android:visibility="gone"/>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -41,10 +50,10 @@
     <Button
         android:id="@+id/btnEdit"
         style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:text="&#9998;"
-        android:textSize="17sp"
+        android:textSize="16sp"
         android:textColor="#9090B8"
         android:insetTop="0dp"
         android:insetBottom="0dp"
@@ -55,10 +64,10 @@
     <Button
         android:id="@+id/btnDelete"
         style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:text="&#10005;"
-        android:textSize="15sp"
+        android:textSize="14sp"
         android:textColor="#7A1820"
         android:insetTop="0dp"
         android:insetBottom="0dp"

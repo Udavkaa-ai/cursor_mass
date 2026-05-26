@@ -67,7 +67,7 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
 
         when {
             secs == null -> { holder.eta.text = a.etaLocal; holder.unit.text = "" }
-            secs <= 0    -> { holder.eta.text = "→";        holder.unit.text = "СЕЙЧАС" }
+            secs <= 0    -> { holder.eta.text = "0";         holder.unit.text = "СЕЙЧАС" }
             secs < 60    -> { holder.eta.text = "< 1";      holder.unit.text = "МИН" }
             else         -> { holder.eta.text = (secs / 60).toString(); holder.unit.text = "МИН" }
         }

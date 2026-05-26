@@ -105,6 +105,7 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.adapter = adapter
 
         ivMap = findViewById(R.id.ivMap)
+        ivMap.clipToOutline = true
         loadStopMap()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }

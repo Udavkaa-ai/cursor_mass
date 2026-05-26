@@ -86,6 +86,7 @@ open class BusWidgetProvider : AppWidgetProvider() {
             if (type == "wide") {
                 rv.setViewVisibility(R.id.rows_active, View.VISIBLE)
                 ROW_IDS.forEachIndexed { i, ids ->
+                    rv.setViewVisibility(ids.row, View.VISIBLE)  // explicit — fixes stale GONE state
                     val a = arrivals.getOrNull(i)
                     val color = a?.color ?: 0xFF9090B8.toInt()
                     rv.setTextViewText(ids.route, a?.route ?: "—")
@@ -104,12 +105,12 @@ open class BusWidgetProvider : AppWidgetProvider() {
                         rv.setTextViewText(ids.eta, a.eta)
                         rv.setTextColor(ids.eta, a.color)
                         rv.setTextViewText(ids.dir, a.direction)
+                        rv.setOnClickPendingIntent(ids.row, openAppPendingIntent(ctx, widgetId))
                     }
                 }
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopPendingIntent(ctx, widgetId))
             rv.setOnClickPendingIntent(R.id.tw_stop, openAppPendingIntent(ctx, widgetId))
-            // for wide widget also set on content area:
             if (type == "wide") rv.setOnClickPendingIntent(R.id.rows_active, openAppPendingIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
