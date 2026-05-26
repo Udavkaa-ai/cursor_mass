@@ -20,8 +20,11 @@ class MapPickerActivity : AppCompatActivity() {
     companion object {
         const val RESULT_STOP_ID   = "stop_id"
         const val RESULT_STOP_NAME = "stop_name"
+        const val RESULT_LAT       = "lat"
+        const val RESULT_LON       = "lon"
         private val STOP_RE = Regex("""stops/(?:stop__)?(\d+)""")
         private val TITLE_SUFFIX = Regex("""\s*[—–-]\s*Яндекс.*$""")
+        private val LL_RE = Regex("""[?&]ll=(-?\d+\.?\d*)[,%2C]+(-?\d+\.?\d*)""")
     }
 
     private lateinit var webView:    WebView
@@ -31,6 +34,8 @@ class MapPickerActivity : AppCompatActivity() {
 
     private var selectedId:   String? = null
     private var selectedName: String? = null
+    private var selectedLat = 0.0
+    private var selectedLon = 0.0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,6 +89,8 @@ class MapPickerActivity : AppCompatActivity() {
             setResult(Activity.RESULT_OK, Intent().apply {
                 putExtra(RESULT_STOP_ID,   id)
                 putExtra(RESULT_STOP_NAME, selectedName ?: id)
+                putExtra(RESULT_LAT, selectedLat)
+                putExtra(RESULT_LON, selectedLon)
             })
             finish()
         }
@@ -103,6 +110,10 @@ class MapPickerActivity : AppCompatActivity() {
             selectedId = match.groupValues[1]
             if (title != null && title.isNotBlank()) {
                 selectedName = title.replace(TITLE_SUFFIX, "").trim()
+            }
+            LL_RE.find(url)?.let {
+                selectedLon = it.groupValues[1].toDoubleOrNull() ?: 0.0
+                selectedLat = it.groupValues[2].toDoubleOrNull() ?: 0.0
             }
             tvHint.text = "Выбрано: ${selectedName ?: selectedId}"
             tvHint.setTextColor(0xFFF4F4F6.toInt())

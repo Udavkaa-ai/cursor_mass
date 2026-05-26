@@ -26,6 +26,23 @@
         android:paddingBottom="12dp">
 
         <TextView
+            android:id="@+id/tvType"
+            android:layout_width="wrap_content"
+            android:layout_height="16dp"
+            android:layout_marginBottom="5dp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.05"
+            android:textColor="#F4F4F6"
+            android:background="@drawable/bg_type_badge"
+            android:gravity="center_vertical"
+            android:includeFontPadding="false"
+            android:visibility="gone"/>
+
+        <TextView
             android:id="@+id/tvRoute"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

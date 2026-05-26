@@ -108,6 +108,9 @@ open class BusWidgetProvider : AppWidgetProvider() {
                 }
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopPendingIntent(ctx, widgetId))
+            rv.setOnClickPendingIntent(R.id.tw_stop, openAppPendingIntent(ctx, widgetId))
+            // for wide widget also set on content area:
+            if (type == "wide") rv.setOnClickPendingIntent(R.id.rows_active, openAppPendingIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
 
@@ -133,6 +136,23 @@ open class BusWidgetProvider : AppWidgetProvider() {
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
+
+        private fun openAppPendingIntent(ctx: Context, widgetId: Int): PendingIntent {
+            val p = widgetPrefs(ctx)
+            val stopId = p.getString("${widgetId}_stopId", "") ?: ""
+            val name   = p.getString("${widgetId}_name",   "") ?: ""
+            val routes = p.getString("${widgetId}_routes", "") ?: ""
+            val intent = Intent(ctx, ru.buswidget.ArrivalsActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(ru.buswidget.ArrivalsActivity.EXTRA_STOP_ID,   stopId)
+                putExtra(ru.buswidget.ArrivalsActivity.EXTRA_STOP_NAME, name)
+                putExtra(ru.buswidget.ArrivalsActivity.EXTRA_ROUTES,    routes)
+            }
+            return PendingIntent.getActivity(
+                ctx, widgetId + 30_000, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
     }
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {

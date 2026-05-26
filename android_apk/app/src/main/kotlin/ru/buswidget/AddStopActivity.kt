@@ -21,6 +21,8 @@ class AddStopActivity : AppCompatActivity() {
     private lateinit var etName:   EditText
     private lateinit var etRoutes: EditText
     private var editingId: String? = null
+    private var pickedLat = 0.0
+    private var pickedLon = 0.0
 
     private val mapPickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -31,6 +33,8 @@ class AddStopActivity : AppCompatActivity() {
             val stopName = data.getStringExtra(MapPickerActivity.RESULT_STOP_NAME) ?: stopId
             etId.setText(stopId)
             etName.setText(stopName)
+            pickedLat = data.getDoubleExtra(MapPickerActivity.RESULT_LAT, 0.0)
+            pickedLon = data.getDoubleExtra(MapPickerActivity.RESULT_LON, 0.0)
             toast("Остановка выбрана: $stopName")
         }
     }
@@ -65,7 +69,7 @@ class AddStopActivity : AppCompatActivity() {
         val name   = etName.text.toString().trim()
         val routes = etRoutes.text.toString().trim()
         if (id.isBlank()) { toast("Сначала выберите остановку на карте"); return }
-        val stop = Stop(id = id, name = name.ifBlank { id }, routes = routes)
+        val stop = Stop(id = id, name = name.ifBlank { id }, routes = routes, lat = pickedLat, lon = pickedLon)
         if (editingId != null) {
             StopStorage.update(this, stop)
         } else {

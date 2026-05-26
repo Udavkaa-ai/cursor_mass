@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
+    private lateinit var ivMap:      ImageView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -101,6 +103,9 @@ class ArrivalsActivity : AppCompatActivity() {
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
+
+        ivMap = findViewById(R.id.ivMap)
+        loadStopMap()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
     }
@@ -186,6 +191,22 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
+    private fun loadStopMap() {
+        val stop = StopStorage.load(this).find { it.id == stopId } ?: return
+        if (stop.lat == 0.0 || stop.lon == 0.0) return
+        ivMap.visibility = View.VISIBLE
+        val url = "https://static-maps.yandex.ru/1.x/?ll=${stop.lon},${stop.lat}&z=16&size=600,300&l=map&pt=${stop.lon},${stop.lat},pm2rdm"
+        Thread {
+            try {
+                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 8_000; conn.readTimeout = 8_000; conn.connect()
+                val bmp = android.graphics.BitmapFactory.decodeStream(conn.inputStream)
+                conn.disconnect()
+                if (bmp != null) runOnUiThread { ivMap.setImageBitmap(bmp) }
+            } catch (_: Exception) { runOnUiThread { ivMap.visibility = View.GONE } }
+        }.start()
+    }
+
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
         arr ?: return emptyList()
         return (0 until arr.length()).map { i ->
@@ -195,6 +216,7 @@ class ArrivalsActivity : AppCompatActivity() {
                 direction  = a.optString("direction", ""),
                 etaLocal   = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") },
                 etaSeconds = if (a.isNull("eta_seconds")) null else a.getInt("eta_seconds"),
+                type       = a.optString("type", ""),
             )
         }.sortedBy { it.etaSeconds ?: Int.MAX_VALUE }
     }

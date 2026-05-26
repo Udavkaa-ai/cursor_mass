@@ -8,6 +8,8 @@ data class Stop(
     val id: String,
     val name: String,
     val routes: String = "",
+    val lat: Double = 0.0,
+    val lon: Double = 0.0,
 )
 
 object StopStorage {
@@ -39,11 +41,14 @@ object StopStorage {
 
     private fun Stop.toJson() = JSONObject().apply {
         put("id", id); put("name", name); put("routes", routes)
+        put("lat", lat); put("lon", lon)
     }
 
     private fun JSONObject.toStop() = Stop(
         id     = optString("id"),
         name   = optString("name"),
         routes = optString("routes"),
+        lat    = optDouble("lat", 0.0),
+        lon    = optDouble("lon", 0.0),
     )
 }

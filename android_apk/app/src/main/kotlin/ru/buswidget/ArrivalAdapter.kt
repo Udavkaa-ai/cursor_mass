@@ -11,6 +11,7 @@ data class Arrival(
     val direction:  String,
     val etaLocal:   String,
     val etaSeconds: Int?,
+    val type:       String = "",
 )
 
 class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
@@ -20,11 +21,12 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
     fun submit(list: List<Arrival>) { items = list; notifyDataSetChanged() }
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-        val accent: View     = v.findViewById(R.id.vAccent)
-        val route:  TextView = v.findViewById(R.id.tvRoute)
-        val dir:    TextView = v.findViewById(R.id.tvDirection)
-        val eta:    TextView = v.findViewById(R.id.tvEta)
-        val unit:   TextView = v.findViewById(R.id.tvEtaUnit)
+        val accent:  View     = v.findViewById(R.id.vAccent)
+        val tvType:  TextView = v.findViewById(R.id.tvType)
+        val route:   TextView = v.findViewById(R.id.tvRoute)
+        val dir:     TextView = v.findViewById(R.id.tvDirection)
+        val eta:     TextView = v.findViewById(R.id.tvEta)
+        val unit:    TextView = v.findViewById(R.id.tvEtaUnit)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -36,6 +38,25 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
         val a = items[position]
         holder.route.text = a.route
         holder.dir.text   = a.direction
+
+        val (typeLabel, typeBgColor) = when (a.type) {
+            "bus"            -> Pair("авт",  0xFF1B4080.toInt())
+            "tram"           -> Pair("трам", 0xFF8B1A1A.toInt())
+            "trolleybus"     -> Pair("трол", 0xFF1A5C4A.toInt())
+            "electric_train" -> Pair("мцд",  0xFF1A4A6B.toInt())
+            "minibus"        -> Pair("мрш",  0xFF5C3A1A.toInt())
+            else             -> Pair("",     0)
+        }
+        if (typeLabel.isNotEmpty()) {
+            holder.tvType.text = typeLabel
+            val bg = android.graphics.drawable.GradientDrawable()
+            bg.setColor(typeBgColor)
+            bg.cornerRadius = 4f * holder.tvType.resources.displayMetrics.density
+            holder.tvType.background = bg
+            holder.tvType.visibility = View.VISIBLE
+        } else {
+            holder.tvType.visibility = View.GONE
+        }
 
         val secs  = a.etaSeconds
         val color = etaColor(secs)
