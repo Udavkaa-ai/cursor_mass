@@ -60,7 +60,11 @@ FastAPI app that scrapes Yandex Maps HTML pages to extract real-time bus arrival
 - `app/yandex.py` — scraper + parser; most fragile part (Yandex anti-bot, HTML structure changes)
 - `app/main.py` — all FastAPI routes + inline HTML for `/` (stop list) and `/stop/{id}` (per-stop board) pages
 - `app/storage.py` — stop CRUD, mode detection via `env_mode()`
+- `app/config.py` — env var loading; values with commas (like JSON arrays) can be passed as `KEY_B64` (base64) which `_maybe_b64()` decodes automatically — used by `deploy_yc.sh`
 - `app/mosgortrans.py` — optional `MosClient` for `data.mos.ru` datasets; enabled when `MOS_API_KEY` env var is set; exposes `/mos/*` endpoints
+- `app/visits.py` — stub (stats disabled); safe to ignore
+
+**Backend env vars:** `API_KEY`, `STOPS`, `DATABASE_PATH`, `MOS_API_KEY`, `MOS_PROXY_URL`, `YANDEX_LANG` (default `ru_RU`), `REQUEST_TIMEOUT` (default `10`).
 
 **stop_id formats:** Yandex uses both numeric (`5854295457`) and canonical (`stop__5854295457`). `normalize_stop_id()` in `yandex.py` always converts to canonical. Pass either format to any endpoint.
 
@@ -78,14 +82,18 @@ FastAPI app that scrapes Yandex Maps HTML pages to extract real-time bus arrival
 
 | Class | Role |
 |---|---|
-| `MainActivity` | Stop list; launches `AddStopActivity` and `ArrivalsActivity` |
-| `AddStopActivity` | Add/edit a stop; can launch `MapPickerActivity` |
+| `MainActivity` | Stop list; `⋮` menu → backup/restore stops as JSON file |
+| `AddStopActivity` | Add a stop via map picker; in edit mode the map picker button is hidden |
 | `MapPickerActivity` | WebView loading `yandex.ru/maps`; intercepts stop URLs to extract stop ID |
-| `ArrivalsActivity` | Full-screen arrival board with live ETA countdown |
+| `ArrivalsActivity` | Full-screen arrival board; auto-starts polling on open, auto-stops after 5 min |
 | `widget/BusWidgetProvider` | Home-screen widget; handles START/STOP broadcast actions |
 | `widget/PollService` | Foreground service; drives per-widget polling sessions |
 | `data/StopStorage` | Stop CRUD in SharedPreferences (`"bw"` prefs, key `"stops_v1"`) as JSON |
 | `data/Config` | Hardcoded `SERVER_URL`, `SESSION_SEC` (300), `POLL_SEC` (15) |
+
+**ArrivalsActivity session:** Polling starts automatically when the activity opens (called from stop list or widget tap) and auto-stops after `SESSION_SEC` (300 s). The СТОП button can stop it early; tapping it again restarts. `tvStatus` shows last update time; `tvNextPoll` shows seconds until next fetch.
+
+**Backup/restore:** `MainActivity` has a `⋮` button that opens a two-item dialog. Export uses `ActivityResultContracts.CreateDocument` (no storage permission needed); import uses `ActivityResultContracts.OpenDocument` and offers "Заменить" (replace all) or "Добавить" (merge, skipping duplicate IDs). The file format is the same JSON array that `StopStorage` uses internally.
 
 **Widget data flow:**
 1. User taps START → `BusWidgetProvider.onReceive` → `PollService.startFor()`
@@ -102,7 +110,7 @@ FastAPI app that scrapes Yandex Maps HTML pages to extract real-time bus arrival
 
 **Two ETA formatters:** `PollService.formatEta()` uses compact format (`"5 мин"`, no "через" prefix) due to widget space constraints. `ArrivalsActivity.formatEta()` uses the full format (`"через 5 мин"`) to match `eta_local` from the server and prevent text flicker on poll cycles.
 
-**MapPickerActivity WebView:** Blocks all non-`http(s)` URL schemes in `shouldOverrideUrlLoading` to prevent Yandex Maps' `intent://` redirects from crashing the WebView. Stop selection is detected via URL pattern `stops/(?:stop__)?(\d+)` in `doUpdateVisitedHistory`.
+**MapPickerActivity WebView:** Blocks all non-`http(s)` URL schemes in `shouldOverrideUrlLoading` to prevent Yandex Maps' `intent://` redirects from crashing the WebView. Stop selection is detected via URL pattern `stops/(?:stop__)?(\d+)` in `doUpdateVisitedHistory`. The top bar and bottom confirm panel are laid out outside the WebView (vertical `LinearLayout`) so the Yandex Maps search field is not obscured.
 
 **ETA color scheme** (used in both `ArrivalAdapter` and `PollService.etaColor()`):
 - `null` / unknown → grey `#8A8A9A`
