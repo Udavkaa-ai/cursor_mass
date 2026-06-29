@@ -1,5 +1,6 @@
 package ru.buswidget.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
@@ -11,6 +12,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.buswidget.ArrivalsActivity
 import ru.buswidget.R
 import ru.buswidget.data.Config
 import ru.buswidget.data.StopStorage
@@ -48,6 +50,19 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
         val distText = if (nearby.distanceMeters < 1000) "${nearby.distanceMeters}м" else "%.1fкм".format(distKm)
         rv.setTextViewText(R.id.tw_stop, nearby.stop.name)
         rv.setTextViewText(R.id.tw_distance, distText)
+
+        // Add click listener to open ArrivalsActivity
+        val intent = Intent(ctx, ArrivalsActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(ArrivalsActivity.EXTRA_STOP_ID, nearby.stop.id)
+            putExtra(ArrivalsActivity.EXTRA_STOP_NAME, nearby.stop.name)
+            putExtra(ArrivalsActivity.EXTRA_ROUTES, nearby.stop.routes)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            ctx, widgetId + 50_000, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        rv.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
         Thread {
             try {
