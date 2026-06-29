@@ -1,6 +1,13 @@
 let map, stopMarker, distanceCircle;
 let mapReady = false;
 
+// Buffer the latest calls that arrive before the Yandex API has finished
+// loading, then replay them once the map is ready. Without this, the first
+// initMap()/updateDistance() (fired ~500ms after page load) is silently
+// dropped if the API is still loading, leaving a blank map forever.
+let pendingInit = null;     // {lat, lon, stopName}
+let pendingDistance = null; // {etaSeconds, etaText}
+
 ymaps.ready(function() {
     map = new ymaps.Map('map', {
         center: [55.7558, 37.6173],
@@ -8,10 +15,22 @@ ymaps.ready(function() {
         controls: []
     });
     mapReady = true;
+
+    if (pendingInit) {
+        initMap(pendingInit.lat, pendingInit.lon, pendingInit.stopName);
+        pendingInit = null;
+    }
+    if (pendingDistance) {
+        updateDistance(pendingDistance.etaSeconds, pendingDistance.etaText);
+        pendingDistance = null;
+    }
 });
 
 function initMap(lat, lon, stopName) {
-    if (!mapReady) return;
+    if (!mapReady) {
+        pendingInit = { lat: lat, lon: lon, stopName: stopName };
+        return;
+    }
 
     if (stopMarker) {
         map.geoObjects.remove(stopMarker);
@@ -32,7 +51,10 @@ function initMap(lat, lon, stopName) {
 }
 
 function updateDistance(etaSeconds, etaText) {
-    if (!mapReady || !stopMarker) return;
+    if (!mapReady || !stopMarker) {
+        pendingDistance = { etaSeconds: etaSeconds, etaText: etaText };
+        return;
+    }
 
     const busSpeedMps = 8.3;
     const busDistanceMeters = Math.max(0, Math.round(etaSeconds * busSpeedMps));

@@ -8,8 +8,9 @@ import android.content.Intent
 import android.location.Location
 import android.view.View
 import android.widget.RemoteViews
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import org.json.JSONArray
 import org.json.JSONObject
 import ru.buswidget.ArrivalsActivity
@@ -24,23 +25,55 @@ import java.net.URLEncoder
 class BusWidgetProviderAuto : AppWidgetProvider() {
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
+        val client = LocationServices.getFusedLocationProviderClient(ctx)
         appWidgetIds.forEach { widgetId ->
             try {
-                // Try lastLocation first (fast cache)
-                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                    if (location != null) {
-                        onLocationReceived(ctx, awm, widgetId, location)
+                // lastLocation returns null from a background widget update when no
+                // foreground app has requested location recently. Try it first (fast),
+                // and if it's null actively request a fresh fix via getCurrentLocation().
+                client.lastLocation.addOnSuccessListener { cached: Location? ->
+                    if (cached != null) {
+                        cacheLocation(ctx, cached)
+                        onLocationReceived(ctx, awm, widgetId, cached)
                     } else {
-                        // lastLocation failed, show error
-                        showNoLocation(ctx, awm, widgetId)
+                        requestFreshLocation(ctx, awm, widgetId)
                     }
                 }.addOnFailureListener {
-                    showNoLocation(ctx, awm, widgetId)
+                    requestFreshLocation(ctx, awm, widgetId)
                 }
             } catch (e: SecurityException) {
                 showNoLocation(ctx, awm, widgetId)
             }
+        }
+    }
+
+    private fun requestFreshLocation(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
+        val client = LocationServices.getFusedLocationProviderClient(ctx)
+        try {
+            client.getCurrentLocation(
+                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                CancellationTokenSource().token
+            ).addOnSuccessListener { fresh: Location? ->
+                if (fresh != null) {
+                    cacheLocation(ctx, fresh)
+                    onLocationReceived(ctx, awm, widgetId, fresh)
+                } else {
+                    useCachedOrFail(ctx, awm, widgetId)
+                }
+            }.addOnFailureListener {
+                useCachedOrFail(ctx, awm, widgetId)
+            }
+        } catch (e: SecurityException) {
+            showNoLocation(ctx, awm, widgetId)
+        }
+    }
+
+    private fun useCachedOrFail(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
+        val cached = loadCachedLocation(ctx)
+        if (cached != null) {
+            onLocationReceived(ctx, awm, widgetId, cached)
+        } else {
+            showNoLocation(ctx, awm, widgetId)
         }
     }
 
@@ -51,6 +84,20 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
         } else {
             showNoStops(ctx, awm, widgetId)
         }
+    }
+
+    private fun cacheLocation(ctx: Context, location: Location) {
+        ctx.getSharedPreferences("bw_widget", Context.MODE_PRIVATE).edit()
+            .putString("last_lat", location.latitude.toString())
+            .putString("last_lon", location.longitude.toString())
+            .apply()
+    }
+
+    private fun loadCachedLocation(ctx: Context): Location? {
+        val p = ctx.getSharedPreferences("bw_widget", Context.MODE_PRIVATE)
+        val lat = p.getString("last_lat", null)?.toDoubleOrNull() ?: return null
+        val lon = p.getString("last_lon", null)?.toDoubleOrNull() ?: return null
+        return Location("cache").apply { latitude = lat; longitude = lon }
     }
 
     private fun updateWidget(ctx: Context, awm: AppWidgetManager, widgetId: Int, nearby: ru.buswidget.data.NearbyStop) {

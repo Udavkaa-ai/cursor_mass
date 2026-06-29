@@ -159,12 +159,19 @@ class ArrivalsActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
+            // file:// base loading https Yandex resources counts as mixed content
+            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         }
         mapView.webViewClient = WebViewClient()
 
         val apiKey = BuildConfig.MAPKIT_API_KEY
         val mapHtml = loadAssetWithApiKey(apiKey)
-        mapView.loadData(mapHtml, "text/html", "utf-8")
+        // Base URL must point at the assets dir so the relative <script src="map.js">
+        // inside map.html resolves. Plain loadData() has no base URL → map.js never
+        // loads → blank white map.
+        mapView.loadDataWithBaseURL(
+            "file:///android_asset/", mapHtml, "text/html", "utf-8", null
+        )
 
         loadStopCoordinates()
 

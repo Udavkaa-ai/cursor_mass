@@ -177,6 +177,12 @@ class MainActivity : AppCompatActivity() {
                     toast("Не удалось определить геолокацию")
                     return@addOnSuccessListener
                 }
+                // Cache for the auto-widget, which can't reliably read location in
+                // the background — this gives it a fresh fallback fix.
+                getSharedPreferences("bw_widget", MODE_PRIVATE).edit()
+                    .putString("last_lat", location.latitude.toString())
+                    .putString("last_lon", location.longitude.toString())
+                    .apply()
                 val nearby = StopStorage.findNearby(this, location.latitude, location.longitude)
                 if (nearby.isEmpty()) {
                     toast("Нет остановок с координатами поблизости")
