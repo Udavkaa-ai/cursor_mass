@@ -25,6 +25,7 @@ import ru.buswidget.data.StopStorage
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import ru.buswidget.BuildConfig
 
 class ArrivalsActivity : AppCompatActivity() {
 
@@ -160,7 +161,11 @@ class ArrivalsActivity : AppCompatActivity() {
             databaseEnabled = true
         }
         mapView.webViewClient = WebViewClient()
-        mapView.loadUrl("file:///android_asset/map.html")
+
+        val apiKey = BuildConfig.MAPKIT_API_KEY
+        val mapHtml = loadAssetWithApiKey(apiKey)
+        mapView.loadData(mapHtml, "text/html", "utf-8")
+
         loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
@@ -273,6 +278,11 @@ class ArrivalsActivity : AppCompatActivity() {
         if (!mapInitialized) return
         val escapedText = etaText.replace("'", "\\'")
         mapView.evaluateJavascript("updateDistance($etaSeconds, '$escapedText')") { }
+    }
+
+    private fun loadAssetWithApiKey(apiKey: String): String {
+        val html = assets.open("map.html").bufferedReader().readText()
+        return html.replace("YOUR_YANDEX_API_KEY", apiKey)
     }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
