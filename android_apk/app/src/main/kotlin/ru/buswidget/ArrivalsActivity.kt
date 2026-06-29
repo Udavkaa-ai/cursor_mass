@@ -10,18 +10,14 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-// TODO: MapKit imports disabled - requires authenticated Yandex repository access
-// import com.yandex.mapkit.MapKit
-// import com.yandex.mapkit.geometry.Circle
-// import com.yandex.mapkit.geometry.Point
-// import com.yandex.mapkit.map.CameraPosition
-// import com.yandex.mapkit.mapview.MapView
 import org.json.JSONArray
 import org.json.JSONObject
 import ru.buswidget.data.Config
@@ -48,8 +44,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
-    // TODO: MapView disabled - requires authenticated Yandex repository access
-    // private lateinit var mapView: MapView
+    private lateinit var mapView: WebView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -95,8 +90,7 @@ class ArrivalsActivity : AppCompatActivity() {
         val firstEta = live.firstOrNull()
         val now = System.currentTimeMillis()
         if (now - lastMapUpdateTime > 100) {
-            // TODO: MapKit distance update disabled
-            // updateMapDistance(firstEta?.etaSeconds ?: 0)
+            updateMapDistance(firstEta?.etaSeconds ?: 0, firstEta?.etaLocal ?: "—")
             lastMapUpdateTime = now
         }
         checkAndNotifyIfBusNear(firstEta)
@@ -159,10 +153,15 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
 
-        // TODO: MapKit initialization disabled
-        // mapView = findViewById(R.id.mapView)
-        // setupMap()
-        // loadStopCoordinates()
+        mapView = findViewById(R.id.mapView)
+        mapView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+        }
+        mapView.webViewClient = WebViewClient()
+        mapView.loadUrl("file:///android_asset/map.html")
+        loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
 
@@ -172,8 +171,6 @@ class ArrivalsActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
-        // TODO: MapKit cleanup disabled
-        // mapView.onDestroy()
     }
 
     private fun startSession() {
@@ -244,8 +241,10 @@ class ArrivalsActivity : AppCompatActivity() {
                         }
                     }
                     adapter.submit(arrivals)
-                    // TODO: MapKit distance update disabled
-                    // updateMapDistance(arrivals.firstOrNull()?.etaSeconds ?: 0)
+                    val firstEta = arrivals.firstOrNull()
+                    if (firstEta != null) {
+                        updateMapDistance(firstEta.etaSeconds ?: 0, firstEta.etaLocal)
+                    }
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())
                     tvStatus.text = "обновлено $t"
@@ -256,67 +255,25 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
-    // TODO: MapKit methods disabled - requires authenticated Yandex repository access
-    // private fun setupMap() {
-    //     mapView.map.apply {
-    //         isZoomGesturesEnabled = false
-    //         isScrollGesturesEnabled = false
-    //         isRotateGesturesEnabled = false
-    //         isTiltGesturesEnabled = false
-    //     }
-    // }
-    //
-    // private fun loadStopCoordinates() {
-    //     val stop = StopStorage.load(this).find { it.id == stopId } ?: return
-    //     if (stop.lat == 0.0 || stop.lon == 0.0) return
-    //     stopLat = stop.lat
-    //     stopLon = stop.lon
-    //     handler.postDelayed({
-    //         if (!mapInitialized) {
-    //             mapInitialized = true
-    //             val cameraPosition = CameraPosition(
-    //                 Point(stopLat, stopLon),
-    //                 16f,
-    //                 0f,
-    //                 0f
-    //             )
-    //             mapView.map.move(cameraPosition)
-    //             addStopMarker()
-    //         }
-    //     }, 500)
-    // }
-    //
-    // private fun addStopMarker() {
-    //     val mapObjects = mapView.map.mapObjects
-    //     val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), 16f))
-    //     circle.setFillColor(0xFF2ED87A.toInt())
-    //     circle.setStrokeColor(0xFF2ED87A.toInt())
-    //     circle.setStrokeWidth(2f)
-    // }
-    //
-    // private fun updateMapDistance(etaSeconds: Int) {
-    //     if (!mapInitialized || etaSeconds < 0) return
-    //
-    //     val busSpeedMps = 8.3
-    //     val busDistanceMeters = (etaSeconds * busSpeedMps).toInt().coerceAtLeast(0).toFloat()
-    //
-    //     val circleColor = when {
-    //         etaSeconds <= 0 -> 0xFFE53040.toInt()
-    //         etaSeconds < 300 -> 0xFFE53040.toInt()
-    //         etaSeconds < 480 -> 0xFFFF8C00.toInt()
-    //         else -> 0xFF2ED87A.toInt()
-    //     }
-    //
-    //     val mapObjects = mapView.map.mapObjects
-    //     distanceCircle?.let { mapObjects.remove(it) }
-    //
-    //     val fillColor = circleColor and 0x00FFFFFF or 0x50000000
-    //     val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), busDistanceMeters))
-    //     circle.setFillColor(fillColor)
-    //     circle.setStrokeColor(circleColor)
-    //     circle.setStrokeWidth(2f)
-    //     distanceCircle = circle
-    // }
+    private fun loadStopCoordinates() {
+        val stop = StopStorage.load(this).find { it.id == stopId } ?: return
+        if (stop.lat == 0.0 || stop.lon == 0.0) return
+        stopLat = stop.lat
+        stopLon = stop.lon
+        handler.postDelayed({
+            if (!mapInitialized) {
+                mapInitialized = true
+                val escapedName = stopName.replace("'", "\\'")
+                mapView.evaluateJavascript("initMap($stopLat, $stopLon, '$escapedName')") { }
+            }
+        }, 500)
+    }
+
+    private fun updateMapDistance(etaSeconds: Int, etaText: String) {
+        if (!mapInitialized) return
+        val escapedText = etaText.replace("'", "\\'")
+        mapView.evaluateJavascript("updateDistance($etaSeconds, '$escapedText')") { }
+    }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
         arr ?: return emptyList()
