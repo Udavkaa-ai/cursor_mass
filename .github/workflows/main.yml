@@ -13,6 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    environment: default
 
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +41,8 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
         working-directory: android_apk
+        env:
+          MAPKIT_API_KEY: ${{ secrets.MAPKIT_API_KEY }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
