@@ -126,8 +126,8 @@
 
     </LinearLayout>
 
-    <!-- Interactive map with distance circle (Yandex MapKit) -->
-    <com.yandex.mapkit.mapview.MapView
+    <!-- Interactive map with distance circle (Yandex Maps WebView) -->
+    <android.webkit.WebView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="220dp"
