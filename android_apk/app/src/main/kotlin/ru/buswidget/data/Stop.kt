@@ -12,6 +12,11 @@ data class Stop(
     val lon: Double = 0.0,
 )
 
+data class NearbyStop(
+    val stop: Stop,
+    val distanceMeters: Int,
+)
+
 object StopStorage {
     private const val PREFS     = "bw"
     private const val KEY_STOPS = "stops_v1"
@@ -36,6 +41,28 @@ object StopStorage {
 
     fun update(ctx: Context, stop: Stop) =
         save(ctx, load(ctx).map { if (it.id == stop.id) stop else it })
+
+    fun findNearby(ctx: Context, userLat: Double, userLon: Double, maxCount: Int = 5): List<NearbyStop> {
+        return load(ctx)
+            .filter { it.lat != 0.0 && it.lon != 0.0 }
+            .map { stop ->
+                val distanceMeters = distanceBetween(userLat, userLon, stop.lat, stop.lon)
+                NearbyStop(stop, distanceMeters)
+            }
+            .sortedBy { it.distanceMeters }
+            .take(maxCount)
+    }
+
+    private fun distanceBetween(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Int {
+        val R = 6371_000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return (R * c).toInt()
+    }
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
