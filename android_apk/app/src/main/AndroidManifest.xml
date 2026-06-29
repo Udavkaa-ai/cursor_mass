@@ -48,6 +48,11 @@
             android:name=".MapPickerActivity"
             android:exported="false"/>
 
+        <!-- About screen -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"/>
+
         <!-- Widget configuration screen -->
         <activity
             android:name=".widget.WidgetConfigActivity"

@@ -70,10 +70,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMenu() {
         AlertDialog.Builder(this)
-            .setItems(arrayOf("Сохранить бэкап", "Восстановить из файла")) { _, which ->
+            .setItems(arrayOf("Сохранить бэкап", "Восстановить из файла", "О приложении")) { _, which ->
                 when (which) {
                     0 -> createDocumentLauncher.launch("buswidget_backup.json")
                     1 -> openDocumentLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                    2 -> startActivity(Intent(this, AboutActivity::class.java))
                 }
             }
             .show()
