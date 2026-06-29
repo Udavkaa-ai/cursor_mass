@@ -18,11 +18,6 @@
         android:supportsRtl="true"
         android:name=".App">
 
-        <!-- Yandex MapKit API key -->
-        <meta-data
-            android:name="com.yandex.android.maps.api_key"
-            android:value="YOUR_MAPKIT_API_KEY"/>
-
         <!-- Main stops list screen -->
         <activity
             android:name=".MainActivity"

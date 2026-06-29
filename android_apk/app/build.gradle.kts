@@ -13,6 +13,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        val mapkitApiKey = System.getenv("MAPKIT_API_KEY") ?: "MAPKIT_API_KEY_PLACEHOLDER"
+        buildConfigField("String", "MAPKIT_API_KEY", "\"$mapkitApiKey\"")
     }
 
     buildTypes {
