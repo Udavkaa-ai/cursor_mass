@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "ru.buswidget"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -45,5 +45,6 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.google.android.gms:play-services-location:21.1.0")
-    implementation("com.yandex.android:maps.mobile:4.11.0-full")
+    // TODO: MapKit requires authenticated Yandex repository credentials - see git history for details
+    // implementation("com.yandex.android:maps.mobile:4.11.0-full")
 }
