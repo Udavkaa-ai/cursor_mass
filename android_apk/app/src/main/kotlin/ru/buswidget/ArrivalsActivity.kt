@@ -164,14 +164,14 @@ class ArrivalsActivity : AppCompatActivity() {
         startSession()
     }
 
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
+    override fun onStart() {
+        super.onStart()
+        mapView.onStart()
     }
 
-    override fun onPause() {
-        mapView.onPause()
-        super.onPause()
+    override fun onStop() {
+        mapView.onStop()
+        super.onStop()
     }
 
     override fun onDestroy() {
@@ -290,12 +290,10 @@ class ArrivalsActivity : AppCompatActivity() {
 
     private fun addStopMarker() {
         val mapObjects = mapView.map.mapObjects
-        mapObjects.addCircle(
-            Circle(Point(stopLat, stopLon), 16f),
-            0xFF2ED87A.toInt(),
-            0xFF2ED87A.toInt(),
-            2f
-        )
+        val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), 16f))
+        circle.setFillColor(0xFF2ED87A.toInt())
+        circle.setStrokeColor(0xFF2ED87A.toInt())
+        circle.setStrokeWidth(2f)
     }
 
     private fun updateMapDistance(etaSeconds: Int) {
@@ -315,12 +313,11 @@ class ArrivalsActivity : AppCompatActivity() {
         distanceCircle?.let { mapObjects.remove(it) }
 
         val fillColor = circleColor and 0x00FFFFFF or 0x50000000
-        distanceCircle = mapObjects.addCircle(
-            Circle(Point(stopLat, stopLon), busDistanceMeters),
-            fillColor,
-            circleColor,
-            2f
-        )
+        val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), busDistanceMeters))
+        circle.setFillColor(fillColor)
+        circle.setStrokeColor(circleColor)
+        circle.setStrokeWidth(2f)
+        distanceCircle = circle
     }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
