@@ -38,19 +38,8 @@ jobs:
         run: echo "sdk.dir=$ANDROID_HOME" > android_apk/local.properties
 
       - name: Build debug APK
-        run: gradle -version && gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace
         working-directory: android_apk
-        continue-on-error: true
-
-      - name: Check APK exists
-        run: |
-          if [ -f android_apk/app/build/outputs/apk/debug/app-debug.apk ]; then
-            ls -lh android_apk/app/build/outputs/apk/debug/app-debug.apk
-            echo "✅ APK file found!"
-          else
-            echo "❌ APK file NOT found!"
-            find android_apk/app/build -name "*.apk" 2>/dev/null || echo "No APK files found anywhere"
-          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
