@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { height: 100vh; background: #0f0f10; }
+        #map { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        let map = null;
+        let stopMarker = null;
+        let distanceCircle = null;
+
+        function initMap(lat, lon, stopName) {
+            if (map === null) {
+                map = L.map('map', {
+                    center: [lat, lon],
+                    zoom: 16,
+                    attributionControl: false,
+                    zoomControl: false
+                });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    minZoom: 1,
+                    maxZoom: 19
+                }).addTo(map);
+
+                stopMarker = L.circleMarker([lat, lon], {
+                    radius: 8,
+                    fillColor: '#2ED87A',
+                    color: '#2ED87A',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map);
+            }
+            map.setView([lat, lon], 16);
+        }
+
+        function updateDistance(etaSeconds) {
+            if (map === null || !stopMarker) return;
+
+            const busSpeedMps = 8.3;
+            const busDistanceMeters = Math.max(0, Math.round(etaSeconds * busSpeedMps));
+
+            if (distanceCircle) {
+                map.removeLayer(distanceCircle);
+            }
+
+            let circleColor = '#4A90E2';
+            let circleOpacity = 0.5;
+
+            if (etaSeconds <= 0) {
+                circleColor = '#E53040';
+                circleOpacity = 0.7;
+            } else if (etaSeconds < 300) {
+                circleColor = '#E53040';
+                circleOpacity = 0.6;
+            } else if (etaSeconds < 480) {
+                circleColor = '#FF8C00';
+                circleOpacity = 0.5;
+            } else {
+                circleColor = '#2ED87A';
+                circleOpacity = 0.4;
+            }
+
+            const latlng = stopMarker.getLatLng();
+            distanceCircle = L.circle([latlng.lat, latlng.lng], {
+                radius: busDistanceMeters,
+                color: circleColor,
+                weight: 2,
+                opacity: 0.7,
+                fillColor: circleColor,
+                fillOpacity: circleOpacity
+            }).addTo(map);
+        }
+    </script>
+</body>
+</html>

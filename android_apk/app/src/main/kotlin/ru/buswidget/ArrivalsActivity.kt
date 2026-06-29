@@ -2,6 +2,7 @@ package ru.buswidget
 
 import android.media.ToneGenerator
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,7 +10,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
+import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -42,8 +43,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
-    private lateinit var ivMap:      ImageView
-    private lateinit var mapDistance: MapDistanceView
+    private lateinit var webViewMap: WebView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -56,7 +56,10 @@ class ArrivalsActivity : AppCompatActivity() {
     private var lastFetchAt    = 0L
     private var lastFetched:   List<Arrival> = emptyList()
     private var lastNotifiedRoute = ""
-    private var lastMapUpdateTime = 0L  // throttle map updates
+    private var lastMapUpdateTime = 0L
+    private var stopLat = 0.0
+    private var stopLon = 0.0
+    private var mapInitialized = false
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -83,8 +86,8 @@ class ArrivalsActivity : AppCompatActivity() {
         adapter.submit(live)
         val firstEta = live.firstOrNull()
         val now = System.currentTimeMillis()
-        if (now - lastMapUpdateTime > 100) {  // throttle map updates to 10Hz
-            mapDistance.setEta(firstEta?.etaSeconds)
+        if (now - lastMapUpdateTime > 100) {
+            updateMapDistance(firstEta?.etaSeconds ?: 0)
             lastMapUpdateTime = now
         }
         checkAndNotifyIfBusNear(firstEta)
@@ -147,10 +150,9 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
 
-        ivMap = findViewById(R.id.ivMap)
-        ivMap.clipToOutline = true
-        mapDistance = findViewById(R.id.mapDistance)
-        loadStopMap()
+        webViewMap = findViewById(R.id.webViewMap)
+        setupWebView()
+        loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
 
@@ -230,7 +232,7 @@ class ArrivalsActivity : AppCompatActivity() {
                         }
                     }
                     adapter.submit(arrivals)
-                    mapDistance.setEta(arrivals.firstOrNull()?.etaSeconds)
+                    updateMapDistance(arrivals.firstOrNull()?.etaSeconds ?: 0)
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())
                     tvStatus.text = "обновлено $t"
@@ -241,20 +243,33 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun loadStopMap() {
+    private fun setupWebView() {
+        webViewMap.settings.apply {
+            javaScriptEnabled = true
+            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        }
+        webViewMap.loadUrl("file:///android_asset/map.html")
+    }
+
+    private fun loadStopCoordinates() {
         val stop = StopStorage.load(this).find { it.id == stopId } ?: return
         if (stop.lat == 0.0 || stop.lon == 0.0) return
-        ivMap.visibility = View.VISIBLE
-        val url = "https://static-maps.yandex.ru/1.x/?ll=${stop.lon},${stop.lat}&z=16&size=600,300&l=map&pt=${stop.lon},${stop.lat},pm2rdm"
-        Thread {
-            try {
-                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-                conn.connectTimeout = 8_000; conn.readTimeout = 8_000; conn.connect()
-                val bmp = android.graphics.BitmapFactory.decodeStream(conn.inputStream)
-                conn.disconnect()
-                if (bmp != null) runOnUiThread { ivMap.setImageBitmap(bmp) }
-            } catch (_: Exception) { runOnUiThread { ivMap.visibility = View.GONE } }
-        }.start()
+        stopLat = stop.lat
+        stopLon = stop.lon
+        handler.postDelayed({
+            if (!mapInitialized) {
+                mapInitialized = true
+                val js = "javascript:initMap($stopLat, $stopLon, '${stopName.replace("'", "\\'")}')"
+                webViewMap.loadUrl(js)
+            }
+        }, 500)
+    }
+
+    private fun updateMapDistance(etaSeconds: Int) {
+        if (mapInitialized && etaSeconds >= 0) {
+            val js = "javascript:updateDistance($etaSeconds)"
+            webViewMap.loadUrl(js)
+        }
     }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {

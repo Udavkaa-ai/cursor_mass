@@ -126,31 +126,17 @@
 
     </LinearLayout>
 
-    <!-- Distance visualization (shows bus distance circle) -->
-    <ru.buswidget.MapDistanceView
-        android:id="@+id/mapDistance"
+    <!-- Interactive map with distance circle (Leaflet + OpenStreetMap) -->
+    <WebView
+        android:id="@+id/webViewMap"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="220dp"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="6dp"
         android:background="@drawable/bg_map_card"
         android:visibility="visible"/>
-
-    <!-- Map preview (fallback Yandex map image) -->
-    <ImageView
-        android:id="@+id/ivMap"
-        android:layout_width="match_parent"
-        android:layout_height="130dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="2dp"
-        android:scaleType="centerCrop"
-        android:background="@drawable/bg_map_card"
-        android:clipToOutline="true"
-        android:visibility="gone"/>
 
     <!-- Thin progress bar -->
     <ProgressBar
