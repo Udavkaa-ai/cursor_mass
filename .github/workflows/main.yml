@@ -37,6 +37,11 @@ jobs:
       - name: Set sdk.dir
         run: echo "sdk.dir=$ANDROID_HOME" > android_apk/local.properties
 
+      - name: Install Gradle
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gradle
+
       - name: Generate Gradle wrapper
         run: gradle wrapper --gradle-version=8.7 --distribution-type=bin
         working-directory: android_apk
