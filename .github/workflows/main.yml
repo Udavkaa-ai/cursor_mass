@@ -31,7 +31,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('android_apk/**/*.gradle.kts') }}
+          key: gradle-v1-${{ hashFiles('android_apk/**/*.gradle.kts') }}
           restore-keys: gradle-
 
       - name: Set sdk.dir
