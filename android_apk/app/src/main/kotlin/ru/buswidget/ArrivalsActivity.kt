@@ -16,11 +16,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.yandex.mapkit.MapKit
-import com.yandex.mapkit.geometry.Circle
-import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.CameraPosition
-import com.yandex.mapkit.mapview.MapView
+// TODO: MapKit imports disabled - requires authenticated Yandex repository access
+// import com.yandex.mapkit.MapKit
+// import com.yandex.mapkit.geometry.Circle
+// import com.yandex.mapkit.geometry.Point
+// import com.yandex.mapkit.map.CameraPosition
+// import com.yandex.mapkit.mapview.MapView
 import org.json.JSONArray
 import org.json.JSONObject
 import ru.buswidget.data.Config
@@ -47,7 +48,8 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
-    private lateinit var mapView: MapView
+    // TODO: MapView disabled - requires authenticated Yandex repository access
+    // private lateinit var mapView: MapView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -64,7 +66,8 @@ class ArrivalsActivity : AppCompatActivity() {
     private var stopLat = 0.0
     private var stopLon = 0.0
     private var mapInitialized = false
-    private var distanceCircle: com.yandex.mapkit.map.CircleMapObject? = null
+    // TODO: MapKit distance circle disabled
+    // private var distanceCircle: com.yandex.mapkit.map.CircleMapObject? = null
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -92,7 +95,8 @@ class ArrivalsActivity : AppCompatActivity() {
         val firstEta = live.firstOrNull()
         val now = System.currentTimeMillis()
         if (now - lastMapUpdateTime > 100) {
-            updateMapDistance(firstEta?.etaSeconds ?: 0)
+            // TODO: MapKit distance update disabled
+            // updateMapDistance(firstEta?.etaSeconds ?: 0)
             lastMapUpdateTime = now
         }
         checkAndNotifyIfBusNear(firstEta)
@@ -155,9 +159,10 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
 
-        mapView = findViewById(R.id.mapView)
-        setupMap()
-        loadStopCoordinates()
+        // TODO: MapKit initialization disabled
+        // mapView = findViewById(R.id.mapView)
+        // setupMap()
+        // loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
 
@@ -167,6 +172,8 @@ class ArrivalsActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        // TODO: MapKit cleanup disabled
+        // mapView.onDestroy()
     }
 
     private fun startSession() {
@@ -237,7 +244,8 @@ class ArrivalsActivity : AppCompatActivity() {
                         }
                     }
                     adapter.submit(arrivals)
-                    updateMapDistance(arrivals.firstOrNull()?.etaSeconds ?: 0)
+                    // TODO: MapKit distance update disabled
+                    // updateMapDistance(arrivals.firstOrNull()?.etaSeconds ?: 0)
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())
                     tvStatus.text = "обновлено $t"
@@ -248,66 +256,67 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun setupMap() {
-        mapView.map.apply {
-            isZoomGesturesEnabled = false
-            isScrollGesturesEnabled = false
-            isRotateGesturesEnabled = false
-            isTiltGesturesEnabled = false
-        }
-    }
-
-    private fun loadStopCoordinates() {
-        val stop = StopStorage.load(this).find { it.id == stopId } ?: return
-        if (stop.lat == 0.0 || stop.lon == 0.0) return
-        stopLat = stop.lat
-        stopLon = stop.lon
-        handler.postDelayed({
-            if (!mapInitialized) {
-                mapInitialized = true
-                val cameraPosition = CameraPosition(
-                    Point(stopLat, stopLon),
-                    16f,
-                    0f,
-                    0f
-                )
-                mapView.map.move(cameraPosition)
-                addStopMarker()
-            }
-        }, 500)
-    }
-
-    private fun addStopMarker() {
-        val mapObjects = mapView.map.mapObjects
-        val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), 16f))
-        circle.setFillColor(0xFF2ED87A.toInt())
-        circle.setStrokeColor(0xFF2ED87A.toInt())
-        circle.setStrokeWidth(2f)
-    }
-
-    private fun updateMapDistance(etaSeconds: Int) {
-        if (!mapInitialized || etaSeconds < 0) return
-
-        val busSpeedMps = 8.3
-        val busDistanceMeters = (etaSeconds * busSpeedMps).toInt().coerceAtLeast(0).toFloat()
-
-        val circleColor = when {
-            etaSeconds <= 0 -> 0xFFE53040.toInt()
-            etaSeconds < 300 -> 0xFFE53040.toInt()
-            etaSeconds < 480 -> 0xFFFF8C00.toInt()
-            else -> 0xFF2ED87A.toInt()
-        }
-
-        val mapObjects = mapView.map.mapObjects
-        distanceCircle?.let { mapObjects.remove(it) }
-
-        val fillColor = circleColor and 0x00FFFFFF or 0x50000000
-        val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), busDistanceMeters))
-        circle.setFillColor(fillColor)
-        circle.setStrokeColor(circleColor)
-        circle.setStrokeWidth(2f)
-        distanceCircle = circle
-    }
+    // TODO: MapKit methods disabled - requires authenticated Yandex repository access
+    // private fun setupMap() {
+    //     mapView.map.apply {
+    //         isZoomGesturesEnabled = false
+    //         isScrollGesturesEnabled = false
+    //         isRotateGesturesEnabled = false
+    //         isTiltGesturesEnabled = false
+    //     }
+    // }
+    //
+    // private fun loadStopCoordinates() {
+    //     val stop = StopStorage.load(this).find { it.id == stopId } ?: return
+    //     if (stop.lat == 0.0 || stop.lon == 0.0) return
+    //     stopLat = stop.lat
+    //     stopLon = stop.lon
+    //     handler.postDelayed({
+    //         if (!mapInitialized) {
+    //             mapInitialized = true
+    //             val cameraPosition = CameraPosition(
+    //                 Point(stopLat, stopLon),
+    //                 16f,
+    //                 0f,
+    //                 0f
+    //             )
+    //             mapView.map.move(cameraPosition)
+    //             addStopMarker()
+    //         }
+    //     }, 500)
+    // }
+    //
+    // private fun addStopMarker() {
+    //     val mapObjects = mapView.map.mapObjects
+    //     val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), 16f))
+    //     circle.setFillColor(0xFF2ED87A.toInt())
+    //     circle.setStrokeColor(0xFF2ED87A.toInt())
+    //     circle.setStrokeWidth(2f)
+    // }
+    //
+    // private fun updateMapDistance(etaSeconds: Int) {
+    //     if (!mapInitialized || etaSeconds < 0) return
+    //
+    //     val busSpeedMps = 8.3
+    //     val busDistanceMeters = (etaSeconds * busSpeedMps).toInt().coerceAtLeast(0).toFloat()
+    //
+    //     val circleColor = when {
+    //         etaSeconds <= 0 -> 0xFFE53040.toInt()
+    //         etaSeconds < 300 -> 0xFFE53040.toInt()
+    //         etaSeconds < 480 -> 0xFFFF8C00.toInt()
+    //         else -> 0xFF2ED87A.toInt()
+    //     }
+    //
+    //     val mapObjects = mapView.map.mapObjects
+    //     distanceCircle?.let { mapObjects.remove(it) }
+    //
+    //     val fillColor = circleColor and 0x00FFFFFF or 0x50000000
+    //     val circle = mapObjects.addCircle(Circle(Point(stopLat, stopLon), busDistanceMeters))
+    //     circle.setFillColor(fillColor)
+    //     circle.setStrokeColor(circleColor)
+    //     circle.setStrokeWidth(2f)
+    //     distanceCircle = circle
+    // }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
         arr ?: return emptyList()
