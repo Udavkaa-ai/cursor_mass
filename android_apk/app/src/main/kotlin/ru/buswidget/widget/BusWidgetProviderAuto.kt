@@ -13,6 +13,7 @@ import com.google.android.gms.location.LocationServices
 import org.json.JSONArray
 import org.json.JSONObject
 import ru.buswidget.ArrivalsActivity
+import ru.buswidget.MainActivity
 import ru.buswidget.R
 import ru.buswidget.data.Config
 import ru.buswidget.data.StopStorage
@@ -26,21 +27,29 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
         appWidgetIds.forEach { widgetId ->
             try {
+                // Try lastLocation first (fast cache)
                 fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     if (location != null) {
-                        val nearby = StopStorage.findNearby(ctx, location.latitude, location.longitude, 1)
-                        if (nearby.isNotEmpty()) {
-                            updateWidget(ctx, awm, widgetId, nearby[0])
-                        } else {
-                            showNoStops(ctx, awm, widgetId)
-                        }
+                        onLocationReceived(ctx, awm, widgetId, location)
                     } else {
+                        // lastLocation failed, show error
                         showNoLocation(ctx, awm, widgetId)
                     }
+                }.addOnFailureListener {
+                    showNoLocation(ctx, awm, widgetId)
                 }
             } catch (e: SecurityException) {
                 showNoLocation(ctx, awm, widgetId)
             }
+        }
+    }
+
+    private fun onLocationReceived(ctx: Context, awm: AppWidgetManager, widgetId: Int, location: Location) {
+        val nearby = StopStorage.findNearby(ctx, location.latitude, location.longitude, 1)
+        if (nearby.isNotEmpty()) {
+            updateWidget(ctx, awm, widgetId, nearby[0])
+        } else {
+            showNoStops(ctx, awm, widgetId)
         }
     }
 
@@ -105,7 +114,18 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
     private fun showNoLocation(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
         val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_auto)
         rv.setTextViewText(R.id.tw_stop, "Геолокация")
-        rv.setTextViewText(R.id.tw_distance, "нет данных")
+        rv.setTextViewText(R.id.tw_distance, "включите GPS")
+
+        // Add click to open app for permission grant
+        val intent = Intent(ctx, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            ctx, widgetId + 60_000, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        rv.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+
         awm.updateAppWidget(widgetId, rv)
     }
 
