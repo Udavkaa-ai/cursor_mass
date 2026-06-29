@@ -37,29 +37,14 @@ jobs:
       - name: Set sdk.dir
         run: echo "sdk.dir=$ANDROID_HOME" > android_apk/local.properties
 
-      - name: Make gradlew executable
-        run: chmod +x android_apk/gradlew
-
-      - name: Download gradle-wrapper.jar
+      - name: Install Gradle
         run: |
-          mkdir -p android_apk/gradle/wrapper
-          # Download gradle wrapper jar using Java built-in tools as curl might have SSL issues
-          cd android_apk
-          if [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-            ./gradlew --version || true
-          fi
+          apt-get update -qq
+          apt-get install -y gradle
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace
         working-directory: android_apk
-        continue-on-error: true
-
-      - name: Show build output if failed
-        if: failure()
-        run: |
-          echo "=== Build Error Output ===" && \
-          find android_apk/app/build -name "*.log" -type f -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || \
-          echo "No build logs found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
