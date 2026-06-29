@@ -37,14 +37,21 @@ jobs:
       - name: Set sdk.dir
         run: echo "sdk.dir=$ANDROID_HOME" > android_apk/local.properties
 
-      - name: Install Gradle
+      - name: Create Gradle wrapper
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gradle
-
-      - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version=8.7 --distribution-type=bin
-        working-directory: android_apk
+          cd android_apk
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version=8.7 --distribution-type=bin 2>&1 || {
+              # Fallback: download wrapper from gradle repository
+              mkdir -p gradle/wrapper
+              GRADLE_VERSION="8.7"
+              BASE_URL="https://raw.githubusercontent.com/gradle/gradle/v${GRADLE_VERSION}"
+              curl -s -o gradle/wrapper/gradle-wrapper.jar "${BASE_URL}/gradle/wrapper/gradle-wrapper.jar"
+              curl -s -o gradle/wrapper/gradle-wrapper.properties "${BASE_URL}/gradle/wrapper/gradle-wrapper.properties"
+              curl -s -o gradlew "${BASE_URL}/gradlew"
+              chmod +x gradlew
+            }
+          fi
 
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon
