@@ -38,6 +38,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
     private lateinit var ivMap:      ImageView
+    private lateinit var mapDistance: MapDistanceView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -73,6 +74,7 @@ class ArrivalsActivity : AppCompatActivity() {
                    etaSeconds = liveSecs)
         }
         adapter.submit(live)
+        mapDistance.setEta(live.firstOrNull()?.etaSeconds)
     }
 
     private fun formatEta(secs: Int): String = when {
@@ -106,6 +108,7 @@ class ArrivalsActivity : AppCompatActivity() {
 
         ivMap = findViewById(R.id.ivMap)
         ivMap.clipToOutline = true
+        mapDistance = findViewById(R.id.mapDistance)
         loadStopMap()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
@@ -184,6 +187,7 @@ class ArrivalsActivity : AppCompatActivity() {
                         }
                     }
                     adapter.submit(arrivals)
+                    mapDistance.setEta(arrivals.firstOrNull()?.etaSeconds)
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())
                     tvStatus.text = "обновлено $t"
