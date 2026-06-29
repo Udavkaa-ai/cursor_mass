@@ -29,7 +29,6 @@ open class BusWidgetProvider : AppWidgetProvider() {
             RowIds(R.id.row1, R.id.r1_route, R.id.r1_eta, R.id.r1_dir, R.id.r1_unit),
             RowIds(R.id.row2, R.id.r2_route, R.id.r2_eta, R.id.r2_dir, R.id.r2_unit),
             RowIds(R.id.row3, R.id.r3_route, R.id.r3_eta, R.id.r3_dir, R.id.r3_unit),
-            RowIds(R.id.row4, R.id.r4_route, R.id.r4_eta, R.id.r4_dir, R.id.r4_unit),
         )
 
         private fun layoutFor(type: String) = when (type) {
