@@ -1,13 +1,18 @@
 package ru.buswidget
 
+import android.media.ToneGenerator
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -50,6 +55,8 @@ class ArrivalsActivity : AppCompatActivity() {
     private var nextPoll       = 0
     private var lastFetchAt    = 0L
     private var lastFetched:   List<Arrival> = emptyList()
+    private var lastNotifiedRoute = ""
+    private var lastMapUpdateTime = 0L  // throttle map updates
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -74,7 +81,41 @@ class ArrivalsActivity : AppCompatActivity() {
                    etaSeconds = liveSecs)
         }
         adapter.submit(live)
-        mapDistance.setEta(live.firstOrNull()?.etaSeconds)
+        val firstEta = live.firstOrNull()
+        val now = System.currentTimeMillis()
+        if (now - lastMapUpdateTime > 100) {  // throttle map updates to 10Hz
+            mapDistance.setEta(firstEta?.etaSeconds)
+            lastMapUpdateTime = now
+        }
+        checkAndNotifyIfBusNear(firstEta)
+    }
+
+    private fun checkAndNotifyIfBusNear(arrival: Arrival?) {
+        if (arrival == null) return
+        val eta = arrival.etaSeconds ?: return
+        val routeKey = arrival.route
+        if (eta in 1..60 && lastNotifiedRoute != routeKey) {
+            lastNotifiedRoute = routeKey
+            notifyBusNear(arrival)
+        }
+    }
+
+    private fun notifyBusNear(arrival: Arrival) {
+        Toast.makeText(this, "🚌 ${arrival.route} подъезжает! (${arrival.etaLocal})", Toast.LENGTH_LONG).show()
+        try {
+            val vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+            val pattern = longArrayOf(0, 200, 100, 200)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, -1)
+            }
+        } catch (_: Exception) {}
+        try {
+            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+            toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 300)
+        } catch (_: Exception) {}
     }
 
     private fun formatEta(secs: Int): String = when {
@@ -125,6 +166,7 @@ class ArrivalsActivity : AppCompatActivity() {
         running  = true
         timeLeft = SESSION
         nextPoll = 0
+        lastNotifiedRoute = ""
         @Suppress("DEPRECATION")
         btnStart.background = getDrawable(R.drawable.bg_btn_pill_stop)
         btnStart.setTextColor(0xFFE53040.toInt())
@@ -180,6 +222,7 @@ class ArrivalsActivity : AppCompatActivity() {
                     fetching    = false
                     lastFetchAt  = fetchedAt
                     lastFetched  = arrivals
+                    lastMapUpdateTime = System.currentTimeMillis()
                     if (name.isNotBlank()) {
                         tvStopName.text = name
                         StopStorage.load(this).find { it.id == stopId }?.let { stop ->
