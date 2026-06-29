@@ -54,6 +54,8 @@ class AddStopActivity : AppCompatActivity() {
                 etId.setText(stop.id)
                 etName.setText(stop.name)
                 etRoutes.setText(stop.routes)
+                pickedLat = stop.lat
+                pickedLon = stop.lon
             }
             findViewById<Button>(R.id.btnPickMap).visibility = android.view.View.GONE
         }
