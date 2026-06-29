@@ -64,7 +64,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private var stopLat = 0.0
     private var stopLon = 0.0
     private var mapInitialized = false
-    private var distanceCircle: com.yandex.mapkit.map.Circle? = null
+    private var distanceCircle: com.yandex.mapkit.map.CircleMapObject? = null
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -164,20 +164,9 @@ class ArrivalsActivity : AppCompatActivity() {
         startSession()
     }
 
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onStop() {
-        mapView.onStop()
-        super.onStop()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
-        mapView.onDestroy()
     }
 
     private fun startSession() {
