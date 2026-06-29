@@ -11,6 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://artifactory.yandex.net/artifactory/yandex_mobile_releases/") }
+        maven { url = uri("https://maven.yandex.ru/releases") }
     }
 }
 rootProject.name = "BusWidget"

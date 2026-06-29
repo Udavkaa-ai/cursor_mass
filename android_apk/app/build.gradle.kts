@@ -34,12 +34,6 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-
-    repositories {
-        maven {
-            url = uri("https://maven.yandex.ru/releases")
-        }
-    }
 }
 
 dependencies {
