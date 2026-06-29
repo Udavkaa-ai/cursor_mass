@@ -31,6 +31,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    repositories {
+        maven {
+            url = uri("https://maven.yandex.ru/releases")
+        }
+    }
 }
 
 dependencies {
@@ -38,4 +44,5 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("com.yandex.android:maps.mobile:4.5.1-full")
 }

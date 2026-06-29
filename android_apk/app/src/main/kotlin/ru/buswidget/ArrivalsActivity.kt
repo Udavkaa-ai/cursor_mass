@@ -10,13 +10,17 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.View
 import android.view.WindowManager
-import android.webkit.WebView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.yandex.mapkit.MapKit
+import com.yandex.mapkit.geometry.Circle
+import com.yandex.mapkit.geometry.Point
+import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.mapview.MapView
 import org.json.JSONArray
 import org.json.JSONObject
 import ru.buswidget.data.Config
@@ -43,7 +47,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvStatus:   TextView
     private lateinit var tvNextPoll: TextView
-    private lateinit var webViewMap: WebView
+    private lateinit var mapView: MapView
 
     private lateinit var stopId:   String
     private lateinit var stopName: String
@@ -60,6 +64,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private var stopLat = 0.0
     private var stopLon = 0.0
     private var mapInitialized = false
+    private var distanceCircle: com.yandex.mapkit.map.Circle? = null
 
     private val tickRunnable = object : Runnable {
         override fun run() {
@@ -150,8 +155,8 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
 
-        webViewMap = findViewById(R.id.webViewMap)
-        setupWebView()
+        mapView = findViewById(R.id.mapView)
+        setupMap()
         loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
@@ -159,9 +164,20 @@ class ArrivalsActivity : AppCompatActivity() {
         startSession()
     }
 
+    override fun onResume() {
+        super.onResume()
+        mapView.onResume()
+    }
+
+    override fun onPause() {
+        mapView.onPause()
+        super.onPause()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        mapView.onDestroy()
     }
 
     private fun startSession() {
@@ -243,12 +259,13 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun setupWebView() {
-        webViewMap.settings.apply {
-            javaScriptEnabled = true
-            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+    private fun setupMap() {
+        mapView.map.apply {
+            isZoomGesturesEnabled = false
+            isScrollGesturesEnabled = false
+            isRotateGesturesEnabled = false
+            isTiltGesturesEnabled = false
         }
-        webViewMap.loadUrl("file:///android_asset/map.html")
     }
 
     private fun loadStopCoordinates() {
@@ -259,17 +276,51 @@ class ArrivalsActivity : AppCompatActivity() {
         handler.postDelayed({
             if (!mapInitialized) {
                 mapInitialized = true
-                val js = "javascript:initMap($stopLat, $stopLon, '${stopName.replace("'", "\\'")}')"
-                webViewMap.loadUrl(js)
+                val cameraPosition = CameraPosition(
+                    Point(stopLat, stopLon),
+                    16f,
+                    0f,
+                    0f
+                )
+                mapView.map.move(cameraPosition)
+                addStopMarker()
             }
         }, 500)
     }
 
+    private fun addStopMarker() {
+        val mapObjects = mapView.map.mapObjects
+        mapObjects.addCircle(
+            Circle(Point(stopLat, stopLon), 16f),
+            0xFF2ED87A.toInt(),
+            0xFF2ED87A.toInt(),
+            2f
+        )
+    }
+
     private fun updateMapDistance(etaSeconds: Int) {
-        if (mapInitialized && etaSeconds >= 0) {
-            val js = "javascript:updateDistance($etaSeconds)"
-            webViewMap.loadUrl(js)
+        if (!mapInitialized || etaSeconds < 0) return
+
+        val busSpeedMps = 8.3
+        val busDistanceMeters = (etaSeconds * busSpeedMps).toInt().coerceAtLeast(0).toFloat()
+
+        val circleColor = when {
+            etaSeconds <= 0 -> 0xFFE53040.toInt()
+            etaSeconds < 300 -> 0xFFE53040.toInt()
+            etaSeconds < 480 -> 0xFFFF8C00.toInt()
+            else -> 0xFF2ED87A.toInt()
         }
+
+        val mapObjects = mapView.map.mapObjects
+        distanceCircle?.let { mapObjects.remove(it) }
+
+        val fillColor = circleColor and 0x00FFFFFF or 0x50000000
+        distanceCircle = mapObjects.addCircle(
+            Circle(Point(stopLat, stopLon), busDistanceMeters),
+            fillColor,
+            circleColor,
+            2f
+        )
     }
 
     private fun parseArrivals(arr: JSONArray?): List<Arrival> {
