@@ -32,9 +32,8 @@ open class BusWidgetProvider : AppWidgetProvider() {
         )
 
         private fun layoutFor(type: String) = when (type) {
-            "light" -> R.layout.widget_bus_light
-            "wide"  -> R.layout.widget_bus_wide
-            else    -> R.layout.widget_bus_dark
+            "wide" -> R.layout.widget_bus_wide
+            else   -> R.layout.widget_bus_dark
         }
 
         private fun typeFor(ctx: Context, widgetId: Int) =

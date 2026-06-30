@@ -47,11 +47,7 @@ class WidgetConfigActivity : AppCompatActivity() {
         val providerClass = try {
             AppWidgetManager.getInstance(this).getAppWidgetInfo(widgetId)?.provider?.className ?: ""
         } catch (_: Exception) { "" }
-        val type = when {
-            providerClass.endsWith("Light") -> "light"
-            providerClass.endsWith("Wide")  -> "wide"
-            else -> "dark"
-        }
+        val type = if (providerClass.endsWith("Wide")) "wide" else "dark"
         BusWidgetProvider.widgetPrefs(this).edit()
             .putString("${widgetId}_stopId", stop.id)
             .putString("${widgetId}_name",   stop.name)

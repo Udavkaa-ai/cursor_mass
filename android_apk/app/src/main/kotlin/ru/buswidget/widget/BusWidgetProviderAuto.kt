@@ -22,24 +22,39 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
         const val ACTION_START = "ru.buswidget.auto.START"
         const val ACTION_STOP  = "ru.buswidget.auto.STOP"
 
-        private data class RowIds(val row: Int, val route: Int, val dir: Int, val eta: Int)
+        private data class ColIds(val col: Int, val route: Int, val eta: Int, val unit: Int)
 
-        private val ROW_IDS = listOf(
-            RowIds(R.id.row1, R.id.r1_route, R.id.r1_dir, R.id.r1_eta),
-            RowIds(R.id.row2, R.id.r2_route, R.id.r2_dir, R.id.r2_eta),
-            RowIds(R.id.row3, R.id.r3_route, R.id.r3_dir, R.id.r3_eta),
-            RowIds(R.id.row4, R.id.r4_route, R.id.r4_dir, R.id.r4_eta),
+        private val COL_IDS = listOf(
+            ColIds(R.id.row1, R.id.r1_route, R.id.r1_eta, R.id.r1_unit),
+            ColIds(R.id.row2, R.id.r2_route, R.id.r2_eta, R.id.r2_unit),
+            ColIds(R.id.row3, R.id.r3_route, R.id.r3_eta, R.id.r3_unit),
         )
 
+        private fun formatEtaNum(secs: Int?): String = when {
+            secs == null -> "—"
+            secs <= 0    -> "→"
+            secs < 60    -> "<1"
+            else         -> "${secs / 60}"
+        }
+
         /** Idle state: prompt to start, no active rows. */
-        fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
+        fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) =
+            renderInactive(ctx, awm, widgetId, "Ближайшая остановка", "")
+
+        /** Short message state (no stops found / location error), with a retry ▶. */
+        fun showMessage(ctx: Context, awm: AppWidgetManager, widgetId: Int, title: String, sub: String) =
+            renderInactive(ctx, awm, widgetId, title, sub)
+
+        private fun renderInactive(
+            ctx: Context, awm: AppWidgetManager, widgetId: Int, title: String, sub: String,
+        ) {
             val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_auto)
-            rv.setTextViewText(R.id.tw_stop, "Ближайшая остановка")
-            rv.setTextViewText(R.id.tw_distance, "")
+            rv.setTextViewText(R.id.tw_stop, title)
+            rv.setTextViewText(R.id.tw_distance, sub)
             rv.setViewVisibility(R.id.tw_timer, View.GONE)
-            rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_stop, View.GONE)
-            ROW_IDS.forEach { rv.setViewVisibility(it.row, View.GONE) }
+            rv.setViewVisibility(R.id.rows_active, View.GONE)
+            rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
             rv.setOnClickPendingIntent(R.id.btn_start, startIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
@@ -51,22 +66,9 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
             rv.setTextViewText(R.id.tw_distance, "")
             rv.setViewVisibility(R.id.tw_timer, View.GONE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)
+            rv.setViewVisibility(R.id.rows_active, View.GONE)
             rv.setViewVisibility(R.id.btn_stop, View.VISIBLE)
-            ROW_IDS.forEach { rv.setViewVisibility(it.row, View.GONE) }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))
-            awm.updateAppWidget(widgetId, rv)
-        }
-
-        /** Short message state (no stops found / location error), with a retry ▶. */
-        fun showMessage(ctx: Context, awm: AppWidgetManager, widgetId: Int, title: String, sub: String) {
-            val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_auto)
-            rv.setTextViewText(R.id.tw_stop, title)
-            rv.setTextViewText(R.id.tw_distance, sub)
-            rv.setViewVisibility(R.id.tw_timer, View.GONE)
-            rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
-            rv.setViewVisibility(R.id.btn_stop, View.GONE)
-            ROW_IDS.forEach { rv.setViewVisibility(it.row, View.GONE) }
-            rv.setOnClickPendingIntent(R.id.btn_start, startIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
 
@@ -90,15 +92,16 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
             rv.setViewVisibility(R.id.tw_timer, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)
             rv.setViewVisibility(R.id.btn_stop, View.VISIBLE)
-            ROW_IDS.forEachIndexed { i, ids ->
+            rv.setViewVisibility(R.id.rows_active, View.VISIBLE)
+            COL_IDS.forEachIndexed { i, ids ->
                 val a = arrivals.getOrNull(i)
-                rv.setViewVisibility(ids.row, if (a != null) View.VISIBLE else View.GONE)
-                if (a != null) {
-                    rv.setTextViewText(ids.route, a.route)
-                    rv.setTextViewText(ids.dir, a.direction)
-                    rv.setTextViewText(ids.eta, a.eta)
-                    rv.setTextColor(ids.eta, a.color)
-                }
+                val color = a?.color ?: 0xFF9090B8.toInt()
+                rv.setViewVisibility(ids.col, if (a != null) View.VISIBLE else View.INVISIBLE)
+                rv.setTextViewText(ids.route, a?.route ?: "")
+                rv.setTextViewText(ids.eta, if (a != null) formatEtaNum(a.etaSeconds) else "")
+                rv.setTextColor(ids.eta, color)
+                rv.setTextViewText(ids.unit, if (a != null) "МИН" else "")
+                rv.setTextColor(ids.unit, color)
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))
             // Tapping the stop name opens the full arrivals screen for this stop.

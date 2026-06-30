@@ -60,31 +60,7 @@
             android:exported="true"
             android:theme="@style/Theme.BusWidget"/>
 
-        <!-- Home screen widget provider -->
-        <receiver
-            android:name=".widget.BusWidgetProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/bus_widget_info"/>
-        </receiver>
-
-        <!-- Light 2×2 widget -->
-        <receiver
-            android:name=".widget.BusWidgetProviderLight"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/bus_widget_info_light"/>
-        </receiver>
-
-        <!-- Wide 3×1 widget -->
+        <!-- Wide 3×1 widget (manual stop selection) -->
         <receiver
             android:name=".widget.BusWidgetProviderWide"
             android:exported="true">
