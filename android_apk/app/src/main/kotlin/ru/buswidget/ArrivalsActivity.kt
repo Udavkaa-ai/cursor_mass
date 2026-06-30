@@ -57,7 +57,7 @@ class ArrivalsActivity : AppCompatActivity() {
     private var nextPoll       = 0
     private var lastFetchAt    = 0L
     private var lastFetched:   List<Arrival> = emptyList()
-    private var lastNotifiedRoute = ""
+    private val notifiedRoutes = mutableSetOf<String>()
     private var lastMapUpdateTime = 0L
     private var stopLat = 0.0
     private var stopLon = 0.0
@@ -101,8 +101,11 @@ class ArrivalsActivity : AppCompatActivity() {
         if (arrival == null) return
         val eta = arrival.etaSeconds ?: return
         val routeKey = arrival.route
-        if (eta in 1..60 && lastNotifiedRoute != routeKey) {
-            lastNotifiedRoute = routeKey
+        // Notify at most once per route per session. A single "last route" var
+        // re-fired when the ETA oscillated around the 1-min boundary or when the
+        // nearest route alternated; a set fixes that.
+        if (eta in 1..60 && routeKey !in notifiedRoutes) {
+            notifiedRoutes.add(routeKey)
             notifyBusNear(arrival)
         }
     }
@@ -162,7 +165,15 @@ class ArrivalsActivity : AppCompatActivity() {
             // file:// base loading https Yandex resources counts as mixed content
             mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         }
-        mapView.webViewClient = WebViewClient()
+        // Init the map only once the page (and map.js) has actually loaded. A fixed
+        // delay was unreliable on slow loads — initMap could fire before map.js was
+        // parsed and get lost, leaving the map on its default center (Red Square).
+        mapView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                initMapForStop()
+            }
+        }
 
         val apiKey = BuildConfig.JS_YANDEX_API
         val mapHtml = loadAssetWithApiKey(apiKey)
@@ -172,8 +183,6 @@ class ArrivalsActivity : AppCompatActivity() {
         mapView.loadDataWithBaseURL(
             "file:///android_asset/", mapHtml, "text/html", "utf-8", null
         )
-
-        loadStopCoordinates()
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
 
@@ -189,7 +198,7 @@ class ArrivalsActivity : AppCompatActivity() {
         running  = true
         timeLeft = SESSION
         nextPoll = 0
-        lastNotifiedRoute = ""
+        notifiedRoutes.clear()
         @Suppress("DEPRECATION")
         btnStart.background = getDrawable(R.drawable.bg_btn_pill_stop)
         btnStart.setTextColor(0xFFE53040.toInt())
@@ -267,18 +276,18 @@ class ArrivalsActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun loadStopCoordinates() {
+    private fun initMapForStop() {
+        if (mapInitialized) return
         val stop = StopStorage.load(this).find { it.id == stopId } ?: return
         if (stop.lat == 0.0 || stop.lon == 0.0) return
         stopLat = stop.lat
         stopLon = stop.lon
-        handler.postDelayed({
-            if (!mapInitialized) {
-                mapInitialized = true
-                val escapedName = stopName.replace("'", "\\'")
-                mapView.evaluateJavascript("initMap($stopLat, $stopLon, '$escapedName')") { }
-            }
-        }, 500)
+        mapInitialized = true
+        val escapedName = stopName.replace("'", "\\'")
+        mapView.evaluateJavascript("initMap($stopLat, $stopLon, '$escapedName')") { }
+        // Push the latest known ETA right away so the circle appears without
+        // waiting for the next poll tick.
+        lastFetched.firstOrNull()?.let { updateMapDistance(it.etaSeconds ?: 0, it.etaLocal) }
     }
 
     private fun updateMapDistance(etaSeconds: Int, etaText: String) {

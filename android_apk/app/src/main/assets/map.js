@@ -94,15 +94,22 @@ function updateDistance(etaSeconds, etaText) {
         circleColor = '#2ED87A'; circleOpacity = 0.40;
     }
 
-    if (distanceCircle) map.geoObjects.remove(distanceCircle);
-    distanceCircle = new ymaps.Circle([stopCoords, radius], {}, {
+    // Update the existing circle in place (radius + colors) instead of removing
+    // and re-adding it every second — that caused a visible fill flicker.
+    if (!distanceCircle) {
+        distanceCircle = new ymaps.Circle([stopCoords, radius], {}, {
+            strokeOpacity: 0.7,
+            strokeWidth: 2
+        });
+        map.geoObjects.add(distanceCircle);
+    } else {
+        distanceCircle.geometry.setRadius(radius);
+    }
+    distanceCircle.options.set({
         fillColor: circleColor,
         strokeColor: circleColor,
-        strokeOpacity: 0.7,
-        strokeWidth: 2,
         fillOpacity: circleOpacity
     });
-    map.geoObjects.add(distanceCircle);
 
     // Re-fit the zoom only when the minute bucket (3→2→1→arriving) changes, so
     // the circle always fits the view but the map doesn't re-zoom every second
