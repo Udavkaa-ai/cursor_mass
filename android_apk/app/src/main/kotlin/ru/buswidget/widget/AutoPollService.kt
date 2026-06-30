@@ -82,6 +82,7 @@ class AutoPollService : Service() {
     private val fetching   = mutableSetOf<Int>()
     private val mapBitmaps = mutableMapOf<Int, Bitmap>()   // static map per map-widget
     private val mapLoading = mutableSetOf<Int>()
+    private val mapNeedsFull = mutableSetOf<Int>()         // map widgets needing a full (vs tick) update
 
     /** A widget belongs to the 4×2 map experiment (vs the plain auto widget). */
     private fun isMapWidget(widgetId: Int): Boolean =
@@ -182,8 +183,9 @@ class AutoPollService : Service() {
                          else "%.1fкм".format(nearby.distanceMeters / 1000.0)
         s.resolved = true
         s.nextPoll = 0  // fetch immediately on next tick
-        if (isMapWidget(widgetId) && s.lat != 0.0 && s.lon != 0.0) {
-            fetchStaticMapAsync(widgetId, s.lat, s.lon)
+        if (isMapWidget(widgetId)) {
+            mapNeedsFull += widgetId   // first active render must be a full update
+            if (s.lat != 0.0 && s.lon != 0.0) fetchStaticMapAsync(widgetId, s.lat, s.lon, null)
         }
         pushUpdate(widgetId, s)
     }
@@ -197,6 +199,8 @@ class AutoPollService : Service() {
         sessions.remove(widgetId)
         snapshots.remove(widgetId)
         mapBitmaps.remove(widgetId)
+        mapNeedsFull.remove(widgetId)
+        mapLoading.remove(widgetId)
         showIdleFor(widgetId)
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
@@ -205,10 +209,16 @@ class AutoPollService : Service() {
         val awm = AppWidgetManager.getInstance(this)
         val live = liveArrivals(widgetId)
         if (isMapWidget(widgetId)) {
-            MapWidgetProvider.updateActive(
-                this, awm, widgetId, s.stopId, s.stopName, s.routes,
-                s.timeLeft, live, mapBitmaps[widgetId],
-            )
+            // Full update (with the heavy map bitmap) only when the map or the row
+            // data changed; otherwise a light per-second tick (timer + ETAs).
+            if (mapNeedsFull.remove(widgetId)) {
+                MapWidgetProvider.updateActive(
+                    this, awm, widgetId, s.stopId, s.stopName, s.routes,
+                    s.timeLeft, live, mapBitmaps[widgetId],
+                )
+            } else {
+                MapWidgetProvider.updateTick(this, awm, widgetId, s.timeLeft, live)
+            }
         } else {
             BusWidgetProviderAuto.updateActive(
                 this, awm, widgetId, s.stopId, s.stopName, s.routes,
@@ -218,15 +228,17 @@ class AutoPollService : Service() {
     }
 
     /** Fetch a static map PNG of the stop once per session and re-render. */
-    private fun fetchStaticMapAsync(widgetId: Int, lat: Double, lon: Double) {
-        if (widgetId in mapLoading || mapBitmaps.containsKey(widgetId)) return
+    /**
+     * Fetch a static map of the stop with a distance circle (a polygon, since the
+     * static API has no native circle) sized by the nearest bus's ETA. Refreshed
+     * each poll, so the circle steps down every ~15s as the bus approaches.
+     */
+    private fun fetchStaticMapAsync(widgetId: Int, lat: Double, lon: Double, etaSeconds: Int?) {
+        if (widgetId in mapLoading) return
         mapLoading += widgetId
+        val url = buildStaticMapUrl(lat, lon, etaSeconds)
         Thread {
             val bmp = try {
-                val key = BuildConfig.JS_YANDEX_API
-                // Keep it small — the bitmap is re-sent to the widget each tick.
-                val url = "https://static-maps.yandex.ru/v1?ll=$lon,$lat&z=16" +
-                    "&size=200,200&pt=$lon,$lat,pm2rdm&lang=ru_RU&apikey=$key"
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.connectTimeout = 8_000; conn.readTimeout = 8_000
                 val ok = conn.responseCode in 200..299
@@ -238,10 +250,45 @@ class AutoPollService : Service() {
                 mapLoading -= widgetId
                 if (bmp != null) {
                     mapBitmaps[widgetId] = bmp
+                    mapNeedsFull += widgetId
                     sessions[widgetId]?.let { pushUpdate(widgetId, it) }
                 }
             }
         }.start()
+    }
+
+    private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?): String {
+        fun f(v: Double) = String.format(java.util.Locale.US, "%.5f", v)
+        val key = BuildConfig.JS_YANDEX_API
+        val sb = StringBuilder("https://static-maps.yandex.ru/v1?size=200,200&lang=ru_RU&apikey=$key")
+        sb.append("&pt=${f(lon)},${f(lat)},pm2rdm")
+
+        val within = etaSeconds != null && etaSeconds <= 180
+        val radius = if (within) maxOf(etaSeconds!! * 8.3, 90.0) else 500.0
+        val rLat = radius / 111320.0
+        val rLon = radius / (111320.0 * Math.cos(Math.toRadians(lat)))
+
+        // Fit the view to the circle (or a default area when the bus is far).
+        val fit = if (within) 1.25 else 1.0
+        sb.append("&bbox=${f(lon - rLon * fit)},${f(lat - rLat * fit)}" +
+                  "~${f(lon + rLon * fit)},${f(lat + rLat * fit)}")
+
+        if (within) {
+            val (stroke, fill) = when {
+                etaSeconds!! <= 60  -> "E53040FF" to "E5304055"
+                etaSeconds <= 120   -> "FF8C00FF" to "FF8C0055"
+                else                -> "2ED87AFF" to "2ED87A4D"
+            }
+            val pts = StringBuilder()
+            val n = 24
+            for (i in 0..n) {
+                val ang = 2 * Math.PI * i / n
+                pts.append("${f(lon + rLon * Math.cos(ang))},${f(lat + rLat * Math.sin(ang))},")
+            }
+            pts.deleteCharAt(pts.length - 1)  // trailing comma
+            sb.append("&pl=c:$stroke,f:$fill,w:2,$pts")
+        }
+        return sb.toString()
     }
 
     private fun liveArrivals(widgetId: Int): List<WidgetArrival> {
@@ -275,8 +322,15 @@ class AutoPollService : Service() {
                     val prev = snapshots[widgetId]
                     if (arrivals.isNotEmpty() && arrivals != prev?.arrivals) {
                         snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
+                        mapNeedsFull += widgetId   // row data changed → full update
                     }
-                    sessions[widgetId]?.let { pushUpdate(widgetId, it) }
+                    // Refresh the map circle each poll with the nearest bus's ETA.
+                    val s2 = sessions[widgetId]
+                    if (s2 != null && isMapWidget(widgetId) && s2.lat != 0.0 && s2.lon != 0.0) {
+                        val nearEta = liveArrivals(widgetId).firstOrNull()?.etaSeconds
+                        fetchStaticMapAsync(widgetId, s2.lat, s2.lon, nearEta)
+                    }
+                    s2?.let { pushUpdate(widgetId, it) }
                 }
             } catch (_: Exception) { handler.post { fetching -= widgetId } }
         }.start()

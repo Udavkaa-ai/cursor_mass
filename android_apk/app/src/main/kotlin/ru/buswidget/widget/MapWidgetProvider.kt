@@ -105,6 +105,26 @@ class MapWidgetProvider : AppWidgetProvider() {
             awm.updateAppWidget(widgetId, rv)
         }
 
+        /**
+         * Per-second tick: update only the countdown timer and ETA texts via a
+         * partial update, so the (relatively heavy) map bitmap isn't re-sent to
+         * the widget every second — only on full updates when data/map changes.
+         */
+        fun updateTick(
+            ctx: Context, awm: AppWidgetManager, widgetId: Int,
+            timeLeft: Int, arrivals: List<WidgetArrival>,
+        ) {
+            val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_map)
+            val m = timeLeft / 60; val s = timeLeft % 60
+            rv.setTextViewText(R.id.tw_timer, "$m:${s.toString().padStart(2, '0')}")
+            ROW_IDS.forEachIndexed { i, ids ->
+                val a = arrivals.getOrNull(i)
+                rv.setTextViewText(ids.eta, a?.eta ?: "")
+                rv.setTextColor(ids.eta, a?.color ?: 0xFF9090B8.toInt())
+            }
+            awm.partiallyUpdateAppWidget(widgetId, rv)
+        }
+
         private fun startIntent(ctx: Context, widgetId: Int): PendingIntent =
             PendingIntent.getBroadcast(
                 ctx, widgetId + 70_000,
