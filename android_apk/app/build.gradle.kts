@@ -16,6 +16,13 @@ android {
 
         val mapkitApiKey = System.getenv("MAPKIT_API_KEY") ?: "MAPKIT_API_KEY_PLACEHOLDER"
         buildConfigField("String", "MAPKIT_API_KEY", "\"$mapkitApiKey\"")
+
+        // Yandex JavaScript API key (used by the WebView map) — distinct from the
+        // MapKit key above. Falls back to the MapKit key for local builds.
+        val jsApiKey = System.getenv("JS_YANDEX_API")
+            ?: System.getenv("MAPKIT_API_KEY")
+            ?: "JS_YANDEX_API_PLACEHOLDER"
+        buildConfigField("String", "JS_YANDEX_API", "\"$jsApiKey\"")
     }
 
     buildTypes {

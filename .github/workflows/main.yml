@@ -42,6 +42,7 @@ jobs:
         working-directory: android_apk
         env:
           MAPKIT_API_KEY: ${{ secrets.MAPKIT_API_KEY }}
+          JS_YANDEX_API: ${{ secrets.JS_YANDEX_API }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

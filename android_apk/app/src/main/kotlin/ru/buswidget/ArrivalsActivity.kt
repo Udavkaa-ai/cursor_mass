@@ -164,7 +164,7 @@ class ArrivalsActivity : AppCompatActivity() {
         }
         mapView.webViewClient = WebViewClient()
 
-        val apiKey = BuildConfig.MAPKIT_API_KEY
+        val apiKey = BuildConfig.JS_YANDEX_API
         val mapHtml = loadAssetWithApiKey(apiKey)
         // Base URL must point at the assets dir so the relative <script src="map.js">
         // inside map.html resolves. Plain loadData() has no base URL → map.js never
