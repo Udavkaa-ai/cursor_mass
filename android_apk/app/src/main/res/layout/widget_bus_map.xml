@@ -39,6 +39,14 @@
             android:ellipsize="end"/>
 
         <TextView
+            android:id="@+id/tw_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="9sp"
+            android:textColor="#7878A0"
+            android:layout_marginStart="6dp"/>
+
+        <TextView
             android:id="@+id/tw_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

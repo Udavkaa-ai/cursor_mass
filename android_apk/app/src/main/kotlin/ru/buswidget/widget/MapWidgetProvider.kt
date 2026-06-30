@@ -69,6 +69,7 @@ class MapWidgetProvider : AppWidgetProvider() {
             stopId: String,
             stopName: String,
             routes: String,
+            distanceText: String,
             timeLeft: Int,
             arrivals: List<WidgetArrival>,
             mapBitmap: Bitmap?,
@@ -77,6 +78,7 @@ class MapWidgetProvider : AppWidgetProvider() {
             val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_map)
             val m = timeLeft / 60; val s = timeLeft % 60
             rv.setTextViewText(R.id.tw_stop, stopName)
+            rv.setTextViewText(R.id.tw_distance, distanceText)
             rv.setTextViewText(R.id.tw_timer, "$m:${s.toString().padStart(2, '0')}")
             rv.setViewVisibility(R.id.tw_timer, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)

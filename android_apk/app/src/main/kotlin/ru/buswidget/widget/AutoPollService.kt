@@ -10,6 +10,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Shader
 import android.location.Location
 import android.os.Build
 import android.os.Handler
@@ -216,7 +221,7 @@ class AutoPollService : Service() {
             if (mapNeedsFull.remove(widgetId)) {
                 MapWidgetProvider.updateActive(
                     this, awm, widgetId, s.stopId, s.stopName, s.routes,
-                    s.timeLeft, live, mapBitmaps[widgetId],
+                    s.distanceText, s.timeLeft, live, mapBitmaps[widgetId],
                     mapStatus[widgetId] ?: "загрузка…",
                 )
             } else {
@@ -240,15 +245,16 @@ class AutoPollService : Service() {
         if (widgetId in mapLoading) return
         mapLoading += widgetId
         val url = buildStaticMapUrl(lat, lon, etaSeconds)
+        val radiusPx = 10f * resources.displayMetrics.density
         Thread {
             var code = -1
             val bmp = try {
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.connectTimeout = 8_000; conn.readTimeout = 8_000
                 code = conn.responseCode
-                val b = if (code in 200..299) BitmapFactory.decodeStream(conn.inputStream) else null
+                val raw = if (code in 200..299) BitmapFactory.decodeStream(conn.inputStream) else null
                 conn.disconnect()
-                b
+                raw?.let { roundCorners(it, radiusPx) }
             } catch (_: Exception) { null }
             handler.post {
                 mapLoading -= widgetId
@@ -264,6 +270,17 @@ class AutoPollService : Service() {
                 sessions[widgetId]?.let { pushUpdate(widgetId, it) }
             }
         }.start()
+    }
+
+    /** Return a copy of [src] with rounded corners (RemoteViews can't clip). */
+    private fun roundCorners(src: Bitmap, radiusPx: Float): Bitmap {
+        val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(out)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.shader = BitmapShader(src, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        val rect = RectF(0f, 0f, src.width.toFloat(), src.height.toFloat())
+        canvas.drawRoundRect(rect, radiusPx, radiusPx, paint)
+        return out
     }
 
     private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?): String {
