@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -24,7 +23,6 @@ import org.json.JSONObject
 import ru.buswidget.data.NearbyStop
 import ru.buswidget.data.Stop
 import ru.buswidget.data.StopStorage
-import ru.buswidget.widget.BusWidgetProviderAuto
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,17 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) { findNearby(); maybeAskBackgroundLocation() }
-        else toast("Нужно разрешение на геолокацию")
-    }
-
-    private val backgroundLocationLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) toast("Готово — виджет будет обновляться сам")
-        else toast("Без фонового доступа виджет обновляется при открытии приложения")
-    }
+    ) { granted -> if (granted) findNearby() else toast("Нужно разрешение на геолокацию") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,88 +66,6 @@ class MainActivity : AppCompatActivity() {
         adapter.submit(stops)
         rvStops.visibility = if (stops.isEmpty()) View.GONE  else View.VISIBLE
         vEmpty.visibility  = if (stops.isEmpty()) View.VISIBLE else View.GONE
-        cacheLocationForWidget()
-        maybeAskBackgroundLocation()
-    }
-
-    /**
-     * Ask once for "Allow all the time" location so the auto-widget can refresh
-     * live in the background. Only relevant on Android 10+; on 11+ the system
-     * routes the request to its settings screen. Guarded by a pref so we don't nag.
-     */
-    private fun maybeAskBackgroundLocation() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
-        val fineGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!fineGranted) return
-        val bgGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        if (bgGranted) return
-
-        val prefs = getSharedPreferences("bw", MODE_PRIVATE)
-        if (prefs.getBoolean("bg_loc_asked", false)) return
-        prefs.edit().putBoolean("bg_loc_asked", true).apply()
-
-        val optionLabel =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) "«Разрешить всегда»"
-            else "«В фоновом режиме»"
-        AlertDialog.Builder(this)
-            .setTitle("Геолокация для виджета")
-            .setMessage(
-                "Чтобы виджет сам обновлял ближайшую остановку без открытия приложения, " +
-                "разрешите доступ к геолокации $optionLabel."
-            )
-            .setPositiveButton("Разрешить") { _, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    // On Android 11+ background location can only be granted from the
-                    // app's settings page ("Разрешить всегда"), not via a dialog.
-                    openAppLocationSettings()
-                } else {
-                    backgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                }
-            }
-            .setNegativeButton("Позже", null)
-            .show()
-    }
-
-    private fun openAppLocationSettings() {
-        toast("Выберите «Разрешения» → «Геолокация» → «Разрешить всегда»")
-        try {
-            startActivity(Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null)
-            ))
-        } catch (_: Exception) {
-            startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        }
-    }
-
-    /**
-     * Silently refresh the cached location for the auto-widget. The widget can't
-     * reliably read live location in the background (Android restricts background
-     * location), so it falls back to this cache. Opening the app keeps it fresh.
-     */
-    private fun cacheLocationForWidget() {
-        val hasPerm = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!hasPerm) return
-        try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location != null) saveCachedLocation(location)
-            }
-        } catch (_: SecurityException) {}
-    }
-
-    private fun saveCachedLocation(location: Location) {
-        getSharedPreferences("bw_widget", MODE_PRIVATE).edit()
-            .putString("last_lat", location.latitude.toString())
-            .putString("last_lon", location.longitude.toString())
-            .apply()
-        // Refresh any auto-widgets now that we have a fresh location.
-        BusWidgetProviderAuto.refreshAll(this)
     }
 
     private fun showMenu() {
@@ -271,9 +177,6 @@ class MainActivity : AppCompatActivity() {
                     toast("Не удалось определить геолокацию")
                     return@addOnSuccessListener
                 }
-                // Cache for the auto-widget, which can't reliably read location in
-                // the background — this gives it a fresh fallback fix.
-                saveCachedLocation(location)
                 val nearby = StopStorage.findNearby(this, location.latitude, location.longitude)
                 if (nearby.isEmpty()) {
                     toast("Нет остановок с координатами поблизости")
