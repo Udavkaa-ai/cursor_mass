@@ -296,12 +296,15 @@ class ArrivalsActivity : AppCompatActivity() {
         arr ?: return emptyList()
         return (0 until arr.length()).map { i ->
             val a = arr.getJSONObject(i)
+            // optString returns the literal "null" when the value is JSON null
+            // (not missing), so guard every string field with isNull().
+            fun str(key: String) = if (a.isNull(key)) "" else a.optString(key, "")
             Arrival(
-                route      = a.optString("route", "?"),
-                direction  = a.optString("direction", ""),
-                etaLocal   = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") },
+                route      = str("route").ifBlank { "?" },
+                direction  = str("direction"),
+                etaLocal   = str("eta_local").ifBlank { str("eta_text") }.ifBlank { "—" },
                 etaSeconds = if (a.isNull("eta_seconds")) null else a.getInt("eta_seconds"),
-                type       = a.optString("type", ""),
+                type       = str("type"),
             )
         }.sortedBy { it.etaSeconds ?: Int.MAX_VALUE }
     }

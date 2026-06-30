@@ -1,5 +1,6 @@
 package ru.buswidget
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -66,10 +67,23 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
         holder.unit.setTextColor(color)
 
         when {
-            secs == null -> { holder.eta.text = a.etaLocal; holder.unit.text = "" }
-            secs <= 0    -> { holder.eta.text = "0";         holder.unit.text = "СЕЙЧАС" }
-            secs < 60    -> { holder.eta.text = "< 1";      holder.unit.text = "МИН" }
-            else         -> { holder.eta.text = (secs / 60).toString(); holder.unit.text = "МИН" }
+            secs == null -> {
+                // No numeric ETA — show the status text at a readable size instead
+                // of the huge 46sp number font (otherwise "нет данных" wraps hugely).
+                holder.eta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                holder.eta.maxLines = 2
+                holder.eta.text = a.etaLocal.ifBlank { "—" }
+                holder.unit.text = ""
+            }
+            else -> {
+                holder.eta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46f)
+                holder.eta.maxLines = 1
+                when {
+                    secs <= 0 -> { holder.eta.text = "0";    holder.unit.text = "СЕЙЧАС" }
+                    secs < 60 -> { holder.eta.text = "< 1";  holder.unit.text = "МИН" }
+                    else      -> { holder.eta.text = (secs / 60).toString(); holder.unit.text = "МИН" }
+                }
+            }
         }
     }
 

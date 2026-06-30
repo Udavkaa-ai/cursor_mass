@@ -217,11 +217,12 @@ class AutoPollService : Service() {
         arr ?: return emptyList()
         return (0 until arr.length()).map { i ->
             val a    = arr.getJSONObject(i)
+            fun str(key: String) = if (a.isNull(key)) "" else a.optString(key, "")
             val secs = if (a.isNull("eta_seconds")) null else a.getInt("eta_seconds")
             WidgetArrival(
-                route      = a.optString("route", "?"),
-                direction  = a.optString("direction", ""),
-                eta        = a.optString("eta_local").ifBlank { a.optString("eta_text", "—") },
+                route      = str("route").ifBlank { "?" },
+                direction  = str("direction"),
+                eta        = str("eta_local").ifBlank { str("eta_text") }.ifBlank { "—" },
                 etaSeconds = secs,
                 color      = PollService.etaColor(secs),
             )
