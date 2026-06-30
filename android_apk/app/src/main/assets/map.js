@@ -45,7 +45,7 @@ function initMap(lat, lon, stopName) {
 
     map.geoObjects.add(stopMarker);
     map.setCenter([lat, lon], DEFAULT_ZOOM);
-    lastZoomBucket = -1;
+    lastFitRadius = -1;
 
     document.getElementById('stopName').textContent = stopName;
     document.getElementById('info').style.display = 'block';
@@ -55,7 +55,7 @@ function initMap(lat, lon, stopName) {
 // away the circle would be kilometers wide and cover the whole map.
 const SHOW_WITHIN_SEC = 180;
 const DEFAULT_ZOOM = 16;
-let lastZoomBucket = -1;   // minute bucket the zoom was last fitted to
+let lastFitRadius = -1;   // circle radius (m) the zoom was last fitted to; 0 = far view
 
 // Bounding box [[south, west], [north, east]] around a center for a radius (m).
 function boundsAround(center, radiusMeters) {
@@ -77,7 +77,7 @@ function updateDistance(etaSeconds, etaText) {
     // Bus still far (or unknown) — no circle, keep a calm default view.
     if (etaSeconds == null || etaSeconds > SHOW_WITHIN_SEC) {
         if (distanceCircle) { map.geoObjects.remove(distanceCircle); distanceCircle = null; }
-        if (lastZoomBucket !== 99) { lastZoomBucket = 99; map.setCenter(stopCoords, DEFAULT_ZOOM); }
+        if (lastFitRadius !== 0) { lastFitRadius = 0; map.setCenter(stopCoords, DEFAULT_ZOOM); }
         return;
     }
 
@@ -111,16 +111,16 @@ function updateDistance(etaSeconds, etaText) {
         fillOpacity: circleOpacity
     });
 
-    // Re-fit the zoom only when the minute bucket (3→2→1→arriving) changes, so
-    // the circle always fits the view but the map doesn't re-zoom every second
-    // (the circle itself still shrinks smoothly each tick).
-    const bucket = etaSeconds <= 0 ? 0 : Math.ceil(etaSeconds / 60);
-    if (bucket !== lastZoomBucket) {
-        lastZoomBucket = bucket;
-        const fitRadius = Math.max(radius, 150);  // avoid over-zooming when ~0
-        map.setBounds(boundsAround(stopCoords, fitRadius), {
+    // Keep the circle filling the view as the bus approaches: re-fit the zoom
+    // whenever the radius has shrunk/grown notably since the last fit (not every
+    // second — that would jitter). Fitting to the actual radius means 1 min is
+    // zoomed in tighter than 3 min instead of staying at the bucket's far edge.
+    const fitRadius = Math.max(radius, 90);  // floor avoids over-zoom near arrival
+    if (lastFitRadius <= 0 || fitRadius < lastFitRadius * 0.8 || fitRadius > lastFitRadius * 1.3) {
+        lastFitRadius = fitRadius;
+        map.setBounds(boundsAround(stopCoords, fitRadius * 1.15), {
             checkZoomRange: true,
-            zoomMargin: 40
+            zoomMargin: 20
         });
     }
 }
@@ -130,5 +130,5 @@ function clearDistance() {
         map.geoObjects.remove(distanceCircle);
         distanceCircle = null;
     }
-    lastZoomBucket = -1;
+    lastFitRadius = -1;
 }
