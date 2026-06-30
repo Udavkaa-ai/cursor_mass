@@ -3,6 +3,7 @@ package ru.buswidget.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -23,6 +24,20 @@ import java.net.URL
 import java.net.URLEncoder
 
 class BusWidgetProviderAuto : AppWidgetProvider() {
+
+    companion object {
+        /** Re-trigger onUpdate for every auto-widget instance (e.g. after the app
+         *  refreshes the cached location). */
+        fun refreshAll(ctx: Context) {
+            val awm = AppWidgetManager.getInstance(ctx)
+            val ids = awm.getAppWidgetIds(ComponentName(ctx, BusWidgetProviderAuto::class.java))
+            if (ids.isEmpty()) return
+            ctx.sendBroadcast(Intent(ctx, BusWidgetProviderAuto::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+            })
+        }
+    }
 
     override fun onUpdate(ctx: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
         val client = LocationServices.getFusedLocationProviderClient(ctx)

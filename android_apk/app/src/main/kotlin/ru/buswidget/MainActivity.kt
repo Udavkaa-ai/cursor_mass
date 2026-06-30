@@ -23,6 +23,7 @@ import org.json.JSONObject
 import ru.buswidget.data.NearbyStop
 import ru.buswidget.data.Stop
 import ru.buswidget.data.StopStorage
+import ru.buswidget.widget.BusWidgetProviderAuto
 
 class MainActivity : AppCompatActivity() {
 
@@ -66,6 +67,33 @@ class MainActivity : AppCompatActivity() {
         adapter.submit(stops)
         rvStops.visibility = if (stops.isEmpty()) View.GONE  else View.VISIBLE
         vEmpty.visibility  = if (stops.isEmpty()) View.VISIBLE else View.GONE
+        cacheLocationForWidget()
+    }
+
+    /**
+     * Silently refresh the cached location for the auto-widget. The widget can't
+     * reliably read live location in the background (Android restricts background
+     * location), so it falls back to this cache. Opening the app keeps it fresh.
+     */
+    private fun cacheLocationForWidget() {
+        val hasPerm = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasPerm) return
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) saveCachedLocation(location)
+            }
+        } catch (_: SecurityException) {}
+    }
+
+    private fun saveCachedLocation(location: Location) {
+        getSharedPreferences("bw_widget", MODE_PRIVATE).edit()
+            .putString("last_lat", location.latitude.toString())
+            .putString("last_lon", location.longitude.toString())
+            .apply()
+        // Refresh any auto-widgets now that we have a fresh location.
+        BusWidgetProviderAuto.refreshAll(this)
     }
 
     private fun showMenu() {
@@ -179,10 +207,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 // Cache for the auto-widget, which can't reliably read location in
                 // the background — this gives it a fresh fallback fix.
-                getSharedPreferences("bw_widget", MODE_PRIVATE).edit()
-                    .putString("last_lat", location.latitude.toString())
-                    .putString("last_lon", location.longitude.toString())
-                    .apply()
+                saveCachedLocation(location)
                 val nearby = StopStorage.findNearby(this, location.latitude, location.longitude)
                 if (nearby.isEmpty()) {
                     toast("Нет остановок с координатами поблизости")
