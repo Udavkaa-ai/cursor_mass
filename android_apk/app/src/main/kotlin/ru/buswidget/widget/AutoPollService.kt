@@ -8,6 +8,8 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Build
 import android.os.Handler
@@ -20,6 +22,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.buswidget.BuildConfig
 import ru.buswidget.data.Config
 import ru.buswidget.data.StopStorage
 import java.net.HttpURLConnection
@@ -64,6 +67,8 @@ class AutoPollService : Service() {
         var stopName: String = "",
         var routes: String = "",
         var distanceText: String = "",
+        var lat: Double = 0.0,
+        var lon: Double = 0.0,
         var resolved: Boolean = false,
         var timeLeft: Int = Config.SESSION_SEC,
         var nextPoll: Int = 0,
@@ -71,10 +76,35 @@ class AutoPollService : Service() {
 
     private data class Snapshot(val fetchedAt: Long, val arrivals: List<WidgetArrival>)
 
-    private val handler   = Handler(Looper.getMainLooper())
-    private val sessions  = mutableMapOf<Int, Session>()
-    private val snapshots = mutableMapOf<Int, Snapshot>()
-    private val fetching  = mutableSetOf<Int>()
+    private val handler    = Handler(Looper.getMainLooper())
+    private val sessions   = mutableMapOf<Int, Session>()
+    private val snapshots  = mutableMapOf<Int, Snapshot>()
+    private val fetching   = mutableSetOf<Int>()
+    private val mapBitmaps = mutableMapOf<Int, Bitmap>()   // static map per map-widget
+    private val mapLoading = mutableSetOf<Int>()
+
+    /** A widget belongs to the 4×2 map experiment (vs the plain auto widget). */
+    private fun isMapWidget(widgetId: Int): Boolean =
+        AppWidgetManager.getInstance(this).getAppWidgetInfo(widgetId)?.provider?.className
+            ?.endsWith("MapWidgetProvider") == true
+
+    private fun showLocatingFor(widgetId: Int) {
+        val awm = AppWidgetManager.getInstance(this)
+        if (isMapWidget(widgetId)) MapWidgetProvider.showLocating(this, awm, widgetId)
+        else BusWidgetProviderAuto.showLocating(this, awm, widgetId)
+    }
+
+    private fun showIdleFor(widgetId: Int) {
+        val awm = AppWidgetManager.getInstance(this)
+        if (isMapWidget(widgetId)) MapWidgetProvider.showIdle(this, awm, widgetId)
+        else BusWidgetProviderAuto.showIdle(this, awm, widgetId)
+    }
+
+    private fun showMessageFor(widgetId: Int, title: String, sub: String) {
+        val awm = AppWidgetManager.getInstance(this)
+        if (isMapWidget(widgetId)) MapWidgetProvider.showMessage(this, awm, widgetId, title, sub)
+        else BusWidgetProviderAuto.showMessage(this, awm, widgetId, title, sub)
+    }
 
     private val tick = object : Runnable {
         override fun run() {
@@ -102,7 +132,7 @@ class AutoPollService : Service() {
         if (widgetId == -1) return START_NOT_STICKY
 
         sessions[widgetId] = Session()
-        BusWidgetProviderAuto.showLocating(this, AppWidgetManager.getInstance(this), widgetId)
+        showLocatingFor(widgetId)
         if (sessions.size == 1) handler.post(tick)
         resolveNearestStop(widgetId)
         return START_NOT_STICKY
@@ -111,12 +141,11 @@ class AutoPollService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun resolveNearestStop(widgetId: Int) {
-        val awm = AppWidgetManager.getInstance(this)
         val hasPerm = ContextCompat.checkSelfPermission(
             this, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         if (!hasPerm) {
-            BusWidgetProviderAuto.showMessage(this, awm, widgetId, "Геолокация", "нет разрешения")
+            showMessageFor(widgetId, "Геолокация", "нет разрешения")
             endSession(widgetId)
             return
         }
@@ -147,32 +176,72 @@ class AutoPollService : Service() {
         s.stopId = nearby.stop.id
         s.stopName = nearby.stop.name
         s.routes = nearby.stop.routes
+        s.lat = nearby.stop.lat
+        s.lon = nearby.stop.lon
         s.distanceText = if (nearby.distanceMeters < 1000) "${nearby.distanceMeters}м"
                          else "%.1fкм".format(nearby.distanceMeters / 1000.0)
         s.resolved = true
         s.nextPoll = 0  // fetch immediately on next tick
+        if (isMapWidget(widgetId) && s.lat != 0.0 && s.lon != 0.0) {
+            fetchStaticMapAsync(widgetId, s.lat, s.lon)
+        }
         pushUpdate(widgetId, s)
     }
 
     private fun fail(widgetId: Int, msg: String) {
-        BusWidgetProviderAuto.showMessage(
-            this, AppWidgetManager.getInstance(this), widgetId, "Остановка", msg)
+        showMessageFor(widgetId, "Остановка", msg)
         endSession(widgetId)
     }
 
     private fun endSession(widgetId: Int) {
         sessions.remove(widgetId)
         snapshots.remove(widgetId)
-        BusWidgetProviderAuto.showIdle(this, AppWidgetManager.getInstance(this), widgetId)
+        mapBitmaps.remove(widgetId)
+        showIdleFor(widgetId)
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
 
     private fun pushUpdate(widgetId: Int, s: Session) {
-        BusWidgetProviderAuto.updateActive(
-            this, AppWidgetManager.getInstance(this), widgetId,
-            s.stopId, s.stopName, s.routes, s.distanceText, s.timeLeft,
-            liveArrivals(widgetId),
-        )
+        val awm = AppWidgetManager.getInstance(this)
+        val live = liveArrivals(widgetId)
+        if (isMapWidget(widgetId)) {
+            MapWidgetProvider.updateActive(
+                this, awm, widgetId, s.stopId, s.stopName, s.routes,
+                s.timeLeft, live, mapBitmaps[widgetId],
+            )
+        } else {
+            BusWidgetProviderAuto.updateActive(
+                this, awm, widgetId, s.stopId, s.stopName, s.routes,
+                s.distanceText, s.timeLeft, live,
+            )
+        }
+    }
+
+    /** Fetch a static map PNG of the stop once per session and re-render. */
+    private fun fetchStaticMapAsync(widgetId: Int, lat: Double, lon: Double) {
+        if (widgetId in mapLoading || mapBitmaps.containsKey(widgetId)) return
+        mapLoading += widgetId
+        Thread {
+            val bmp = try {
+                val key = BuildConfig.JS_YANDEX_API
+                // Keep it small — the bitmap is re-sent to the widget each tick.
+                val url = "https://static-maps.yandex.ru/v1?ll=$lon,$lat&z=16" +
+                    "&size=200,200&pt=$lon,$lat,pm2rdm&lang=ru_RU&apikey=$key"
+                val conn = URL(url).openConnection() as HttpURLConnection
+                conn.connectTimeout = 8_000; conn.readTimeout = 8_000
+                val ok = conn.responseCode in 200..299
+                val b = if (ok) BitmapFactory.decodeStream(conn.inputStream) else null
+                conn.disconnect()
+                b
+            } catch (_: Exception) { null }
+            handler.post {
+                mapLoading -= widgetId
+                if (bmp != null) {
+                    mapBitmaps[widgetId] = bmp
+                    sessions[widgetId]?.let { pushUpdate(widgetId, it) }
+                }
+            }
+        }.start()
     }
 
     private fun liveArrivals(widgetId: Int): List<WidgetArrival> {

@@ -79,7 +79,7 @@
                 android:resource="@xml/bus_widget_info_wide"/>
         </receiver>
 
-        <!-- Auto 2×2 widget (finds nearest stop by geolocation) -->
+        <!-- Auto 3×1 widget (finds nearest stop by geolocation) -->
         <receiver
             android:name=".widget.BusWidgetProviderAuto"
             android:exported="true">
@@ -89,6 +89,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/bus_widget_info_auto"/>
+        </receiver>
+
+        <!-- Experimental 4×2 widget: static map snippet + nearest 3 buses -->
+        <receiver
+            android:name=".widget.MapWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/bus_widget_info_map"/>
         </receiver>
 
         <!-- Background polling service -->
