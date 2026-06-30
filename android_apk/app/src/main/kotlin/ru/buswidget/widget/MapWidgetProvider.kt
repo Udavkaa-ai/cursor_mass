@@ -72,6 +72,7 @@ class MapWidgetProvider : AppWidgetProvider() {
             timeLeft: Int,
             arrivals: List<WidgetArrival>,
             mapBitmap: Bitmap?,
+            mapStatus: String,
         ) {
             val rv = RemoteViews(ctx.packageName, R.layout.widget_bus_map)
             val m = timeLeft / 60; val s = timeLeft % 60
@@ -84,9 +85,12 @@ class MapWidgetProvider : AppWidgetProvider() {
 
             if (mapBitmap != null) {
                 rv.setViewVisibility(R.id.map_image, View.VISIBLE)
+                rv.setViewVisibility(R.id.map_status, View.GONE)
                 rv.setImageViewBitmap(R.id.map_image, mapBitmap)
             } else {
                 rv.setViewVisibility(R.id.map_image, View.GONE)
+                rv.setViewVisibility(R.id.map_status, View.VISIBLE)
+                rv.setTextViewText(R.id.map_status, mapStatus)
             }
 
             ROW_IDS.forEachIndexed { i, ids ->
@@ -101,7 +105,7 @@ class MapWidgetProvider : AppWidgetProvider() {
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))
             val openApp = openArrivalsIntent(ctx, widgetId, stopId, stopName, routes)
             rv.setOnClickPendingIntent(R.id.tw_stop, openApp)
-            rv.setOnClickPendingIntent(R.id.map_image, openApp)
+            rv.setOnClickPendingIntent(R.id.map_slot, openApp)
             awm.updateAppWidget(widgetId, rv)
         }
 

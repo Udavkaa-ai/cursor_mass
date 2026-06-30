@@ -83,6 +83,7 @@ class AutoPollService : Service() {
     private val mapBitmaps = mutableMapOf<Int, Bitmap>()   // static map per map-widget
     private val mapLoading = mutableSetOf<Int>()
     private val mapNeedsFull = mutableSetOf<Int>()         // map widgets needing a full (vs tick) update
+    private val mapStatus = mutableMapOf<Int, String>()    // placeholder text when no bitmap
 
     /** A widget belongs to the 4×2 map experiment (vs the plain auto widget). */
     private fun isMapWidget(widgetId: Int): Boolean =
@@ -201,6 +202,7 @@ class AutoPollService : Service() {
         mapBitmaps.remove(widgetId)
         mapNeedsFull.remove(widgetId)
         mapLoading.remove(widgetId)
+        mapStatus.remove(widgetId)
         showIdleFor(widgetId)
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
@@ -215,6 +217,7 @@ class AutoPollService : Service() {
                 MapWidgetProvider.updateActive(
                     this, awm, widgetId, s.stopId, s.stopName, s.routes,
                     s.timeLeft, live, mapBitmaps[widgetId],
+                    mapStatus[widgetId] ?: "загрузка…",
                 )
             } else {
                 MapWidgetProvider.updateTick(this, awm, widgetId, s.timeLeft, live)
@@ -238,11 +241,12 @@ class AutoPollService : Service() {
         mapLoading += widgetId
         val url = buildStaticMapUrl(lat, lon, etaSeconds)
         Thread {
+            var code = -1
             val bmp = try {
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.connectTimeout = 8_000; conn.readTimeout = 8_000
-                val ok = conn.responseCode in 200..299
-                val b = if (ok) BitmapFactory.decodeStream(conn.inputStream) else null
+                code = conn.responseCode
+                val b = if (code in 200..299) BitmapFactory.decodeStream(conn.inputStream) else null
                 conn.disconnect()
                 b
             } catch (_: Exception) { null }
@@ -250,9 +254,14 @@ class AutoPollService : Service() {
                 mapLoading -= widgetId
                 if (bmp != null) {
                     mapBitmaps[widgetId] = bmp
-                    mapNeedsFull += widgetId
-                    sessions[widgetId]?.let { pushUpdate(widgetId, it) }
+                    mapStatus.remove(widgetId)
+                } else if (!mapBitmaps.containsKey(widgetId)) {
+                    // Surface the HTTP code so we can tell auth (403) from a bad
+                    // request (400) etc. while this is experimental.
+                    mapStatus[widgetId] = if (code > 0) "нет карты ($code)" else "нет сети"
                 }
+                mapNeedsFull += widgetId
+                sessions[widgetId]?.let { pushUpdate(widgetId, it) }
             }
         }.start()
     }
