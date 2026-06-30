@@ -23,6 +23,13 @@ android {
             ?: System.getenv("MAPKIT_API_KEY")
             ?: "JS_YANDEX_API_PLACEHOLDER"
         buildConfigField("String", "JS_YANDEX_API", "\"$jsApiKey\"")
+
+        // Yandex Static API key (used by the 4×2 map widget). Falls back to the JS
+        // key, then a placeholder, for local builds.
+        val staticApiKey = System.getenv("STATIC_YA_API")
+            ?: System.getenv("JS_YANDEX_API")
+            ?: "STATIC_YA_API_PLACEHOLDER"
+        buildConfigField("String", "STATIC_YA_API", "\"$staticApiKey\"")
     }
 
     buildTypes {

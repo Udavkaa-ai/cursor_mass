@@ -268,7 +268,7 @@ class AutoPollService : Service() {
 
     private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?): String {
         fun f(v: Double) = String.format(java.util.Locale.US, "%.5f", v)
-        val key = BuildConfig.JS_YANDEX_API
+        val key = BuildConfig.STATIC_YA_API
         val sb = StringBuilder("https://static-maps.yandex.ru/v1?size=200,200&lang=ru_RU&apikey=$key")
         sb.append("&pt=${f(lon)},${f(lat)},pm2rdm")
 

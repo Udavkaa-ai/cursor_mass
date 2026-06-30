@@ -43,6 +43,7 @@ jobs:
         env:
           MAPKIT_API_KEY: ${{ secrets.MAPKIT_API_KEY }}
           JS_YANDEX_API: ${{ secrets.JS_YANDEX_API }}
+          STATIC_YA_API: ${{ secrets.STATIC_YA_API }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
