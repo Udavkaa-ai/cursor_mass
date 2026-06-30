@@ -104,8 +104,10 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
                 rv.setTextColor(ids.unit, color)
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))
-            // Tapping the stop name opens the full arrivals screen for this stop.
-            rv.setOnClickPendingIntent(R.id.tw_stop, openArrivalsIntent(ctx, widgetId, stopId, stopName, routes))
+            // Tapping the stop name or the arrivals area opens the full screen.
+            val openApp = openArrivalsIntent(ctx, widgetId, stopId, stopName, routes)
+            rv.setOnClickPendingIntent(R.id.tw_stop, openApp)
+            rv.setOnClickPendingIntent(R.id.rows_active, openApp)
             awm.updateAppWidget(widgetId, rv)
         }
 

@@ -61,6 +61,8 @@ open class BusWidgetProvider : AppWidgetProvider() {
                 ROW_IDS.forEach { rv.setViewVisibility(it.row, View.GONE) }
             }
             rv.setOnClickPendingIntent(R.id.btn_start, startPendingIntent(ctx, widgetId))
+            // Tapping the stop name opens the full arrivals screen for this stop.
+            rv.setOnClickPendingIntent(R.id.tw_stop, openAppPendingIntent(ctx, widgetId))
             awm.updateAppWidget(widgetId, rv)
         }
 

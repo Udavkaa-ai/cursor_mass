@@ -60,6 +60,13 @@
             android:exported="true"
             android:theme="@style/Theme.BusWidget"/>
 
+        <!-- Base receiver for the manual widget's START/STOP button broadcasts.
+             Registered (so explicit intents reach it) but has no appwidget
+             meta-data, so it is NOT offered as a separate widget in the picker. -->
+        <receiver
+            android:name=".widget.BusWidgetProvider"
+            android:exported="false"/>
+
         <!-- Wide 3×1 widget (manual stop selection) -->
         <receiver
             android:name=".widget.BusWidgetProviderWide"
