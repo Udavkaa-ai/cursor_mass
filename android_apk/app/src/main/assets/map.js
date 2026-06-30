@@ -44,10 +44,24 @@ function initMap(lat, lon, stopName) {
     });
 
     map.geoObjects.add(stopMarker);
-    map.setCenter([lat, lon], 15);
+    map.setCenter([lat, lon], DEFAULT_ZOOM);
+    lastZoomBucket = -1;
 
     document.getElementById('stopName').textContent = stopName;
     document.getElementById('info').style.display = 'block';
+}
+
+// Only draw the bus-distance circle within this many seconds (3 min). Further
+// away the circle would be kilometers wide and cover the whole map.
+const SHOW_WITHIN_SEC = 180;
+const DEFAULT_ZOOM = 16;
+let lastZoomBucket = -1;   // minute bucket the zoom was last fitted to
+
+// Bounding box [[south, west], [north, east]] around a center for a radius (m).
+function boundsAround(center, radiusMeters) {
+    const dLat = radiusMeters / 111320;
+    const dLon = radiusMeters / (111320 * Math.cos(center[0] * Math.PI / 180));
+    return [[center[0] - dLat, center[1] - dLon], [center[0] + dLat, center[1] + dLon]];
 }
 
 function updateDistance(etaSeconds, etaText) {
@@ -56,47 +70,52 @@ function updateDistance(etaSeconds, etaText) {
         return;
     }
 
-    const busSpeedMps = 8.3;
-    const busDistanceMeters = Math.max(0, Math.round(etaSeconds * busSpeedMps));
+    document.getElementById('arrivalInfo').textContent = '🚌 ' + etaText;
 
-    // Удаляем старый кружок
-    if (distanceCircle) {
-        map.geoObjects.remove(distanceCircle);
-    }
-
-    // Определяем цвет по ETA
-    let circleColor = '#4A90E2';
-    let circleOpacity = 0.5;
-
-    if (etaSeconds <= 0) {
-        circleColor = '#E53040';
-        circleOpacity = 0.7;
-    } else if (etaSeconds < 300) {
-        circleColor = '#E53040';
-        circleOpacity = 0.6;
-    } else if (etaSeconds < 480) {
-        circleColor = '#FF8C00';
-        circleOpacity = 0.5;
-    } else {
-        circleColor = '#2ED87A';
-        circleOpacity = 0.4;
-    }
-
-    // Создаём новый кружок. Геометрия ymaps.Circle — это [центр, радиус],
-    // т.е. [[lat, lon], радиусВметрах]. Радиус НЕ задаётся через свойства.
     const stopCoords = stopMarker.geometry.getCoordinates();
-    distanceCircle = new ymaps.Circle([stopCoords, busDistanceMeters], {}, {
+
+    // Bus still far (or unknown) — no circle, keep a calm default view.
+    if (etaSeconds == null || etaSeconds > SHOW_WITHIN_SEC) {
+        if (distanceCircle) { map.geoObjects.remove(distanceCircle); distanceCircle = null; }
+        if (lastZoomBucket !== 99) { lastZoomBucket = 99; map.setCenter(stopCoords, DEFAULT_ZOOM); }
+        return;
+    }
+
+    const busSpeedMps = 8.3;
+    const radius = Math.max(0, Math.round(etaSeconds * busSpeedMps));
+
+    // Color by closeness.
+    let circleColor, circleOpacity;
+    if (etaSeconds <= 60) {            // ≤ 1 min / arriving
+        circleColor = '#E53040'; circleOpacity = 0.55;
+    } else if (etaSeconds <= 120) {    // ~2 min
+        circleColor = '#FF8C00'; circleOpacity = 0.45;
+    } else {                           // ~3 min
+        circleColor = '#2ED87A'; circleOpacity = 0.40;
+    }
+
+    if (distanceCircle) map.geoObjects.remove(distanceCircle);
+    distanceCircle = new ymaps.Circle([stopCoords, radius], {}, {
         fillColor: circleColor,
         strokeColor: circleColor,
         strokeOpacity: 0.7,
         strokeWidth: 2,
         fillOpacity: circleOpacity
     });
-
     map.geoObjects.add(distanceCircle);
 
-    // Обновляем панель информации
-    document.getElementById('arrivalInfo').textContent = '🚌 ' + etaText;
+    // Re-fit the zoom only when the minute bucket (3→2→1→arriving) changes, so
+    // the circle always fits the view but the map doesn't re-zoom every second
+    // (the circle itself still shrinks smoothly each tick).
+    const bucket = etaSeconds <= 0 ? 0 : Math.ceil(etaSeconds / 60);
+    if (bucket !== lastZoomBucket) {
+        lastZoomBucket = bucket;
+        const fitRadius = Math.max(radius, 150);  // avoid over-zooming when ~0
+        map.setBounds(boundsAround(stopCoords, fitRadius), {
+            checkZoomRange: true,
+            zoomMargin: 40
+        });
+    }
 }
 
 function clearDistance() {
@@ -104,4 +123,5 @@ function clearDistance() {
         map.geoObjects.remove(distanceCircle);
         distanceCircle = null;
     }
+    lastZoomBucket = -1;
 }
