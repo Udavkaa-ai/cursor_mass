@@ -82,14 +82,13 @@ function updateDistance(etaSeconds, etaText) {
         circleOpacity = 0.4;
     }
 
-    // Создаём новый кружок
+    // Создаём новый кружок. Геометрия ymaps.Circle — это [центр, радиус],
+    // т.е. [[lat, lon], радиусВметрах]. Радиус НЕ задаётся через свойства.
     const stopCoords = stopMarker.geometry.getCoordinates();
-    distanceCircle = new ymaps.Circle([stopCoords], {
-        radius: busDistanceMeters
-    }, {
+    distanceCircle = new ymaps.Circle([stopCoords, busDistanceMeters], {}, {
         fillColor: circleColor,
         strokeColor: circleColor,
-        opacity: 0.7,
+        strokeOpacity: 0.7,
         strokeWidth: 2,
         fillOpacity: circleOpacity
     });
