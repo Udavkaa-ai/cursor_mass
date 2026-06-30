@@ -96,7 +96,7 @@ function updateDistance(etaSeconds, etaText) {
     map.geoObjects.add(distanceCircle);
 
     // Обновляем панель информации
-    document.getElementById('arrivalInfo').textContent = 'Ближайший: ' + etaText;
+    document.getElementById('arrivalInfo').textContent = '🚌 ' + etaText;
 }
 
 function clearDistance() {
