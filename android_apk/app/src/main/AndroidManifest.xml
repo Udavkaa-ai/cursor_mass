@@ -54,6 +54,26 @@
             android:name=".AboutActivity"
             android:exported="false"/>
 
+        <!-- Invisible router for the Quick Settings tile -->
+        <activity
+            android:name=".NearestStopActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BusWidget.Translucent"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""/>
+
+        <!-- Quick Settings tile: open the nearest stop's arrivals -->
+        <service
+            android:name=".BusTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_bus"
+            android:label="Ближайший автобус"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
         <!-- Widget configuration screen -->
         <activity
             android:name=".widget.WidgetConfigActivity"

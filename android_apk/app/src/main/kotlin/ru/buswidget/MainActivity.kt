@@ -57,6 +57,15 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnAddEmpty).setOnClickListener(openAdd)
         findViewById<TextView>(R.id.btnMenu).setOnClickListener { showMenu() }
         findViewById<TextView>(R.id.btnNearby).setOnClickListener { requestLocationAndFind() }
+
+        // Android 13+: notifications (arrival alerts + the live departure board)
+        // need a runtime grant.
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
     }
 
     override fun onResume() {
@@ -69,13 +78,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMenu() {
         AlertDialog.Builder(this)
-            .setItems(arrayOf("Сохранить бэкап", "Восстановить из файла", "О приложении")) { _, which ->
+            .setItems(arrayOf(
+                "Сохранить бэкап", "Восстановить из файла",
+                "Напоминание о прибытии", "О приложении",
+            )) { _, which ->
                 when (which) {
                     0 -> createDocumentLauncher.launch("buswidget_backup.json")
                     1 -> openDocumentLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                    2 -> startActivity(Intent(this, AboutActivity::class.java))
+                    2 -> showAlertSettings()
+                    3 -> startActivity(Intent(this, AboutActivity::class.java))
                 }
             }
+            .show()
+    }
+
+    private fun showAlertSettings() {
+        val options = arrayOf("Выключено", "За 1 минуту", "За 2 минуты", "За 3 минуты")
+        val current = ru.buswidget.widget.ArrivalAlerts.thresholdMin(this).coerceIn(0, 3)
+        AlertDialog.Builder(this)
+            .setTitle("Напоминать о прибытии автобуса")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                ru.buswidget.widget.ArrivalAlerts.setThresholdMin(this, which)
+                toast(if (which == 0) "Напоминания выключены" else "Напомню ${options[which].lowercase()}")
+                dialog.dismiss()
+            }
+            .setNegativeButton("Отмена", null)
             .show()
     }
 

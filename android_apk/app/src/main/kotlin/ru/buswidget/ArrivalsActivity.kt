@@ -101,12 +101,18 @@ class ArrivalsActivity : AppCompatActivity() {
         if (arrival == null) return
         val eta = arrival.etaSeconds ?: return
         val routeKey = arrival.route
+        val threshold = ru.buswidget.widget.ArrivalAlerts.thresholdSec(this)
+        if (threshold <= 0) return
         // Notify at most once per route per session. A single "last route" var
         // re-fired when the ETA oscillated around the 1-min boundary or when the
         // nearest route alternated; a set fixes that.
-        if (eta in 1..60 && routeKey !in notifiedRoutes) {
+        if (eta in 1..threshold && routeKey !in notifiedRoutes) {
             notifiedRoutes.add(routeKey)
             notifyBusNear(arrival)
+            // Also post a system notification, so the alert reaches the user
+            // even if they've switched away from the app.
+            ru.buswidget.widget.ArrivalAlerts.post(
+                this, stopId, stopName, routes, arrival.route, arrival.etaLocal)
         }
     }
 

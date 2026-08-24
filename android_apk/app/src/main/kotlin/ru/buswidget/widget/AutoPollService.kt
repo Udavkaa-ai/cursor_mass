@@ -89,6 +89,8 @@ class AutoPollService : Service() {
     private val mapLoading = mutableSetOf<Int>()
     private val mapNeedsFull = mutableSetOf<Int>()         // map widgets needing a full (vs tick) update
     private val mapStatus = mutableMapOf<Int, String>()    // placeholder text when no bitmap
+    private val alerted = mutableMapOf<Int, MutableSet<String>>()  // arrival-alerted routes per widget
+    private var lastBoardText: String? = null
 
     /** A widget belongs to the 4×2 map experiment (vs the plain auto widget). */
     private fun isMapWidget(widgetId: Int): Boolean =
@@ -208,13 +210,30 @@ class AutoPollService : Service() {
         mapNeedsFull.remove(widgetId)
         mapLoading.remove(widgetId)
         mapStatus.remove(widgetId)
+        alerted.remove(widgetId)
         showIdleFor(widgetId)
+        lastBoardText = null
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
 
     private fun pushUpdate(widgetId: Int, s: Session) {
         val awm = AppWidgetManager.getInstance(this)
         val live = liveArrivals(widgetId)
+        ArrivalAlerts.check(
+            this, alerted.getOrPut(widgetId) { mutableSetOf() },
+            s.stopId, s.stopName, s.routes, live,
+        )
+        // Live departure board in the shade (see PollService for the pattern).
+        if (widgetId == sessions.keys.firstOrNull()) {
+            val lines = BoardNotification.renderLines(live)
+            if (lines != lastBoardText) {
+                lastBoardText = lines
+                getSystemService(NotificationManager::class.java)?.notify(
+                    NOTIF_ID,
+                    BoardNotification.build(this, CHANNEL_ID, s.stopId, s.stopName, s.routes, lines),
+                )
+            }
+        }
         if (isMapWidget(widgetId)) {
             // Full update (with the heavy map bitmap) only when the map or the row
             // data changed; otherwise a light per-second tick (timer + ETAs).
@@ -406,7 +425,7 @@ class AutoPollService : Service() {
             getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setSmallIcon(ru.buswidget.R.drawable.ic_tile_bus)
             .setContentTitle("Где автобус?")
             .setContentText("Ищу ближайшую остановку")
             .setPriority(NotificationCompat.PRIORITY_LOW)

@@ -74,6 +74,8 @@ class PollService : Service() {
     private val sessions  = mutableMapOf<Int, Session>()
     private val snapshots = mutableMapOf<Int, Snapshot>()
     private val fetching  = mutableSetOf<Int>()  // widgetIds with in-flight requests
+    private val alerted   = mutableMapOf<Int, MutableSet<String>>()  // arrival-alerted routes per widget
+    private var lastBoardText: String? = null
 
     private val tick = object : Runnable {
         override fun run() {
@@ -112,16 +114,34 @@ class PollService : Service() {
     private fun endSession(widgetId: Int) {
         sessions.remove(widgetId)
         snapshots.remove(widgetId)
+        alerted.remove(widgetId)
         BusWidgetProvider.showIdle(this, AppWidgetManager.getInstance(this), widgetId)
+        lastBoardText = null
         if (sessions.isEmpty()) { handler.removeCallbacks(tick); stopSelf() }
     }
 
     private fun pushUpdate(widgetId: Int, s: Session) {
+        val live = liveArrivals(widgetId)
         BusWidgetProvider.updateActive(
             this, AppWidgetManager.getInstance(this),
-            widgetId, s.stopName, s.timeLeft,
-            liveArrivals(widgetId),
+            widgetId, s.stopName, s.timeLeft, live,
         )
+        ArrivalAlerts.check(
+            this, alerted.getOrPut(widgetId) { mutableSetOf() },
+            s.stopId, s.stopName, s.routes, live,
+        )
+        // Live departure board in the shade: re-post the foreground notification
+        // only when its rendered text changes (minute granularity, silent).
+        if (widgetId == sessions.keys.firstOrNull()) {
+            val lines = BoardNotification.renderLines(live)
+            if (lines != lastBoardText) {
+                lastBoardText = lines
+                getSystemService(NotificationManager::class.java)?.notify(
+                    NOTIF_ID,
+                    BoardNotification.build(this, CHANNEL_ID, s.stopId, s.stopName, s.routes, lines),
+                )
+            }
+        }
     }
 
     // Re-compute ETAs each second from stored etaSeconds + elapsed time
@@ -190,7 +210,7 @@ class PollService : Service() {
             getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_directions)
+            .setSmallIcon(ru.buswidget.R.drawable.ic_tile_bus)
             .setContentTitle("Где автобус?")
             .setContentText("Обновление данных остановок")
             .setPriority(NotificationCompat.PRIORITY_LOW)
