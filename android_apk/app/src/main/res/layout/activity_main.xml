@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#13100C">
+    android:orientation="vertical">
 
     <!-- App bar -->
     <LinearLayout
@@ -11,11 +10,17 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#1A1710"
-        android:paddingStart="18dp"
+        android:paddingStart="16dp"
         android:paddingEnd="12dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="14dp"
+        android:paddingBottom="12dp">
+
+        <ImageView
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_logo"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@string/app_name"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -28,7 +33,7 @@
                 android:layout_height="wrap_content"
                 android:text="МОИ ОСТАНОВКИ"
                 android:textSize="10sp"
-                android:textColor="#9090B8"
+                android:textColor="#A3AAC8"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="0.12"
                 android:textAllCaps="true"
@@ -40,33 +45,34 @@
                 android:text="Где автобус?"
                 android:textSize="19sp"
                 android:textStyle="bold"
-                android:textColor="#F4F4F6"/>
+                android:textColor="#F5F6FB"/>
 
         </LinearLayout>
 
-        <Button
+        <TextView
             android:id="@+id/btnAdd"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:text="+ Добавить"
             android:textSize="12sp"
-            android:textColor="#6B9FD4"
-            android:backgroundTint="#243555"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:stateListAnimator="@null"/>
+            android:textStyle="bold"
+            android:textColor="#F5F6FB"
+            android:gravity="center"
+            android:background="@drawable/bg_btn"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clickable="true"
+            android:focusable="true"/>
 
         <TextView
             android:id="@+id/btnNearby"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:text="📍"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:gravity="center"
-            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_glass_pill"
+            android:layout_marginStart="8dp"
             android:clickable="true"
             android:focusable="true"/>
 
@@ -75,10 +81,11 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:text="⋮"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:gravity="center"
-            android:textColor="#9090B8"
-            android:layout_marginStart="6dp"
+            android:textColor="#A3AAC8"
+            android:background="@drawable/bg_glass_pill"
+            android:layout_marginStart="8dp"
             android:clickable="true"
             android:focusable="true"/>
 
@@ -91,10 +98,11 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
+        android:layoutAnimation="@anim/layout_glass"
         android:paddingTop="10dp"
         android:paddingBottom="16dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:visibility="gone"/>
 
     <!-- Empty state onboarding -->
@@ -120,7 +128,7 @@
                 android:text="Как начать"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#F4F4F6"
+                android:textColor="#F5F6FB"
                 android:layout_marginBottom="10dp"
                 android:paddingStart="4dp"/>
 
@@ -143,17 +151,17 @@
                     android:gravity="center"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#F4F4F6"
+                    android:textColor="#F5F6FB"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Нажмите «+ Добавить» и выберите остановку"
-                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F5F6FB"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Нажмите «Выбрать на карте» и тапните на остановку"
-                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
+                        android:textSize="11sp" android:textColor="#A3AAC8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -176,17 +184,17 @@
                     android:gravity="center"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#F4F4F6"
+                    android:textColor="#F5F6FB"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Нажмите на остановку, нажмите ЗАПУСТИТЬ"
-                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F5F6FB"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Автобусы обновляются каждые 15 секунд"
-                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
+                        android:textSize="11sp" android:textColor="#A3AAC8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -209,17 +217,17 @@
                     android:gravity="center"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#F4F4F6"
+                    android:textColor="#F5F6FB"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Фильтруйте маршруты (по желанию)"
-                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F5F6FB"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Введите номера через запятую: 925,907 — или оставьте пустым"
-                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
+                        android:textSize="11sp" android:textColor="#A3AAC8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -242,17 +250,17 @@
                     android:gravity="center"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#F4F4F6"
+                    android:textColor="#F5F6FB"
                     android:background="@drawable/bg_route_badge"
                     android:layout_marginEnd="12dp"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Добавьте виджет на рабочий стол"
-                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F4F4F6"/>
+                        android:textSize="13sp" android:textStyle="bold" android:textColor="#F5F6FB"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:text="Долгое нажатие на экран — Виджеты — Где автобус?"
-                        android:textSize="11sp" android:textColor="#9090B8" android:layout_marginTop="3dp"/>
+                        android:textSize="11sp" android:textColor="#A3AAC8" android:layout_marginTop="3dp"/>
                 </LinearLayout>
             </LinearLayout>
 

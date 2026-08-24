@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:text="●"
             android:textSize="8sp"
-            android:textColor="#9090B8"/>
+            android:textColor="#A3AAC8"/>
 
         <TextView
             android:id="@+id/tw_stop"
@@ -34,7 +34,7 @@
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.07"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"
             android:layout_marginStart="5dp"/>
@@ -44,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#6496D0"
+            android:textColor="#7A9BFF"
             android:fontFamily="monospace"
             android:visibility="gone"/>
     </LinearLayout>
@@ -81,7 +81,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#F5F6FB"/>
 
         <TextView
             android:id="@+id/r1_dir"
@@ -89,7 +89,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="9sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"
             android:paddingEnd="4dp"/>
@@ -101,7 +101,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#9090B8"/>
+            android:textColor="#A3AAC8"/>
     </LinearLayout>
 
     <!-- Active: arrival row 2 -->
@@ -125,7 +125,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#F5F6FB"/>
 
         <TextView
             android:id="@+id/r2_dir"
@@ -133,7 +133,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="9sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"
             android:paddingEnd="4dp"/>
@@ -145,7 +145,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#9090B8"/>
+            android:textColor="#A3AAC8"/>
     </LinearLayout>
 
     <!-- Active: arrival row 3 -->
@@ -169,7 +169,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#F5F6FB"/>
 
         <TextView
             android:id="@+id/r3_dir"
@@ -177,7 +177,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="9sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"
             android:paddingEnd="4dp"/>
@@ -189,7 +189,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#9090B8"/>
+            android:textColor="#A3AAC8"/>
     </LinearLayout>
 
     <!-- Active: arrival row 4 -->
@@ -213,7 +213,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#F5F6FB"/>
 
         <TextView
             android:id="@+id/r4_dir"
@@ -221,7 +221,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="9sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"
             android:paddingEnd="4dp"/>
@@ -233,7 +233,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#9090B8"/>
+            android:textColor="#A3AAC8"/>
     </LinearLayout>
 
     <!-- Stop button -->

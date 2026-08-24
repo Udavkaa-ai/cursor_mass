@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#13100C"
-    android:fillViewport="true">
+        android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,7 +20,7 @@
             android:text="Добавить остановку"
             android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
+            android:textColor="#F5F6FB"
             android:layout_marginBottom="16dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -48,7 +47,7 @@
             android:layout_height="wrap_content"
             android:text="Название остановки"
             android:textSize="12sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:layout_marginBottom="4dp"/>
 
         <EditText
@@ -57,8 +56,8 @@
             android:layout_height="wrap_content"
             android:hint="заполнится автоматически"
             android:textSize="15sp"
-            android:textColor="#F4F4F6"
-            android:textColorHint="#7878A0"
+            android:textColor="#F5F6FB"
+            android:textColorHint="#8A91B4"
             android:background="@drawable/bg_card"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
@@ -71,7 +70,7 @@
             android:layout_height="wrap_content"
             android:text="Показывать только маршруты (необязательно)"
             android:textSize="12sp"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:layout_marginTop="14dp"
             android:layout_marginBottom="4dp"/>
 
@@ -81,8 +80,8 @@
             android:layout_height="wrap_content"
             android:hint="925,907 — через запятую, пусто = все"
             android:textSize="15sp"
-            android:textColor="#F4F4F6"
-            android:textColorHint="#7878A0"
+            android:textColor="#F5F6FB"
+            android:textColorHint="#8A91B4"
             android:background="@drawable/bg_card"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"

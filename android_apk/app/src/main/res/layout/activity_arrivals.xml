@@ -2,15 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#13100C">
+    android:orientation="vertical">
 
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#1B3A6B">
+        android:background="@drawable/bg_header_glass">
 
         <!-- Title row: back + stop info + LIVE -->
         <LinearLayout
@@ -41,7 +40,7 @@
                     android:layout_height="wrap_content"
                     android:text="ОСТАНОВКА"
                     android:textSize="10sp"
-                    android:textColor="#707898"
+                    android:textColor="#8A91B4"
                     android:fontFamily="sans-serif-medium"
                     android:letterSpacing="0.1"
                     android:textAllCaps="true"
@@ -54,7 +53,7 @@
                     android:text="остановка"
                     android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="#F4F4F6"
+                    android:textColor="#F5F6FB"
                     android:maxLines="1"
                     android:ellipsize="end"/>
 
@@ -126,15 +125,17 @@
 
     </LinearLayout>
 
-    <!-- Interactive map with distance circle (Yandex Maps WebView) -->
+    <!-- Interactive map with distance circle (Yandex Maps WebView).
+         Rounded clipping is applied in code (outlineProvider + clipToOutline). -->
     <android.webkit.WebView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="220dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="12dp"
         android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_map_card"
         android:visibility="visible"/>
 
     <!-- Thin progress bar -->
@@ -157,8 +158,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:layoutAnimation="@anim/layout_glass"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
         android:paddingTop="12dp"
         android:paddingBottom="8dp"
         android:clipToPadding="false"/>
@@ -175,7 +177,7 @@
         android:text=""
         android:textSize="10sp"
         android:fontFamily="monospace"
-        android:textColor="#7878A0"
+        android:textColor="#8A91B4"
         android:gravity="center"
         android:letterSpacing="0.08"/>
 

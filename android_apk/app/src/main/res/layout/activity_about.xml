@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#13100C">
+    >
 
     <!-- Header -->
     <LinearLayout
@@ -11,7 +11,7 @@
         android:layout_height="52dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#1B3A6B"
+        android:background="@drawable/bg_header_glass"
         android:paddingStart="4dp"
         android:paddingEnd="12dp">
 
@@ -33,7 +33,7 @@
             android:text="О приложении"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
+            android:textColor="#F5F6FB"
             android:paddingStart="16dp"/>
 
     </LinearLayout>
@@ -53,7 +53,7 @@
             android:text="Yandex Bus Widget"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"
+            android:textColor="#F5F6FB"
             android:layout_marginBottom="8dp"/>
 
         <TextView
@@ -77,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:text="Условия использования"
                 android:textSize="12sp"
-                android:textColor="#707898"
+                android:textColor="#8A91B4"
                 android:letterSpacing="0.05"
                 android:textAllCaps="true"
                 android:layout_marginBottom="8dp"/>

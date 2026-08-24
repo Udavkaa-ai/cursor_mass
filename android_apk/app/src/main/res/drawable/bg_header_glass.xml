@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget start button: accent-tinted glass -->
+<!-- Header panel: indigo-tinted glass with a hairline bottom edge -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
             <gradient
-                android:startColor="#2E5E8BFF"
-                android:endColor="#1F8E5CF6"
-                android:angle="0"/>
-            <corners android:radius="14dp"/>
+                android:startColor="#2E3A7A"
+                android:centerColor="#232B58"
+                android:endColor="#1B2040"
+                android:angle="270"/>
         </shape>
     </item>
     <item>
@@ -16,14 +16,12 @@
                 android:startColor="#1FFFFFFF"
                 android:endColor="#00FFFFFF"
                 android:angle="270"/>
-            <corners android:radius="14dp"/>
         </shape>
     </item>
-    <item>
+    <item android:top="-2dp" android:left="-2dp" android:right="-2dp">
         <shape android:shape="rectangle">
             <solid android:color="#00000000"/>
-            <stroke android:width="1dp" android:color="#4D7A9BFF"/>
-            <corners android:radius="14dp"/>
+            <stroke android:width="1dp" android:color="#2AFFFFFF"/>
         </shape>
     </item>
 </layer-list>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App background: deep indigo base with two soft "aurora" glows.
+     Radial glows are oversized ovals so they fade beyond screen edges. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:startColor="#171A33"
+                android:centerColor="#101226"
+                android:endColor="#0A0B16"
+                android:angle="270"/>
+        </shape>
+    </item>
+    <!-- Violet glow, top-left -->
+    <item android:top="-220dp" android:left="-180dp" android:right="60dp" android:bottom="380dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="300dp"
+                android:startColor="#2E8E5CF6"
+                android:endColor="#008E5CF6"/>
+        </shape>
+    </item>
+    <!-- Blue glow, mid-right -->
+    <item android:top="120dp" android:left="120dp" android:right="-200dp" android:bottom="-80dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="320dp"
+                android:startColor="#245E8BFF"
+                android:endColor="#005E8BFF"/>
+        </shape>
+    </item>
+</layer-list>

@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.BusWidget" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#4382FF</item>
-        <item name="colorPrimaryVariant">#1a56cc</item>
+        <item name="colorPrimary">#5E8BFF</item>
+        <item name="colorPrimaryVariant">#3D63D4</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:statusBarColor">#0f0f10</item>
-        <item name="android:navigationBarColor">#0f0f10</item>
-        <item name="android:windowBackground">#0f0f10</item>
+        <item name="colorSecondary">#8E5CF6</item>
+        <item name="android:statusBarColor">#171A33</item>
+        <item name="android:navigationBarColor">#0A0B16</item>
+        <item name="android:windowBackground">@drawable/bg_app_gradient</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnim</item>
+    </style>
+
+    <style name="GlassActivityAnim" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/act_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/act_fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/act_fade_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/act_close_exit</item>
     </style>
 
     <style name="SettingsDialog" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
-        <item name="android:background">#0F0F10</item>
-        <item name="android:textColor">#F4F4F6</item>
-        <item name="android:textColorPrimary">#F4F4F6</item>
-        <item name="colorAccent">#4382FF</item>
+        <item name="android:windowBackground">@drawable/bg_dialog_glass</item>
+        <item name="android:textColor">#F5F6FB</item>
+        <item name="android:textColorPrimary">#F5F6FB</item>
+        <item name="colorAccent">#7A9BFF</item>
         <item name="buttonBarPositiveButtonStyle">@style/DialogBtn</item>
     </style>
 
     <style name="DialogBtn" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">#4382FF</item>
+        <item name="android:textColor">#7A9BFF</item>
     </style>
 </resources>
-

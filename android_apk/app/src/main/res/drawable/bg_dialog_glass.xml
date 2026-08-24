@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Green-tinted glass pill for the LIVE indicator -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
             <gradient
-                android:startColor="#2E2ED87A"
-                android:endColor="#122ED87A"
+                android:startColor="#1E2240"
+                android:endColor="#141731"
                 android:angle="270"/>
-            <corners android:radius="100dp"/>
+            <corners android:radius="24dp"/>
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
             <solid android:color="#00000000"/>
-            <stroke android:width="1dp" android:color="#4D2ED87A"/>
-            <corners android:radius="100dp"/>
+            <stroke android:width="1dp" android:color="#2CFFFFFF"/>
+            <corners android:radius="24dp"/>
         </shape>
     </item>
 </layer-list>

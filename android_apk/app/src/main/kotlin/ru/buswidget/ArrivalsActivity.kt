@@ -158,6 +158,14 @@ class ArrivalsActivity : AppCompatActivity() {
         rv.adapter = adapter
 
         mapView = findViewById(R.id.mapView)
+        // Round the WebView corners (XML clipToOutline is API 31+, so clip in code)
+        val mapCorner = 16f * resources.displayMetrics.density
+        mapView.outlineProvider = object : android.view.ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: android.graphics.Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, mapCorner)
+            }
+        }
+        mapView.clipToOutline = true
         mapView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -185,6 +193,15 @@ class ArrivalsActivity : AppCompatActivity() {
         )
 
         btnStart.setOnClickListener { if (running) stopSession() else startSession() }
+
+        // Soft breathing pulse on the LIVE dot
+        findViewById<View>(R.id.vLiveDot).startAnimation(
+            android.view.animation.AlphaAnimation(1f, 0.25f).apply {
+                duration = 900
+                repeatMode = android.view.animation.Animation.REVERSE
+                repeatCount = android.view.animation.Animation.INFINITE
+            }
+        )
 
         startSession()
     }

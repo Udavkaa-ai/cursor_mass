@@ -62,7 +62,8 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
         val secs  = a.etaSeconds
         val color = etaColor(secs)
 
-        holder.accent.setBackgroundColor(color)
+        // Tint (not replace) the rounded accent-strip drawable
+        holder.accent.backgroundTintList = android.content.res.ColorStateList.valueOf(color)
         holder.eta.setTextColor(color)
         holder.unit.setTextColor(color)
 

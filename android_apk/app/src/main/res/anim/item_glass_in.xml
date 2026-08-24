@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- List item entrance: rise + fade -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/decelerate_cubic">
+    <translate
+        android:fromYDelta="28dp"
+        android:toYDelta="0dp"
+        android:duration="340"/>
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1"
+        android:duration="340"/>
+</set>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0F0F10">
+    >
 
     <!-- Top bar -->
     <LinearLayout
@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#CC0F0F10"
+        android:background="#D9101226"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="12dp"
@@ -35,7 +35,7 @@
             android:text="Выберите остановку"
             android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="#F4F4F6"/>
+            android:textColor="#F5F6FB"/>
 
     </LinearLayout>
 
@@ -67,7 +67,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#EE0F0F10"
+        android:background="#F0101226"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="14dp"

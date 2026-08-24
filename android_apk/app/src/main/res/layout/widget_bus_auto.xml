@@ -34,7 +34,7 @@
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.07"
-            android:textColor="#9090B8"
+            android:textColor="#A3AAC8"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#7878A0"
+            android:textColor="#8A91B4"
             android:layout_marginStart="6dp"/>
 
         <TextView
@@ -51,7 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#6496D0"
+            android:textColor="#7A9BFF"
             android:fontFamily="monospace"
             android:layout_marginStart="6dp"
             android:visibility="gone"/>
@@ -114,7 +114,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F4F4F6"/>
+                android:textColor="#F5F6FB"/>
 
             <TextView
                 android:id="@+id/r1_eta"
@@ -123,7 +123,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
 
             <TextView
                 android:id="@+id/r1_unit"
@@ -131,7 +131,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
         </LinearLayout>
 
         <!-- Divider -->
@@ -161,7 +161,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F4F4F6"/>
+                android:textColor="#F5F6FB"/>
 
             <TextView
                 android:id="@+id/r2_eta"
@@ -170,7 +170,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
 
             <TextView
                 android:id="@+id/r2_unit"
@@ -178,7 +178,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
         </LinearLayout>
 
         <!-- Divider -->
@@ -208,7 +208,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F4F4F6"/>
+                android:textColor="#F5F6FB"/>
 
             <TextView
                 android:id="@+id/r3_eta"
@@ -217,7 +217,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
 
             <TextView
                 android:id="@+id/r3_unit"
@@ -225,7 +225,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#9090B8"/>
+                android:textColor="#A3AAC8"/>
         </LinearLayout>
 
     </LinearLayout>
