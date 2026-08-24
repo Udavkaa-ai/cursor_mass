@@ -90,6 +90,33 @@
             android:inputType="text"
             android:singleLine="true"/>
 
+        <TextView
+            android:id="@+id/tvRoutesLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Доступные маршруты — нажмите, чтобы отслеживать"
+            android:textSize="12sp"
+            android:textColor="#A3AAC8"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="2dp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/tvRoutesStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#8A91B4"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipsRoutes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"/>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
