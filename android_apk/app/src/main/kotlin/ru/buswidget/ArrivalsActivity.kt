@@ -268,20 +268,26 @@ class ArrivalsActivity : AppCompatActivity() {
                 val arrivals = parseArrivals(json.optJSONArray("arrivals"))
                 val fetchedAt = System.currentTimeMillis()
                 handler.post {
-                    fetching    = false
-                    lastFetchAt  = fetchedAt
-                    lastFetched  = arrivals
-                    lastMapUpdateTime = System.currentTimeMillis()
+                    fetching = false
                     if (name.isNotBlank()) {
                         tvStopName.text = name
                         StopStorage.load(this).find { it.id == stopId }?.let { stop ->
                             StopStorage.update(this, stop.copy(name = name))
                         }
                     }
-                    adapter.submit(arrivals)
-                    val firstEta = arrivals.firstOrNull()
-                    if (firstEta != null) {
-                        updateMapDistance(firstEta.etaSeconds ?: 0, firstEta.etaLocal)
+                    // Reset the countdown baseline only when the payload actually
+                    // changed. The server caches ~45s while we poll every 15s —
+                    // resetting on identical data made the ETA jump back up and
+                    // drift away from the widgets' countdowns (same rule as
+                    // PollService's snapshot update).
+                    if (arrivals.isNotEmpty() && arrivals != lastFetched) {
+                        lastFetchAt = fetchedAt
+                        lastFetched = arrivals
+                        lastMapUpdateTime = 0  // let the next tick refresh the map
+                        adapter.submit(arrivals)
+                        arrivals.firstOrNull()?.let {
+                            updateMapDistance(it.etaSeconds ?: 0, it.etaLocal)
+                        }
                     }
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())

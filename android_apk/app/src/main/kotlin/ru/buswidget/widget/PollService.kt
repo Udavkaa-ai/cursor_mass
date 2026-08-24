@@ -131,9 +131,14 @@ class PollService : Service() {
         return snap.arrivals.mapNotNull { a ->
             val liveSecs = a.etaSeconds?.minus(elapsed)
             if (liveSecs != null && liveSecs < -30) return@mapNotNull null
+            // etaSeconds must be live too: the wide/auto widgets render the
+            // NUMBER from etaSeconds, so leaving the original value froze their
+            // countdown between server data changes (while the map widget's
+            // string kept ticking) — widgets visibly disagreed on the same stop.
             a.copy(
-                eta   = liveSecs?.let { formatEta(it) } ?: a.eta,
-                color = etaColor(liveSecs ?: a.etaSeconds),
+                eta        = liveSecs?.let { formatEta(it) } ?: a.eta,
+                etaSeconds = liveSecs,
+                color      = etaColor(liveSecs ?: a.etaSeconds),
             )
         }
     }

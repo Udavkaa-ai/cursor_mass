@@ -342,9 +342,12 @@ class AutoPollService : Service() {
         return snap.arrivals.mapNotNull { a ->
             val liveSecs = a.etaSeconds?.minus(elapsed)
             if (liveSecs != null && liveSecs < -30) return@mapNotNull null
+            // Keep etaSeconds live as well — the 3×1 widget renders the number
+            // from etaSeconds, which otherwise stays frozen between data changes.
             a.copy(
-                eta   = liveSecs?.let { PollService.formatEta(it) } ?: a.eta,
-                color = PollService.etaColor(liveSecs ?: a.etaSeconds),
+                eta        = liveSecs?.let { PollService.formatEta(it) } ?: a.eta,
+                etaSeconds = liveSecs,
+                color      = PollService.etaColor(liveSecs ?: a.etaSeconds),
             )
         }
     }
