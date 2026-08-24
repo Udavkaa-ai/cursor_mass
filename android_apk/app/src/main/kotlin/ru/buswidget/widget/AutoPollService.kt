@@ -235,7 +235,26 @@ class AutoPollService : Service() {
         }
     }
 
-    /** Fetch a static map PNG of the stop once per session and re-render. */
+    /**
+     * Compute the map slot's size (in request px, at 2× for sharpness) and the
+     * matching corner radius from the widget's real dimensions, so the fetched
+     * image has the slot's exact aspect ratio and uniform 12dp corners.
+     * Layout constants: root h-padding 10+10, 8dp gap, half width for the map;
+     * root v-padding 6+6, ~26dp header row.
+     */
+    private fun mapSlotSpec(widgetId: Int): Triple<Int, Int, Float> {
+        val opts = AppWidgetManager.getInstance(this).getAppWidgetOptions(widgetId)
+        val wDp = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: 250
+        val hDp = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).takeIf { it > 0 } ?: 110
+        val slotWdp = ((wDp - 28) / 2).coerceAtLeast(80)
+        val slotHdp = (hDp - 38).coerceAtLeast(60)
+        var w = slotWdp * 2; var h = slotHdp * 2
+        // Static API caps: 650×450 — shrink uniformly to preserve the aspect.
+        val f = minOf(650f / w, 450f / h, 1f)
+        w = (w * f).toInt(); h = (h * f).toInt()
+        return Triple(w, h, 12f * 2 * f)
+    }
+
     /**
      * Fetch a static map of the stop with a distance circle (a polygon, since the
      * static API has no native circle) sized by the nearest bus's ETA. Refreshed
@@ -244,8 +263,8 @@ class AutoPollService : Service() {
     private fun fetchStaticMapAsync(widgetId: Int, lat: Double, lon: Double, etaSeconds: Int?) {
         if (widgetId in mapLoading) return
         mapLoading += widgetId
-        val url = buildStaticMapUrl(lat, lon, etaSeconds)
-        val radiusPx = 10f * resources.displayMetrics.density
+        val (mapW, mapH, radiusPx) = mapSlotSpec(widgetId)
+        val url = buildStaticMapUrl(lat, lon, etaSeconds, mapW, mapH)
         Thread {
             var code = -1
             val bmp = try {
@@ -283,10 +302,10 @@ class AutoPollService : Service() {
         return out
     }
 
-    private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?): String {
+    private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?, w: Int, h: Int): String {
         fun f(v: Double) = String.format(java.util.Locale.US, "%.5f", v)
         val key = BuildConfig.STATIC_YA_API
-        val sb = StringBuilder("https://static-maps.yandex.ru/v1?size=200,200&lang=ru_RU&apikey=$key")
+        val sb = StringBuilder("https://static-maps.yandex.ru/v1?size=$w,$h&lang=ru_RU&apikey=$key")
         sb.append("&pt=${f(lon)},${f(lat)},pm2rdm")
 
         val within = etaSeconds != null && etaSeconds <= 180

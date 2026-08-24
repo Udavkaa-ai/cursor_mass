@@ -96,11 +96,14 @@
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/bg_widget_row">
 
+                <!-- The bitmap is fetched at this slot's exact aspect ratio and
+                     pre-rounded in code, so fitXY shows it 1:1 with no cropping
+                     (centerCrop was shaving the rounded corners unevenly). -->
                 <ImageView
                     android:id="@+id/map_image"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
+                    android:scaleType="fitXY"
                     android:contentDescription="map"
                     android:visibility="gone"/>
 
