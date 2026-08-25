@@ -34,14 +34,29 @@ class PollService : Service() {
                 putExtra(EXTRA_ID, widgetId); putExtra(EXTRA_STOP, stopId)
                 putExtra(EXTRA_NAME, stopName); putExtra(EXTRA_ROUTES, routes)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            } catch (_: Exception) {
+                // OEM background-start refusal — reset the widget instead of crashing
+                BusWidgetProvider.showIdle(ctx, AppWidgetManager.getInstance(ctx), widgetId)
+            }
         }
 
         fun stopFor(ctx: Context, widgetId: Int) {
-            ctx.startService(Intent(ctx, PollService::class.java).apply {
+            val i = Intent(ctx, PollService::class.java).apply {
                 action = ACTION_STOP; putExtra(EXTRA_ID, widgetId)
-            })
+            }
+            // startForegroundService (not startService): a plain background start is
+            // illegal on O+ when the process was killed while locked — tapping СТОП
+            // on such a frozen widget crashed with IllegalStateException. The FGS
+            // start is always allowed; the service stops itself right after.
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            } catch (_: Exception) {
+                BusWidgetProvider.showIdle(ctx, AppWidgetManager.getInstance(ctx), widgetId)
+            }
         }
 
         fun formatEta(secs: Int): String = when {
@@ -63,6 +78,7 @@ class PollService : Service() {
 
     private data class Session(
         val stopId: String, val stopName: String, val routes: String,
+        val startedAt: Long = System.currentTimeMillis(),
         var timeLeft: Int = Config.SESSION_SEC,
         var nextPoll: Int = 0,
     )
@@ -81,7 +97,9 @@ class PollService : Service() {
         override fun run() {
             if (sessions.isEmpty()) { stopSelf(); return }
             sessions.entries.toList().forEach { (widgetId, s) ->
-                s.timeLeft--
+                // Wall-clock, not tick-count: Doze throttles the handler while the
+                // phone is locked, and counted ticks stretched the 5-min session.
+                s.timeLeft = (Config.SESSION_SEC - (System.currentTimeMillis() - s.startedAt) / 1000).toInt()
                 s.nextPoll--
                 if (s.nextPoll <= 0) { s.nextPoll = Config.POLL_SEC; fetchAndUpdate(widgetId, s) }
                 if (s.timeLeft <= 0) endSession(widgetId)

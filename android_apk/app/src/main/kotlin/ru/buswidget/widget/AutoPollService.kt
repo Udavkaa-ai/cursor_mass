@@ -55,15 +55,41 @@ class AutoPollService : Service() {
             } catch (e: Exception) {
                 // Android 12+ may reject a background FGS start in rare cases — show a
                 // hint instead of crashing.
-                BusWidgetProviderAuto.showMessage(
-                    ctx, AppWidgetManager.getInstance(ctx), widgetId, "Остановка", "откройте приложение")
+                showMessageStatic(ctx, widgetId, "Остановка", "откройте приложение")
             }
         }
 
         fun stopFor(ctx: Context, widgetId: Int) {
-            ctx.startService(Intent(ctx, AutoPollService::class.java).apply {
+            val i = Intent(ctx, AutoPollService::class.java).apply {
                 action = ACTION_STOP; putExtra(EXTRA_ID, widgetId)
-            })
+            }
+            // startForegroundService (not startService): tapping СТОП on a widget
+            // whose service was killed while the phone was locked crashed with a
+            // background-start IllegalStateException. The FGS start is always
+            // allowed; the service resets the widget to idle and stops itself.
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            } catch (_: Exception) {
+                resetToIdle(ctx, widgetId)
+            }
+        }
+
+        private fun isMapWidgetStatic(ctx: Context, widgetId: Int): Boolean =
+            AppWidgetManager.getInstance(ctx).getAppWidgetInfo(widgetId)?.provider?.className
+                ?.endsWith("MapWidgetProvider") == true
+
+        /** Reset a frozen widget to its idle state without needing the service. */
+        fun resetToIdle(ctx: Context, widgetId: Int) {
+            val awm = AppWidgetManager.getInstance(ctx)
+            if (isMapWidgetStatic(ctx, widgetId)) MapWidgetProvider.showIdle(ctx, awm, widgetId)
+            else BusWidgetProviderAuto.showIdle(ctx, awm, widgetId)
+        }
+
+        private fun showMessageStatic(ctx: Context, widgetId: Int, title: String, sub: String) {
+            val awm = AppWidgetManager.getInstance(ctx)
+            if (isMapWidgetStatic(ctx, widgetId)) MapWidgetProvider.showMessage(ctx, awm, widgetId, title, sub)
+            else BusWidgetProviderAuto.showMessage(ctx, awm, widgetId, title, sub)
         }
     }
 
@@ -75,6 +101,7 @@ class AutoPollService : Service() {
         var lat: Double = 0.0,
         var lon: Double = 0.0,
         var resolved: Boolean = false,
+        var startedAt: Long = System.currentTimeMillis(),
         var timeLeft: Int = Config.SESSION_SEC,
         var nextPoll: Int = 0,
     )
@@ -120,7 +147,9 @@ class AutoPollService : Service() {
             if (sessions.isEmpty()) { stopSelf(); return }
             sessions.entries.toList().forEach { (widgetId, s) ->
                 if (!s.resolved) return@forEach   // still waiting on the GPS fix
-                s.timeLeft--
+                // Wall-clock, not tick-count: Doze throttles the handler while the
+                // phone is locked, and counted ticks stretched the 5-min session.
+                s.timeLeft = (Config.SESSION_SEC - (System.currentTimeMillis() - s.startedAt) / 1000).toInt()
                 s.nextPoll--
                 if (s.nextPoll <= 0) { s.nextPoll = Config.POLL_SEC; fetchAndUpdate(widgetId, s) }
                 if (s.timeLeft <= 0) endSession(widgetId) else pushUpdate(widgetId, s)
@@ -190,6 +219,7 @@ class AutoPollService : Service() {
         s.distanceText = if (nearby.distanceMeters < 1000) "${nearby.distanceMeters}м"
                          else "%.1fкм".format(nearby.distanceMeters / 1000.0)
         s.resolved = true
+        s.startedAt = System.currentTimeMillis()  // the 5-min window starts now
         s.nextPoll = 0  // fetch immediately on next tick
         if (isMapWidget(widgetId)) {
             mapNeedsFull += widgetId   // first active render must be a full update
