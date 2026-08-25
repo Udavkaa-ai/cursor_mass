@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Single-color bus silhouette for the QS tile and notification small icons
-     (the system alpha-masks these, so it must be one flat color) -->
+     (the system alpha-masks these, so it must be one flat color).
+     Windshield and headlights are even-odd cutouts; wheels are solid bumps
+     protruding below the body — not holes in the face. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+
+    <!-- Wheels (merge with the body silhouette, arcs visible below it) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5.7,19.4 a2.3,2.3 0 1 0 4.6,0 a2.3,2.3 0 1 0 -4.6,0 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13.7,19.4 a2.3,2.3 0 1 0 4.6,0 a2.3,2.3 0 1 0 -4.6,0 Z"/>
+
+    <!-- Body with windshield + headlight cutouts -->
     <path
         android:fillColor="#FFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M7,2 h10 a3,3 0 0 1 3,3 v11 a3,3 0 0 1 -3,3 h-10 a3,3 0 0 1 -3,-3 v-11 a3,3 0 0 1 3,-3 Z
-            M7,5.5 a1.5,1.5 0 0 0 -1.5,1.5 v3 a1.5,1.5 0 0 0 1.5,1.5 h10 a1.5,1.5 0 0 0 1.5,-1.5 v-3 a1.5,1.5 0 0 0 -1.5,-1.5 Z
-            M7.5,14.2 a1.5,1.5 0 1 0 0,3 a1.5,1.5 0 1 0 0,-3 Z
-            M16.5,14.2 a1.5,1.5 0 1 0 0,3 a1.5,1.5 0 1 0 0,-3 Z"/>
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M7,20.5 h3 v1.2 a1.3,1.3 0 0 1 -1.3,1.3 h-0.4 a1.3,1.3 0 0 1 -1.3,-1.3 Z"/>
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M14,20.5 h3 v1.2 a1.3,1.3 0 0 1 -1.3,1.3 h-0.4 a1.3,1.3 0 0 1 -1.3,-1.3 Z"/>
+        android:pathData="M6,2 h12 a3,3 0 0 1 3,3 v11.5 a3,3 0 0 1 -3,3 h-12 a3,3 0 0 1 -3,-3 v-11.5 a3,3 0 0 1 3,-3 Z
+            M6.3,5.5 h11.4 a1.6,1.6 0 0 1 1.6,1.6 v3.3 a1.6,1.6 0 0 1 -1.6,1.6 h-11.4 a1.6,1.6 0 0 1 -1.6,-1.6 v-3.3 a1.6,1.6 0 0 1 1.6,-1.6 Z
+            M5.9,15.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 Z
+            M15.5,15.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 Z"/>
 </vector>
