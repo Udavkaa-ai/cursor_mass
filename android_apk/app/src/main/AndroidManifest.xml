@@ -135,5 +135,11 @@
             android:exported="false"
             android:foregroundServiceType="location|dataSync"/>
 
+        <!-- Single-bus watch service ("напомнить, когда автобус будет в N мин") -->
+        <service
+            android:name=".widget.WatchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
+
     </application>
 </manifest>

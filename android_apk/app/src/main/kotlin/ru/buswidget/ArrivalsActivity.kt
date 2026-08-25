@@ -134,6 +134,32 @@ class ArrivalsActivity : AppCompatActivity() {
         } catch (_: Exception) {}
     }
 
+    /** Tap on an arrival → watch that specific bus and alert N minutes out. */
+    private fun showWatchDialog(a: Arrival) {
+        val eta = a.etaSeconds
+        if (eta == null) {
+            Toast.makeText(this, "Для этого рейса нет прогноза — следить не получится", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val options = intArrayOf(1, 3, 5)
+        val labels = options.map { "Напомнить за $it мин" }.toTypedArray()
+        val dirSuffix = if (a.direction.isNotBlank()) " · ${a.direction}" else ""
+        android.app.AlertDialog.Builder(this)
+            .setTitle("🚌 ${a.route}$dirSuffix — ${a.etaLocal}")
+            .setItems(labels) { _, which ->
+                val m = options[which]
+                if (eta <= m * 60) {
+                    Toast.makeText(this, "Этот автобус уже ближе $m мин", Toast.LENGTH_SHORT).show()
+                } else {
+                    ru.buswidget.widget.WatchService.startWatch(
+                        this, stopId, tvStopName.text.toString(), a.route, a.direction, eta, m)
+                    Toast.makeText(this, "👁 Слежу за ${a.route} — напомню за $m мин", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
     private fun formatEta(secs: Int): String = when {
         secs <= 0   -> "подъезжает"
         secs < 60   -> "< 1 мин"
@@ -162,6 +188,7 @@ class ArrivalsActivity : AppCompatActivity() {
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
+        adapter.onItemClick = { a -> showWatchDialog(a) }
 
         mapView = findViewById(R.id.mapView)
         // Round the WebView corners (XML clipToOutline is API 31+, so clip in code)

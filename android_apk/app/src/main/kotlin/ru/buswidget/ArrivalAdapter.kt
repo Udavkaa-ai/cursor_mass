@@ -19,6 +19,9 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
 
     private var items: List<Arrival> = emptyList()
 
+    /** Tap on an arrival card (used for the "watch this bus" dialog). */
+    var onItemClick: ((Arrival) -> Unit)? = null
+
     fun submit(list: List<Arrival>) { items = list; notifyDataSetChanged() }
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
@@ -37,6 +40,7 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val a = items[position]
+        holder.itemView.setOnClickListener { onItemClick?.invoke(a) }
         holder.route.text = a.route
         holder.dir.text   = a.direction
 
