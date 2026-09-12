@@ -51,6 +51,9 @@ class MapPickerActivity : AppCompatActivity() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            // let the Yandex Maps page use browser geolocation (locate-me arrow,
+            // no "Карты не знают, где вы находитесь" banner)
+            setGeolocationEnabled(true)
             // modern Chrome UA so Yandex serves the standard mobile site
             userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) " +
                 "AppleWebKit/537.36 (KHTML, like Gecko) " +
@@ -78,6 +81,18 @@ class MapPickerActivity : AppCompatActivity() {
             }
             override fun onReceivedTitle(view: WebView, title: String) {
                 onUrlChanged(view.url ?: "", title)
+            }
+
+            // The page asks for geolocation — pass it through when the app
+            // itself holds the permission (the web prompt can't be shown here).
+            override fun onGeolocationPermissionsShowPrompt(
+                origin: String,
+                callback: android.webkit.GeolocationPermissions.Callback,
+            ) {
+                val granted = ContextCompat.checkSelfPermission(
+                    this@MapPickerActivity, android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                callback.invoke(origin, granted, false)
             }
         }
 
@@ -119,20 +134,30 @@ class MapPickerActivity : AppCompatActivity() {
 
         var loaded = false
         fun load(url: String) { if (!loaded) { loaded = true; webView.loadUrl(url) } }
+        fun loadAt(loc: android.location.Location) =
+            load("https://yandex.ru/maps/?ll=%.6f%%2C%.6f&z=17"
+                .format(java.util.Locale.US, loc.longitude, loc.latitude))
+        val fused = com.google.android.gms.location.LocationServices
+            .getFusedLocationProviderClient(this)
         try {
-            com.google.android.gms.location.LocationServices
-                .getFusedLocationProviderClient(this)
-                .lastLocation
+            fused.lastLocation
                 .addOnSuccessListener { loc ->
-                    if (loc != null) {
-                        load("https://yandex.ru/maps/?ll=%.6f%%2C%.6f&z=17"
-                            .format(java.util.Locale.US, loc.longitude, loc.latitude))
-                    } else load(fallback)
+                    if (loc != null) loadAt(loc)
+                    else {
+                        // No cached fix (fresh boot / GPS just enabled) — ask
+                        // for an actual one instead of giving up immediately.
+                        fused.getCurrentLocation(
+                            com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                            null,
+                        )
+                            .addOnSuccessListener { cur -> if (cur != null) loadAt(cur) else load(fallback) }
+                            .addOnFailureListener { load(fallback) }
+                    }
                 }
                 .addOnFailureListener { load(fallback) }
         } catch (_: SecurityException) { load(fallback) }
         // Don't leave the user staring at a blank screen if the fix hangs
-        webView.postDelayed({ load(fallback) }, 1500)
+        webView.postDelayed({ load(fallback) }, 4000)
     }
 
     private fun onUrlChanged(url: String, title: String?) {

@@ -212,11 +212,20 @@ class MainActivity : AppCompatActivity() {
     private fun findNearby() {
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location == null) {
-                    toast("Не удалось определить геолокацию")
+                if (location != null) {
+                    showNearbySheet(location.latitude, location.longitude)
                     return@addOnSuccessListener
                 }
-                showNearbySheet(location.latitude, location.longitude)
+                // No cached fix — request a fresh one before giving up
+                fusedLocationClient.getCurrentLocation(
+                    com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    null,
+                ).addOnSuccessListener { cur: Location? ->
+                    if (cur != null) showNearbySheet(cur.latitude, cur.longitude)
+                    else toast("Не удалось определить геолокацию")
+                }.addOnFailureListener {
+                    toast("Не удалось определить геолокацию")
+                }
             }
         } catch (e: SecurityException) {
             toast("Ошибка доступа: ${e.message}")
