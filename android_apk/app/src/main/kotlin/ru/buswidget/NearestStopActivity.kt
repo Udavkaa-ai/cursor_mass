@@ -34,21 +34,8 @@ class NearestStopActivity : AppCompatActivity() {
         }
 
         toast("Ищу ближайшую остановку…")
-        val client = LocationServices.getFusedLocationProviderClient(this)
-        try {
-            client.getCurrentLocation(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                CancellationTokenSource().token
-            ).addOnSuccessListener { loc: Location? ->
-                if (loc != null) openNearest(loc)
-                else client.lastLocation
-                    .addOnSuccessListener { last ->
-                        if (last != null) openNearest(last) else fail("включите GPS")
-                    }
-                    .addOnFailureListener { fail("включите GPS") }
-            }.addOnFailureListener { fail("включите GPS") }
-        } catch (_: SecurityException) {
-            fail("нет разрешения на геолокацию")
+        ru.buswidget.data.Locator.request(this) { loc ->
+            if (loc != null) openNearest(loc) else fail("включите GPS")
         }
     }
 

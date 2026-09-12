@@ -187,20 +187,9 @@ class AutoPollService : Service() {
             endSession(widgetId)
             return
         }
-        val client = LocationServices.getFusedLocationProviderClient(this)
-        try {
-            client.getCurrentLocation(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                CancellationTokenSource().token
-            ).addOnSuccessListener { loc: Location? ->
-                if (loc != null) onLocation(widgetId, loc)
-                else client.lastLocation.addOnSuccessListener { last ->
-                    if (last != null) onLocation(widgetId, last)
-                    else fail(widgetId, "включите GPS")
-                }.addOnFailureListener { fail(widgetId, "включите GPS") }
-            }.addOnFailureListener { fail(widgetId, "включите GPS") }
-        } catch (e: SecurityException) {
-            fail(widgetId, "нет разрешения")
+        ru.buswidget.data.Locator.request(this) { loc ->
+            if (loc != null) onLocation(widgetId, loc)
+            else fail(widgetId, "включите GPS")
         }
     }
 

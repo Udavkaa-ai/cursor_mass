@@ -210,25 +210,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun findNearby() {
-        try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    showNearbySheet(location.latitude, location.longitude)
-                    return@addOnSuccessListener
-                }
-                // No cached fix — request a fresh one before giving up
-                fusedLocationClient.getCurrentLocation(
-                    com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    null,
-                ).addOnSuccessListener { cur: Location? ->
-                    if (cur != null) showNearbySheet(cur.latitude, cur.longitude)
-                    else toast("Не удалось определить геолокацию")
-                }.addOnFailureListener {
-                    toast("Не удалось определить геолокацию")
-                }
-            }
-        } catch (e: SecurityException) {
-            toast("Ошибка доступа: ${e.message}")
+        ru.buswidget.data.Locator.request(this) { location: Location? ->
+            if (location != null) showNearbySheet(location)
+            else toast("Не удалось определить геолокацию")
         }
     }
 
@@ -243,7 +227,14 @@ class MainActivity : AppCompatActivity() {
      * the map by the server) — not just saved ones. Untracked stops can be
      * added right from here; tracked ones open their arrivals board.
      */
-    private fun showNearbySheet(lat: Double, lon: Double) {
+    private fun showNearbySheet(fix: Location) {
+        val lat = fix.latitude
+        val lon = fix.longitude
+        nearbyFixInfo = "±%.0fм, %dс назад".format(
+            java.util.Locale.US,
+            if (fix.hasAccuracy()) fix.accuracy else -1f,
+            ru.buswidget.data.Locator.ageMs(fix) / 1000,
+        )
         val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.MenuSheet)
         val v = layoutInflater.inflate(R.layout.sheet_nearby, null)
         sheet.setContentView(v)
@@ -286,6 +277,9 @@ class MainActivity : AppCompatActivity() {
     /** Диагностика последней неудачи /nearby — показывается в шите. */
     @Volatile private var nearbyDebug: String? = null
 
+    /** Точность/возраст последнего GPS-фикса для той же диагностики. */
+    @Volatile private var nearbyFixInfo: String = "?"
+
     private fun fetchNearbyStops(lat: Double, lon: Double): List<NearbyMapStop>? {
         return try {
             val base = ru.buswidget.data.Config.SERVER_URL.trimEnd('/')
@@ -325,7 +319,7 @@ class MainActivity : AppCompatActivity() {
                 nearbyDebug = if (parsed.isEmpty())
                     "точка %.5f, %.5f · сервер: в ответе %d, всего найдено %d"
                         .format(java.util.Locale.US, lat, lon, arr.length(),
-                            json.optInt("found_total", -1))
+                            json.optInt("found_total", -1)) + " · GPS $nearbyFixInfo"
                 else null
                 parsed
             }
