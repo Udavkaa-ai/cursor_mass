@@ -302,21 +302,44 @@ class AutoPollService : Service() {
      * static API has no native circle) sized by the nearest bus's ETA. Refreshed
      * each poll, so the circle steps down every ~15s as the bus approaches.
      */
+    /** Подложки карт неделю живут на диске: карта — константа, меняется только кружок. */
+    private val mapCacheTtlMs = 7L * 24 * 3600 * 1000
+
     private fun fetchStaticMapAsync(widgetId: Int, lat: Double, lon: Double, etaSeconds: Int?) {
         if (widgetId in mapLoading) return
         mapLoading += widgetId
         val (mapW, mapH, radiusPx) = mapSlotSpec(widgetId)
-        val url = buildStaticMapUrl(lat, lon, etaSeconds, mapW, mapH)
+        // Зум зависит только от 30-сек корзины ETA — так подложка кэшируется,
+        // а кружок и его цвет рисуем локально поверх.
+        val bucket = if (etaSeconds == null || etaSeconds > 180) -1
+                     else etaSeconds.coerceAtLeast(0) / 30
+        val url = buildStaticMapUrl(lat, lon, bucket, mapW, mapH)
+        val stopKey = (sessions[widgetId]?.stopId ?: "x").replace(Regex("[^A-Za-z0-9_]"), "")
+        val cacheFile = java.io.File(cacheDir, "basemap_${stopKey}_${mapW}x${mapH}_$bucket.png")
         Thread {
             var code = -1
-            val bmp = try {
-                val conn = URL(url).openConnection() as HttpURLConnection
-                conn.connectTimeout = 8_000; conn.readTimeout = 8_000
-                code = conn.responseCode
-                val raw = if (code in 200..299) BitmapFactory.decodeStream(conn.inputStream) else null
-                conn.disconnect()
-                raw?.let { roundCorners(it, radiusPx) }
+            // 1) подложка: диск → сеть (с записью на диск)
+            var base: Bitmap? = try {
+                if (cacheFile.exists() &&
+                    System.currentTimeMillis() - cacheFile.lastModified() < mapCacheTtlMs
+                ) BitmapFactory.decodeFile(cacheFile.absolutePath) else null
             } catch (_: Exception) { null }
+            if (base == null) {
+                base = try {
+                    val conn = URL(url).openConnection() as HttpURLConnection
+                    conn.connectTimeout = 8_000; conn.readTimeout = 8_000
+                    code = conn.responseCode
+                    val raw = if (code in 200..299) BitmapFactory.decodeStream(conn.inputStream) else null
+                    conn.disconnect()
+                    raw?.also { b ->
+                        try {
+                            cacheFile.outputStream().use { b.compress(Bitmap.CompressFormat.PNG, 90, it) }
+                        } catch (_: Exception) { }
+                    }
+                } catch (_: Exception) { null }
+            }
+            // 2) кружок расстояния поверх + скругление углов
+            val bmp = base?.let { roundCorners(drawCircleOverlay(it, bucket, etaSeconds), radiusPx) }
             handler.post {
                 mapLoading -= widgetId
                 if (bmp != null) {
@@ -348,16 +371,20 @@ class AutoPollService : Service() {
         return out
     }
 
-    private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?, w: Int, h: Int): String {
+    /**
+     * ПОДЛОЖКА карты (без кружка): бесключевой 1.x-эндпоинт, как у мини-карт
+     * списка остановок (ключевой v1 отдавал 403 по лимитам ключа). Зум задаёт
+     * bucket (30-сек корзина ETA, -1 = автобус далеко): радиус берём по верху
+     * корзины, чтобы URL был стабилен всю корзину и кэшировался.
+     */
+    private fun buildStaticMapUrl(lat: Double, lon: Double, bucket: Int, w: Int, h: Int): String {
         fun f(v: Double) = String.format(java.util.Locale.US, "%.5f", v)
-        // Тот же бесключевой 1.x-эндпоинт, что и мини-карты списка остановок:
-        // ключевой v1 (STATIC_YA_API) начал отдавать 403 (лимит/ограничения
-        // ключа), а 1.x работает без ключа и понимает те же pt/bbox/pl.
         val sb = StringBuilder("https://static-maps.yandex.ru/1.x/?l=map&lang=ru_RU&size=$w,$h")
         sb.append("&pt=${f(lon)},${f(lat)},pm2rdm")
 
-        val within = etaSeconds != null && etaSeconds <= 180
-        val radius = if (within) maxOf(etaSeconds!! * 8.3, 90.0) else 500.0
+        val within = bucket >= 0
+        val etaTop = (bucket + 1) * 30
+        val radius = if (within) maxOf(etaTop * 8.3, 90.0) else 500.0
         val rLat = radius / 111320.0
         val rLon = radius / (111320.0 * Math.cos(Math.toRadians(lat)))
 
@@ -365,23 +392,34 @@ class AutoPollService : Service() {
         val fit = if (within) 1.25 else 1.0
         sb.append("&bbox=${f(lon - rLon * fit)},${f(lat - rLat * fit)}" +
                   "~${f(lon + rLon * fit)},${f(lat + rLat * fit)}")
-
-        if (within) {
-            val (stroke, fill) = when {
-                etaSeconds!! <= 60  -> "E53040FF" to "E5304055"
-                etaSeconds <= 120   -> "FF8C00FF" to "FF8C0055"
-                else                -> "2ED87AFF" to "2ED87A4D"
-            }
-            val pts = StringBuilder()
-            val n = 24
-            for (i in 0..n) {
-                val ang = 2 * Math.PI * i / n
-                pts.append("${f(lon + rLon * Math.cos(ang))},${f(lat + rLat * Math.sin(ang))},")
-            }
-            pts.deleteCharAt(pts.length - 1)  // trailing comma
-            sb.append("&pl=c:$stroke,f:$fill,w:2,$pts")
-        }
         return sb.toString()
+    }
+
+    /**
+     * Кружок расстояния рисуем сами поверх подложки: bbox симметричен вокруг
+     * остановки, так что центр = центр картинки, а радиус в пикселях — это
+     * min(w,h)/2 без запаса fit=1.25. Цвет — по живому ETA, без сети.
+     */
+    private fun drawCircleOverlay(base: Bitmap, bucket: Int, etaSeconds: Int?): Bitmap {
+        val out = base.copy(Bitmap.Config.ARGB_8888, true) ?: return base
+        if (bucket < 0 || etaSeconds == null) return out
+        val (strokeColor, fillColor) = when {
+            etaSeconds <= 60  -> 0xFFE53040.toInt() to 0x55E53040
+            etaSeconds <= 120 -> 0xFFFF8C00.toInt() to 0x55FF8C00
+            else              -> 0xFF2ED87A.toInt() to 0x4D2ED87A
+        }
+        val canvas = Canvas(out)
+        val cx = out.width / 2f
+        val cy = out.height / 2f
+        val r = minOf(out.width, out.height) / 2f / 1.25f
+        canvas.drawCircle(cx, cy, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillColor; style = Paint.Style.FILL
+        })
+        canvas.drawCircle(cx, cy, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = strokeColor; style = Paint.Style.STROKE
+            strokeWidth = 2f * resources.displayMetrics.density
+        })
+        return out
     }
 
     private fun liveArrivals(widgetId: Int): List<WidgetArrival> {
