@@ -26,6 +26,7 @@ class AddStopActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_EDIT_STOP_ID = "edit_stop_id"
+        const val EXTRA_OPEN_PICKER  = "open_picker"
 
         private val CHIP_STATES = arrayOf(
             intArrayOf(android.R.attr.state_checked),
@@ -98,6 +99,14 @@ class AddStopActivity : AppCompatActivity() {
             mapPickerLauncher.launch(Intent(this, MapPickerActivity::class.java))
         }
         findViewById<Button>(R.id.btnSave).setOnClickListener { saveStop() }
+
+        // "Find a stop near me": jump straight into the map picker (it centers
+        // itself on the current GPS position when permission is granted).
+        if (editingId == null && savedInstanceState == null &&
+            intent.getBooleanExtra(EXTRA_OPEN_PICKER, false)
+        ) {
+            mapPickerLauncher.launch(Intent(this, MapPickerActivity::class.java))
+        }
     }
 
     /** Fetch every route serving the stop (unfiltered /arrivals) → toggle chips. */
@@ -161,13 +170,14 @@ class AddStopActivity : AppCompatActivity() {
             text = if (typeLabel.isNotEmpty()) "$route · $typeLabel" else route
             isCheckable = true
             isCheckedIconVisible = false
+            val c = { id: Int -> androidx.core.content.ContextCompat.getColor(context, id) }
             chipBackgroundColor = ColorStateList(CHIP_STATES,
-                intArrayOf(0x595E8BFF, 0x14FFFFFF))
+                intArrayOf(0x595E8BFF, c(R.color.surfacePill)))
             chipStrokeColor = ColorStateList(CHIP_STATES,
-                intArrayOf(0xB35E8BFF.toInt(), 0x26FFFFFF))
+                intArrayOf(0xB35E8BFF.toInt(), c(R.color.surfaceCardStroke)))
             chipStrokeWidth = 1f * resources.displayMetrics.density
             setTextColor(ColorStateList(CHIP_STATES,
-                intArrayOf(0xFFFFFFFF.toInt(), 0xFFA3AAC8.toInt())))
+                intArrayOf(c(R.color.textPrimary), c(R.color.textSecondary))))
             setOnCheckedChangeListener { _, _ -> if (!syncingChips) syncChipsToField() }
         }
     }

@@ -34,7 +34,7 @@
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.07"
-            android:textColor="#A3AAC8"
+            android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#8A91B4"
+            android:textColor="#B0B7D8" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
             android:layout_marginStart="6dp"/>
 
         <TextView
@@ -51,7 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#7A9BFF"
+            android:textColor="#7A9BFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
             android:fontFamily="monospace"
             android:layout_marginStart="6dp"
             android:visibility="gone"/>
@@ -64,7 +64,7 @@
             android:text="СТОП"
             android:textSize="8sp"
             android:letterSpacing="0.08"
-            android:textColor="#FFFFFF"
+            android:textColor="#FFFFFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:insetTop="0dp"
@@ -82,7 +82,7 @@
         android:layout_weight="1"
         android:text="▶  Ближайший автобус"
         android:textSize="12sp"
-        android:textColor="#99FFFFFF"
+        android:textColor="#CCFFFFFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
         android:background="@drawable/bg_widget_btn"/>
 
     <!-- Active: 3 columns of arrivals (visible when active) -->
@@ -114,7 +114,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F5F6FB"/>
+                android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r1_eta"
@@ -123,7 +123,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r1_unit"
@@ -131,7 +131,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
         </LinearLayout>
 
         <!-- Divider -->
@@ -161,7 +161,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F5F6FB"/>
+                android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r2_eta"
@@ -170,7 +170,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r2_unit"
@@ -178,7 +178,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
         </LinearLayout>
 
         <!-- Divider -->
@@ -208,7 +208,7 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:fontFamily="monospace"
-                android:textColor="#F5F6FB"/>
+                android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r3_eta"
@@ -217,7 +217,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-condensed"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
 
             <TextView
                 android:id="@+id/r3_unit"
@@ -225,7 +225,7 @@
                 android:layout_height="wrap_content"
                 android:text="МИН"
                 android:textSize="8sp"
-                android:textColor="#A3AAC8"/>
+                android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
         </LinearLayout>
 
     </LinearLayout>

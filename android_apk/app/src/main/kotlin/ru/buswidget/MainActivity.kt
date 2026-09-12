@@ -1,7 +1,6 @@
 package ru.buswidget
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -11,6 +10,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -77,25 +77,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showMenu() {
-        AlertDialog.Builder(this)
-            .setItems(arrayOf(
-                "Сохранить бэкап", "Восстановить из файла",
-                "Напоминание о прибытии", "О приложении",
-            )) { _, which ->
-                when (which) {
-                    0 -> createDocumentLauncher.launch("buswidget_backup.json")
-                    1 -> openDocumentLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                    2 -> showAlertSettings()
-                    3 -> startActivity(Intent(this, AboutActivity::class.java))
-                }
+        val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.MenuSheet)
+        val v = layoutInflater.inflate(R.layout.sheet_menu, null)
+        sheet.setContentView(v)
+        fun item(id: Int, action: () -> Unit) =
+            v.findViewById<View>(id).setOnClickListener { sheet.dismiss(); action() }
+        item(R.id.miBackup)  { createDocumentLauncher.launch("buswidget_backup.json") }
+        item(R.id.miRestore) { openDocumentLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) }
+        item(R.id.miAlerts)  { showAlertSettings() }
+        item(R.id.miTheme)   { showThemeDialog() }
+        item(R.id.miAbout)   { startActivity(Intent(this, AboutActivity::class.java)) }
+        sheet.show()
+        // The framework wraps the content view in its own frame — clear its
+        // background so bg_sheet's rounded top corners are what the user sees.
+        (v.parent as? View)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+    }
+
+    private fun showThemeDialog() {
+        val options = arrayOf("Как в системе", "Светлая", "Тёмная")
+        val current = App.themeMode(this).coerceIn(0, 2)
+        AlertDialog.Builder(this, R.style.SettingsDialog)
+            .setTitle("Тема оформления")
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                dialog.dismiss()
+                App.setThemeMode(this, which)
             }
+            .setNegativeButton("Отмена", null)
             .show()
     }
 
     private fun showAlertSettings() {
         val options = arrayOf("Выключено", "За 1 минуту", "За 2 минуты", "За 3 минуты")
         val current = ru.buswidget.widget.ArrivalAlerts.thresholdMin(this).coerceIn(0, 3)
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.SettingsDialog)
             .setTitle("Напоминать о прибытии автобуса")
             .setSingleChoiceItems(options, current) { dialog, which ->
                 ru.buswidget.widget.ArrivalAlerts.setThresholdMin(this, which)
@@ -151,7 +165,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "В файле нет остановок", Toast.LENGTH_SHORT).show()
             return
         }
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.SettingsDialog)
             .setTitle("Восстановить ${imported.size} ост.?")
             .setMessage("Заменить текущий список или добавить к нему?")
             .setPositiveButton("Заменить") { _, _ ->
@@ -205,7 +219,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 val nearby = StopStorage.findNearby(this, location.latitude, location.longitude)
                 if (nearby.isEmpty()) {
-                    toast("Нет остановок с координатами поблизости")
+                    // Nothing saved around — offer picking a new stop on the map
+                    AlertDialog.Builder(this, R.style.SettingsDialog)
+                        .setTitle("Рядом нет сохранённых остановок")
+                        .setMessage("Найти остановку рядом на карте и добавить её в отслеживаемые?")
+                        .setPositiveButton("Искать на карте") { _, _ -> openMapNearMe() }
+                        .setNegativeButton("Отмена", null)
+                        .show()
                     return@addOnSuccessListener
                 }
                 showNearbyDialog(nearby)
@@ -217,13 +237,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun showNearbyDialog(nearby: List<NearbyStop>) {
         val items = nearby.map { "${it.stop.name} • ${formatDistance(it.distanceMeters)}" }.toTypedArray()
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.SettingsDialog)
             .setTitle("Ближайшие остановки (${nearby.size})")
             .setItems(items) { _, which ->
                 openArrivals(nearby[which].stop)
             }
+            .setPositiveButton("Искать на карте") { _, _ -> openMapNearMe() }
             .setNegativeButton("Отмена", null)
             .show()
+    }
+
+    /** Open AddStopActivity with the map picker auto-launched centered on GPS. */
+    private fun openMapNearMe() {
+        startActivity(Intent(this, AddStopActivity::class.java).apply {
+            putExtra(AddStopActivity.EXTRA_OPEN_PICKER, true)
+        })
     }
 
     private fun formatDistance(meters: Int): String = when {

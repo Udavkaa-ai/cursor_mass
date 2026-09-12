@@ -12,14 +12,14 @@
         android:text="Выберите остановку для виджета"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="#F5F6FB"
+        android:textColor="@color/textPrimary"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#26FFFFFF"/>
+        android:background="@color/divider"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

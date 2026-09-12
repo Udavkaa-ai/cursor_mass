@@ -39,7 +39,7 @@
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.05"
-            android:textColor="#F5F6FB"
+            android:textColor="@color/textPrimary"
             android:background="@drawable/bg_type_badge"
             android:gravity="center_vertical"
             android:includeFontPadding="false"
@@ -52,7 +52,7 @@
             android:textSize="22sp"
             android:textStyle="bold"
             android:fontFamily="monospace"
-            android:textColor="#F5F6FB"
+            android:textColor="@color/textPrimary"
             android:letterSpacing="0.01"
             android:includeFontPadding="false"/>
 
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:textSize="11sp"
-            android:textColor="#A3AAC8"
+            android:textColor="@color/textSecondary"
             android:maxLines="2"
             android:ellipsize="end"
             android:lineSpacingMultiplier="1.3"/>
@@ -73,7 +73,7 @@
     <View
         android:layout_width="1dp"
         android:layout_height="match_parent"
-        android:background="#1FFFFFFF"/>
+        android:background="@color/divider"/>
 
     <!-- Right: ETA number + unit (42% width) -->
     <LinearLayout

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DARK theme palette. Names must stay in sync with values/colors.xml. -->
+<resources>
+    <!-- Text -->
+    <color name="textPrimary">#F5F6FB</color>
+    <color name="textSecondary">#A3AAC8</color>
+    <color name="textTertiary">#8A91B4</color>
+
+    <!-- Accent -->
+    <color name="accent">#5E8BFF</color>
+    <color name="accentAlt">#8E5CF6</color>
+    <color name="timerAccent">#7A9BFF</color>
+
+    <!-- App background gradient + aurora glows -->
+    <color name="appBgStart">#171A33</color>
+    <color name="appBgCenter">#101226</color>
+    <color name="appBgEnd">#0A0B16</color>
+    <color name="glowViolet">#2E8E5CF6</color>
+    <color name="glowBlue">#245E8BFF</color>
+
+    <!-- Surfaces (flat cards) -->
+    <color name="surfaceCard">#12FFFFFF</color>
+    <color name="surfaceCardStroke">#22FFFFFF</color>
+    <color name="surfacePill">#14FFFFFF</color>
+    <color name="surfacePillPressed">#2BFFFFFF</color>
+    <color name="headerBg">#1C2142</color>
+    <color name="dialogBg">#1A1D38</color>
+    <color name="dialogStroke">#2CFFFFFF</color>
+    <color name="divider">#1FFFFFFF</color>
+    <color name="progressTrack">#1AFFFFFF</color>
+    <color name="panelOverlay">#F0101226</color>
+
+    <!-- System bars -->
+    <color name="statusBarBg">#171A33</color>
+    <color name="navBarBg">#0A0B16</color>
+
+    <!-- Session state text -->
+    <color name="runText">#2ED87A</color>
+    <color name="stopText">#FF5A6E</color>
+</resources>

@@ -1,29 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget start button: accent-tinted glass -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:startColor="#2E5E8BFF"
-                android:endColor="#1F8E5CF6"
-                android:angle="0"/>
-            <corners android:radius="14dp"/>
-        </shape>
-    </item>
-    <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:startColor="#1FFFFFFF"
-                android:endColor="#00FFFFFF"
-                android:angle="270"/>
-            <corners android:radius="14dp"/>
-        </shape>
-    </item>
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#00000000"/>
-            <stroke android:width="1dp" android:color="#4D7A9BFF"/>
-            <corners android:radius="14dp"/>
-        </shape>
-    </item>
-</layer-list>
+<!-- Widget start button: semi-transparent accent, flat -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#4D5E8BFF"
+        android:endColor="#408E5CF6"
+        android:angle="0"/>
+    <stroke android:width="1dp" android:color="#4D7A9BFF"/>
+    <corners android:radius="14dp"/>
+</shape>

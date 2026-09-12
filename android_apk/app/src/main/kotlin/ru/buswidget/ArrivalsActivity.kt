@@ -144,7 +144,7 @@ class ArrivalsActivity : AppCompatActivity() {
         val options = intArrayOf(1, 3, 5)
         val labels = options.map { "Напомнить за $it мин" }.toTypedArray()
         val dirSuffix = if (a.direction.isNotBlank()) " · ${a.direction}" else ""
-        android.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.SettingsDialog)
             .setTitle("🚌 ${a.route}$dirSuffix — ${a.etaLocal}")
             .setItems(labels) { _, which ->
                 val m = options[which]
@@ -251,7 +251,7 @@ class ArrivalsActivity : AppCompatActivity() {
         notifiedRoutes.clear()
         @Suppress("DEPRECATION")
         btnStart.background = getDrawable(R.drawable.bg_btn_pill_stop)
-        btnStart.setTextColor(0xFFE53040.toInt())
+        btnStart.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.stopText))
         progressBar.visibility = View.VISIBLE
         tvStatus.text = "загрузка..."
         handler.post(tickRunnable)
@@ -262,7 +262,7 @@ class ArrivalsActivity : AppCompatActivity() {
         handler.removeCallbacks(tickRunnable)
         @Suppress("DEPRECATION")
         btnStart.background = getDrawable(R.drawable.bg_btn_pill_run)
-        btnStart.setTextColor(0xFF2ED87A.toInt())
+        btnStart.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.runText))
         btnStart.text = "▶  ЗАПУСТИТЬ"
         progressBar.progress = 0
         progressBar.visibility = View.INVISIBLE

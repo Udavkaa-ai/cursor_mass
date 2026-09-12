@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 27+ copy of Theme.BusWidget adding windowLightNavigationBar
+     (attribute doesn't exist below 27). Keep in sync with values/themes.xml. -->
+<resources>
+    <style name="Theme.BusWidget" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryVariant">#3D63D4</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/accentAlt</item>
+        <item name="android:statusBarColor">@color/statusBarBg</item>
+        <item name="android:navigationBarColor">@color/navBarBg</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+        <item name="android:windowBackground">@drawable/bg_app_gradient</item>
+        <item name="android:windowAnimationStyle">@style/GlassActivityAnim</item>
+    </style>
+</resources>

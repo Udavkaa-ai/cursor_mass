@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.BusWidget" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#5E8BFF</item>
+        <item name="colorPrimary">@color/accent</item>
         <item name="colorPrimaryVariant">#3D63D4</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">#8E5CF6</item>
-        <item name="android:statusBarColor">#171A33</item>
-        <item name="android:navigationBarColor">#0A0B16</item>
+        <item name="colorSecondary">@color/accentAlt</item>
+        <item name="android:statusBarColor">@color/statusBarBg</item>
+        <item name="android:navigationBarColor">@color/navBarBg</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
         <item name="android:windowBackground">@drawable/bg_app_gradient</item>
         <item name="android:windowAnimationStyle">@style/GlassActivityAnim</item>
     </style>
@@ -29,13 +30,47 @@
 
     <style name="SettingsDialog" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_dialog_glass</item>
-        <item name="android:textColor">#F5F6FB</item>
-        <item name="android:textColorPrimary">#F5F6FB</item>
-        <item name="colorAccent">#7A9BFF</item>
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+        <item name="colorAccent">@color/timerAccent</item>
         <item name="buttonBarPositiveButtonStyle">@style/DialogBtn</item>
+        <item name="buttonBarNegativeButtonStyle">@style/DialogBtn</item>
+        <item name="buttonBarNeutralButtonStyle">@style/DialogBtn</item>
     </style>
 
     <style name="DialogBtn" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">#7A9BFF</item>
+        <item name="android:textColor">@color/timerAccent</item>
+    </style>
+
+    <!-- Bottom-sheet menu: transparent frame so bg_sheet's rounded top shows -->
+    <style name="MenuSheet" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/MenuSheetStyle</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
+
+    <style name="MenuSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="MenuSheetItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:paddingTop">15dp</item>
+        <item name="android:paddingBottom">15dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <style name="MenuSheetDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">24dp</item>
+        <item name="android:layout_marginEnd">24dp</item>
+        <item name="android:background">@color/divider</item>
     </style>
 </resources>

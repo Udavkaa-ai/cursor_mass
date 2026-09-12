@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- App background: deep indigo base with two soft "aurora" glows.
-     Radial glows are oversized ovals so they fade beyond screen edges. -->
+<!-- App background: theme-aware base with two very soft "aurora" glows.
+     Colors come from values/colors.xml + values-night/colors.xml. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
             <gradient
                 android:type="linear"
-                android:startColor="#171A33"
-                android:centerColor="#101226"
-                android:endColor="#0A0B16"
+                android:startColor="@color/appBgStart"
+                android:centerColor="@color/appBgCenter"
+                android:endColor="@color/appBgEnd"
                 android:angle="270"/>
         </shape>
     </item>
@@ -18,7 +18,7 @@
             <gradient
                 android:type="radial"
                 android:gradientRadius="300dp"
-                android:startColor="#2E8E5CF6"
+                android:startColor="@color/glowViolet"
                 android:endColor="#008E5CF6"/>
         </shape>
     </item>
@@ -28,7 +28,7 @@
             <gradient
                 android:type="radial"
                 android:gradientRadius="320dp"
-                android:startColor="#245E8BFF"
+                android:startColor="@color/glowBlue"
                 android:endColor="#005E8BFF"/>
         </shape>
     </item>

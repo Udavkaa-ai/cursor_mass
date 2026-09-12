@@ -14,6 +14,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class MapPickerActivity : AppCompatActivity() {
 
@@ -80,7 +81,7 @@ class MapPickerActivity : AppCompatActivity() {
             }
         }
 
-        webView.loadUrl("https://yandex.ru/maps/")
+        loadMapCenteredOnMe()
 
         btnConfirm.isEnabled = false
         btnConfirm.alpha = 0.4f
@@ -104,6 +105,36 @@ class MapPickerActivity : AppCompatActivity() {
         })
     }
 
+    /**
+     * Open Yandex Maps centered on the current GPS position (so nearby stops
+     * are immediately visible and tappable). Falls back to the plain map when
+     * there is no permission or the fix doesn't arrive quickly.
+     */
+    private fun loadMapCenteredOnMe() {
+        val fallback = "https://yandex.ru/maps/"
+        val hasPerm = ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasPerm) { webView.loadUrl(fallback); return }
+
+        var loaded = false
+        fun load(url: String) { if (!loaded) { loaded = true; webView.loadUrl(url) } }
+        try {
+            com.google.android.gms.location.LocationServices
+                .getFusedLocationProviderClient(this)
+                .lastLocation
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        load("https://yandex.ru/maps/?ll=%.6f%%2C%.6f&z=17"
+                            .format(java.util.Locale.US, loc.longitude, loc.latitude))
+                    } else load(fallback)
+                }
+                .addOnFailureListener { load(fallback) }
+        } catch (_: SecurityException) { load(fallback) }
+        // Don't leave the user staring at a blank screen if the fix hangs
+        webView.postDelayed({ load(fallback) }, 1500)
+    }
+
     private fun onUrlChanged(url: String, title: String?) {
         val match = STOP_RE.find(url)
         if (match != null) {
@@ -116,7 +147,7 @@ class MapPickerActivity : AppCompatActivity() {
                 selectedLat = it.groupValues[2].toDoubleOrNull() ?: 0.0
             }
             tvHint.text = "Выбрано: ${selectedName ?: selectedId}"
-            tvHint.setTextColor(0xFFF4F4F6.toInt())
+            tvHint.setTextColor(ContextCompat.getColor(this, R.color.textPrimary))
             btnConfirm.isEnabled = true
             btnConfirm.alpha = 1f
         } else if (!url.contains("stops/")) {
@@ -125,7 +156,7 @@ class MapPickerActivity : AppCompatActivity() {
             btnConfirm.isEnabled = false
             btnConfirm.alpha = 0.4f
             tvHint.text = "Нажмите на значок остановки на карте"
-            tvHint.setTextColor(0xFF888899.toInt())
+            tvHint.setTextColor(ContextCompat.getColor(this, R.color.textTertiary))
         }
     }
 }

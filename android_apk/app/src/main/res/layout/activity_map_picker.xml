@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#D9101226"
+        android:background="@color/panelOverlay"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="12dp"
@@ -23,7 +23,7 @@
             android:layout_height="40dp"
             android:text="X"
             android:textSize="14sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/textSecondary"
             android:gravity="center"
             android:background="@drawable/bg_card"
             android:layout_marginEnd="12dp"/>
@@ -35,7 +35,7 @@
             android:text="Выберите остановку"
             android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="#F5F6FB"/>
+            android:textColor="@color/textPrimary"/>
 
     </LinearLayout>
 
@@ -67,7 +67,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#F0101226"
+        android:background="@color/panelOverlay"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="14dp"
@@ -79,7 +79,7 @@
             android:layout_height="wrap_content"
             android:text="Нажмите на значок остановки на карте"
             android:textSize="14sp"
-            android:textColor="#888899"
+            android:textColor="@color/textTertiary"
             android:layout_marginBottom="12dp"/>
 
         <Button

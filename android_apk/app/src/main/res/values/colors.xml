@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LIGHT theme palette. The dark twin lives in values-night/colors.xml —
+     keep the two files' color names in sync. Widget layouts intentionally do
+     NOT use these (they must stay dark-glass regardless of system theme). -->
+<resources>
+    <!-- Text -->
+    <color name="textPrimary">#1B1E2E</color>
+    <color name="textSecondary">#5A6076</color>
+    <color name="textTertiary">#8A8FA6</color>
+
+    <!-- Accent -->
+    <color name="accent">#5E8BFF</color>
+    <color name="accentAlt">#8E5CF6</color>
+    <color name="timerAccent">#3D63D4</color>
+
+    <!-- App background gradient + aurora glows -->
+    <color name="appBgStart">#F3F5FE</color>
+    <color name="appBgCenter">#EEF0FB</color>
+    <color name="appBgEnd">#E8EAF7</color>
+    <color name="glowViolet">#1A8E5CF6</color>
+    <color name="glowBlue">#145E8BFF</color>
+
+    <!-- Surfaces (flat cards) -->
+    <color name="surfaceCard">#C9FFFFFF</color>
+    <color name="surfaceCardStroke">#1E1B1E2E</color>
+    <color name="surfacePill">#A6FFFFFF</color>
+    <color name="surfacePillPressed">#331B1E2E</color>
+    <color name="headerBg">#E9EDFC</color>
+    <color name="dialogBg">#FBFCFF</color>
+    <color name="dialogStroke">#1E1B1E2E</color>
+    <color name="divider">#141B1E2E</color>
+    <color name="progressTrack">#1E1B1E2E</color>
+    <color name="panelOverlay">#F0F3F5FE</color>
+
+    <!-- System bars -->
+    <color name="statusBarBg">#F3F5FE</color>
+    <color name="navBarBg">#E8EAF7</color>
+
+    <!-- Session state text (needs more contrast on light) -->
+    <color name="runText">#169B57</color>
+    <color name="stopText">#D93A4C</color>
+</resources>

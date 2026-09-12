@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:textSize="13sp"
             android:textStyle="bold"
-            android:textColor="#F5F6FB"
+            android:textColor="@color/textPrimary"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="11sp"
-            android:textColor="#A3AAC8"/>
+            android:textColor="@color/textSecondary"/>
 
     </LinearLayout>
 
@@ -54,7 +54,7 @@
         android:layout_height="36dp"
         android:text="&#9998;"
         android:textSize="16sp"
-        android:textColor="#A3AAC8"
+        android:textColor="@color/textSecondary"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:stateListAnimator="@null"
@@ -68,7 +68,7 @@
         android:layout_height="36dp"
         android:text="&#10005;"
         android:textSize="14sp"
-        android:textColor="#7A1820"
+        android:textColor="@color/stopText"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:stateListAnimator="@null"
