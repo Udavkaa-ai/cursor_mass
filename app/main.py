@@ -500,6 +500,57 @@ async def nearby_stops_endpoint(
     return JSONResponse(body)
 
 
+@app.get("/debug_threads/{stop_id}", dependencies=[Depends(require_api_key)])
+async def debug_threads_endpoint(stop_id: str) -> JSONResponse:
+    """Компактная выжимка по каждому маршруту остановки: какие поля есть у
+    threads/BriefSchedule, примеры Events, Frequency. Нужна, чтобы понять,
+    где Яндекс прячет время прибытия у «нестандартных» маршрутов (трамваи)."""
+    assert masstransit is not None
+    try:
+        state = await masstransit.get_stop_state(stop_id, use_cache=False)
+    except yandex.YandexError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    data: dict = {}
+    stack = state.get("stack")
+    if isinstance(stack, list) and stack and isinstance(stack[0], dict):
+        stops_obj = stack[0].get("stops")
+        if isinstance(stops_obj, dict) and isinstance(stops_obj.get("data"), dict):
+            data = stops_obj["data"]
+    out = []
+    for t in data.get("transports") or []:
+        if not isinstance(t, dict):
+            continue
+        entry: dict = {
+            "name": t.get("name"),
+            "type": t.get("type"),
+            "transport_keys": sorted(t.keys()),
+            "threads": [],
+        }
+        threads = t.get("threads")
+        for th in threads if isinstance(threads, list) else []:
+            if not isinstance(th, dict):
+                continue
+            brief = th.get("BriefSchedule") or th.get("briefSchedule")
+            info: dict = {
+                "thread_keys": sorted(th.keys()),
+                "noBoarding": th.get("noBoarding"),
+            }
+            if isinstance(brief, dict):
+                events = brief.get("Events") or brief.get("events") or []
+                info["brief_keys"] = sorted(brief.keys())
+                info["events_count"] = len(events) if isinstance(events, list) else None
+                if isinstance(events, list) and events:
+                    info["events_sample"] = events[:2]
+                freq = brief.get("Frequency") or brief.get("frequency")
+                if freq is not None:
+                    info["frequency"] = freq
+            else:
+                info["brief"] = str(type(brief).__name__)
+            entry["threads"].append(info)
+        out.append(entry)
+    return JSONResponse({"stop": data.get("name"), "transports": out})
+
+
 @app.get("/raw/{stop_id}", dependencies=[Depends(require_api_key)])
 async def raw_stop_endpoint(stop_id: str) -> JSONResponse:
     """Распарсенный встроенный state из HTML-страницы остановки."""
