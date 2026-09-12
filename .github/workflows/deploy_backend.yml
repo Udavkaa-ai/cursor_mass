@@ -79,4 +79,7 @@ jobs:
           revision-concurrency: 8
           revision-execution-timeout: 30
           revision-env: ${{ steps.envs.outputs.env }}
-          public: true
+          # Контейнер уже публичный (allow-unauthenticated-invoke выполнен при
+          # первичном деплое); public: true требует роли admin и не нужен —
+          # с ним последний шаг падает с PERMISSION_DENIED, хотя ревизия
+          # уже успешно выкатилась.
