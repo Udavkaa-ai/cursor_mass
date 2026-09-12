@@ -460,23 +460,34 @@ def _eta_from_value(value: Any, now_ts: int) -> int | None:
 
 
 def _frequency_of_thread(thread: dict[str, Any]) -> str | None:
-    """Интервальные маршруты (трамваи и т.п.) вместо прогнозов несут
-    BriefSchedule.Frequency = {"text": "12 мин", "value": 720}."""
+    """Интервальные маршруты вместо прогнозов несут интервал движения.
+    В живых данных встречаются обе формы: BriefSchedule.Frequency = {...}
+    и BriefSchedule.Frequencies = [{...} | {"Frequency": {...}}, ...]."""
     brief = thread.get("BriefSchedule") or thread.get("briefSchedule")
     if not isinstance(brief, dict):
         return None
-    freq = brief.get("Frequency") or brief.get("frequency")
-    if not isinstance(freq, dict):
-        return None
-    text = freq.get("text")
-    if isinstance(text, str) and text.strip():
-        return text.strip()
-    value = freq.get("value")
-    try:
-        v = int(value)
-    except (TypeError, ValueError):
-        return None
-    return f"{v // 60} мин" if v > 0 else None
+    candidates: list[Any] = [brief.get("Frequency"), brief.get("frequency")]
+    for key in ("Frequencies", "frequencies"):
+        seq = brief.get(key)
+        if isinstance(seq, list):
+            for item in seq:
+                candidates.append(item)
+                if isinstance(item, dict):
+                    candidates.append(item.get("Frequency") or item.get("frequency"))
+    for freq in candidates:
+        if not isinstance(freq, dict):
+            continue
+        text = freq.get("text")
+        if isinstance(text, str) and text.strip():
+            return text.strip()
+        value = freq.get("value")
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            continue
+        if v > 0:
+            return f"{v // 60} мин"
+    return None
 
 
 def _events_of_thread(thread: dict[str, Any]) -> list[tuple[str, int | None, bool]]:
