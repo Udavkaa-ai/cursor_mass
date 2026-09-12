@@ -1,0 +1,82 @@
+name: Deploy Backend to Yandex Cloud
+
+# Деплоит бэкенд в Y.Cloud Serverless Containers при изменении его файлов.
+# Нужные секреты репозитория (см. шаги настройки в описании PR/коммита):
+#   YC_SA_JSON_CREDENTIALS — JSON-ключ сервисного аккаунта для деплоя
+#   YC_FOLDER_ID           — id каталога Yandex Cloud
+#   YC_REGISTRY_ID         — id Container Registry (bus-tracker)
+#   YC_PULL_SA_ID          — id сервисного аккаунта bus-tracker-sa (пулл образа)
+#   STOPS                  — JSON-массив остановок (как в env.yc)
+#   API_KEY, MOS_API_KEY   — опционально
+
+on:
+  push:
+    branches:
+      - claude/yandex-maps-widget-Zod7Y
+    paths:
+      - 'app/**'
+      - 'proxy/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - '.github/workflows/deploy_backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    # Без секрета молча пропускаем (форки, не настроенный автодеплой)
+    if: ${{ github.repository == 'Udavkaa-ai/cursor_mass' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Yandex Container Registry
+        uses: yc-actions/yc-cr-login@v3
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+
+      - name: Build and push image
+        run: |
+          IMAGE="cr.yandex/${{ secrets.YC_REGISTRY_ID }}/bus-tracker:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Prepare revision env
+        id: envs
+        env:
+          STOPS: ${{ secrets.STOPS }}
+          API_KEY: ${{ secrets.API_KEY }}
+          MOS_API_KEY: ${{ secrets.MOS_API_KEY }}
+        run: |
+          # STOPS содержит запятые → отдаём как STOPS_B64, config.py сам декодирует
+          {
+            echo 'env<<EOF'
+            if [ -n "$STOPS" ]; then
+              echo "STOPS_B64=$(printf '%s' "$STOPS" | base64 -w0)"
+            fi
+            if [ -n "$API_KEY" ]; then
+              echo "API_KEY=$API_KEY"
+            fi
+            if [ -n "$MOS_API_KEY" ]; then
+              echo "MOS_API_KEY=$MOS_API_KEY"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy serverless container revision
+        uses: yc-actions/yc-sls-container-deploy@v5
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+          container-name: bus-tracker
+          folder-id: ${{ secrets.YC_FOLDER_ID }}
+          revision-image-url: ${{ env.IMAGE }}
+          revision-service-account-id: ${{ secrets.YC_PULL_SA_ID }}
+          revision-cores: 1
+          revision-core-fraction: 100
+          revision-memory: 512Mb
+          revision-concurrency: 8
+          revision-execution-timeout: 30
+          revision-env: ${{ steps.envs.outputs.env }}
+          public: true
