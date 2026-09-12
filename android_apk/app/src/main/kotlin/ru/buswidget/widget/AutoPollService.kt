@@ -350,8 +350,10 @@ class AutoPollService : Service() {
 
     private fun buildStaticMapUrl(lat: Double, lon: Double, etaSeconds: Int?, w: Int, h: Int): String {
         fun f(v: Double) = String.format(java.util.Locale.US, "%.5f", v)
-        val key = BuildConfig.STATIC_YA_API
-        val sb = StringBuilder("https://static-maps.yandex.ru/v1?size=$w,$h&lang=ru_RU&apikey=$key")
+        // Тот же бесключевой 1.x-эндпоинт, что и мини-карты списка остановок:
+        // ключевой v1 (STATIC_YA_API) начал отдавать 403 (лимит/ограничения
+        // ключа), а 1.x работает без ключа и понимает те же pt/bbox/pl.
+        val sb = StringBuilder("https://static-maps.yandex.ru/1.x/?l=map&lang=ru_RU&size=$w,$h")
         sb.append("&pt=${f(lon)},${f(lat)},pm2rdm")
 
         val within = etaSeconds != null && etaSeconds <= 180
