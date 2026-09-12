@@ -267,7 +267,9 @@ class MainActivity : AppCompatActivity() {
                     stops == null   -> status.text =
                         "не получилось узнать остановки рядом — попробуйте карту" +
                         (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
-                    stops.isEmpty() -> status.text = "рядом остановок не нашлось — попробуйте карту"
+                    stops.isEmpty() -> status.text =
+                        "рядом остановок не нашлось — попробуйте карту" +
+                        (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
                     else -> {
                         status.visibility = View.GONE
                         val savedIds = StopStorage.load(this)
@@ -305,9 +307,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 val json = JSONObject(conn.inputStream.bufferedReader().readText())
                 conn.disconnect()
-                nearbyDebug = null
                 val arr = json.optJSONArray("stops") ?: JSONArray()
-                (0 until arr.length()).mapNotNull { i ->
+                val parsed = (0 until arr.length()).mapNotNull { i ->
                     val o = arr.getJSONObject(i)
                     val id = o.optString("stop_id").takeIf { it.isNotBlank() }
                         ?: return@mapNotNull null
@@ -319,6 +320,14 @@ class MainActivity : AppCompatActivity() {
                         distanceM = o.optInt("distance_m", 0),
                     )
                 }
+                // При пустом результате показываем, ЧТО именно спросили и что
+                // ответил сервер — иначе не отличить протухший GPS от антибота.
+                nearbyDebug = if (parsed.isEmpty())
+                    "точка %.5f, %.5f · сервер: в ответе %d, всего найдено %d"
+                        .format(java.util.Locale.US, lat, lon, arr.length(),
+                            json.optInt("found_total", -1))
+                else null
+                parsed
             }
         } catch (e: Exception) {
             nearbyDebug = e.toString().take(200)

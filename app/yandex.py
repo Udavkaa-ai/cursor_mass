@@ -181,17 +181,22 @@ class YandexMasstransit:
 
     async def find_nearby_stops(
         self, lat: float, lon: float, radius_m: int = 1500, limit: int = 12
-    ) -> list[dict[str, Any]]:
+    ) -> dict[str, Any]:
         """Остановки рядом с точкой: скрейпим поисковую страницу Я.Карт
         «остановка общественного транспорта» с центром в (lat, lon) и
         вынимаем из SSR-state все объекты с id вида stop__NNN.
 
+        Возвращает {"stops": [...], "found_total": N} — found_total это
+        всё найденное в выдаче ДО фильтра по радиусу (для диагностики).
         Кэш 5 минут по сетке ~100 м, чтобы не долбить Яндекс."""
         cache_key = (round(lat, 3), round(lon, 3))
         async with self._nearby_cache_lock:
             entry = self._nearby_cache.get(cache_key)
             if entry and (time.monotonic() - entry[0]) < NEARBY_CACHE_TTL_SECONDS:
-                return _rank_nearby(entry[1], lat, lon, radius_m, limit)
+                return {
+                    "stops": _rank_nearby(entry[1], lat, lon, radius_m, limit),
+                    "found_total": len(entry[1]),
+                }
         # (кэш ниже пишет сырые записи; ranked считается на каждый запрос,
         #  чтобы radius/limit можно было менять без повторного скрейпа)
 
@@ -209,7 +214,10 @@ class YandexMasstransit:
         records = list(found.values())
         async with self._nearby_cache_lock:
             self._nearby_cache[cache_key] = (time.monotonic(), records)
-        return _rank_nearby(records, lat, lon, radius_m, limit)
+        return {
+            "stops": _rank_nearby(records, lat, lon, radius_m, limit),
+            "found_total": len(records),
+        }
 
     async def search(self, query: str) -> dict[str, Any]:
         csrf, session_id = await self._ensure_session()

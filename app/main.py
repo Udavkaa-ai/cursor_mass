@@ -484,15 +484,19 @@ async def nearby_stops_endpoint(
     debug=1 добавляет всё найденное в выдаче без фильтра по радиусу."""
     assert masstransit is not None
     try:
-        stops = await masstransit.find_nearby_stops(lat, lon, radius, limit)
+        res = await masstransit.find_nearby_stops(lat, lon, radius, limit)
     except yandex.YandexError as e:
         return JSONResponse({"stops": [], "error": str(e)}, status_code=502)
-    body: dict = {"stops": stops}
+    body: dict = {
+        "stops": res["stops"],
+        "found_total": res["found_total"],
+        "query": {"lat": lat, "lon": lon, "radius": radius},
+    }
     if debug:
         # без фильтра по радиусу — чтобы видеть, что вообще нашлось
-        body["all_found"] = await masstransit.find_nearby_stops(
-            lat, lon, radius_m=5_000_000, limit=30
-        )
+        body["all_found"] = (
+            await masstransit.find_nearby_stops(lat, lon, radius_m=5_000_000, limit=30)
+        )["stops"]
     return JSONResponse(body)
 
 
