@@ -30,12 +30,6 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
             ColIds(R.id.row3, R.id.r3_route, R.id.r3_eta, R.id.r3_unit),
         )
 
-        private fun formatEtaNum(secs: Int?): String = when {
-            secs == null -> "—"
-            secs <= 0    -> "→"
-            secs < 60    -> "<1"
-            else         -> "${secs / 60}"
-        }
 
         /** Idle state: prompt to start, no active rows. */
         fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) =
@@ -98,9 +92,10 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
                 val color = a?.color ?: 0xFF9090B8.toInt()
                 rv.setViewVisibility(ids.col, if (a != null) View.VISIBLE else View.INVISIBLE)
                 rv.setTextViewText(ids.route, a?.route ?: "")
-                rv.setTextViewText(ids.eta, if (a != null) formatEtaNum(a.etaSeconds) else "")
+                val (num, unit) = if (a != null) PollService.formatEtaParts(a.etaSeconds) else ("" to "")
+                rv.setTextViewText(ids.eta, num)
                 rv.setTextColor(ids.eta, color)
-                rv.setTextViewText(ids.unit, if (a != null) "МИН" else "")
+                rv.setTextViewText(ids.unit, unit)
                 rv.setTextColor(ids.unit, color)
             }
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))

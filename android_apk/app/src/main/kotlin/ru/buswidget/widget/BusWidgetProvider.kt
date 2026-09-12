@@ -39,12 +39,6 @@ open class BusWidgetProvider : AppWidgetProvider() {
         private fun typeFor(ctx: Context, widgetId: Int) =
             widgetPrefs(ctx).getString("${widgetId}_type", "dark") ?: "dark"
 
-        private fun formatEtaNum(secs: Int?): String = when {
-            secs == null  -> "—"
-            secs <= 0     -> "→"
-            secs < 60     -> "<1"
-            else          -> "${secs / 60}"
-        }
 
         fun showIdle(ctx: Context, awm: AppWidgetManager, widgetId: Int) {
             val type = typeFor(ctx, widgetId)
@@ -91,9 +85,10 @@ open class BusWidgetProvider : AppWidgetProvider() {
                     val color = a?.color ?: 0xFF9090B8.toInt()
                     rv.setTextViewText(ids.route, a?.route ?: "—")
                     rv.setTextColor(ids.route, if (a != null) 0xFFF4F4F6.toInt() else 0xFF9090B8.toInt())
-                    rv.setTextViewText(ids.eta, if (a != null) formatEtaNum(a.etaSeconds) else "—")
+                    val (num, unit) = if (a != null) PollService.formatEtaParts(a.etaSeconds) else ("—" to "")
+                    rv.setTextViewText(ids.eta, num)
                     rv.setTextColor(ids.eta, color)
-                    rv.setTextViewText(ids.unit, if (a != null) "МИН" else "")
+                    rv.setTextViewText(ids.unit, unit)
                     rv.setTextColor(ids.unit, color)
                 }
             } else {

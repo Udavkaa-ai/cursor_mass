@@ -80,6 +80,13 @@ class ArrivalAdapter : RecyclerView.Adapter<ArrivalAdapter.VH>() {
                 holder.eta.text = a.etaLocal.ifBlank { "—" }
                 holder.unit.text = ""
             }
+            secs >= 3600 -> {
+                // Больше часа: "9ч 22м" вместо нечитаемых "562 мин"
+                holder.eta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
+                holder.eta.maxLines = 1
+                holder.eta.text = "${secs / 3600}ч ${(secs % 3600) / 60}м"
+                holder.unit.text = ""
+            }
             else -> {
                 holder.eta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46f)
                 holder.eta.maxLines = 1

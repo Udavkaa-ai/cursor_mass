@@ -63,7 +63,16 @@ class PollService : Service() {
             secs <= 0   -> "подъезж."
             secs < 60   -> "< 1 мин"
             secs < 3600 -> "${secs / 60} мин"
-            else        -> "${secs / 3600}ч"
+            else        -> "${secs / 3600}ч ${(secs % 3600) / 60}м"
+        }
+
+        /** (число, подпись) для колоночных виджетов: "9ч"+"22м" вместо "562"+"МИН". */
+        fun formatEtaParts(secs: Int?): Pair<String, String> = when {
+            secs == null -> "—" to ""
+            secs <= 0    -> "→" to ""
+            secs < 60    -> "<1" to "МИН"
+            secs < 3600  -> "${secs / 60}" to "МИН"
+            else         -> "${secs / 3600}ч" to "${(secs % 3600) / 60}м"
         }
 
         fun etaColor(secs: Int?): Int = when {

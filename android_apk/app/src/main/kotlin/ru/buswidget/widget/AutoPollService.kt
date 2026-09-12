@@ -116,6 +116,9 @@ class AutoPollService : Service() {
     private val mapLoading = mutableSetOf<Int>()
     private val mapNeedsFull = mutableSetOf<Int>()         // map widgets needing a full (vs tick) update
     private val mapStatus = mutableMapOf<Int, String>()    // placeholder text when no bitmap
+    // 30-секундная «корзина» ETA последней загруженной карты: пока корзина не
+    // сменилась, картинку не перезапрашиваем — бережём дневной лимит Static API
+    private val mapLastKey = mutableMapOf<Int, Int>()
     private val alerted = mutableMapOf<Int, MutableSet<String>>()  // arrival-alerted routes per widget
     private var lastBoardText: String? = null
 
@@ -226,6 +229,7 @@ class AutoPollService : Service() {
         sessions.remove(widgetId)
         snapshots.remove(widgetId)
         mapBitmaps.remove(widgetId)
+        mapLastKey.remove(widgetId)
         mapNeedsFull.remove(widgetId)
         mapLoading.remove(widgetId)
         mapStatus.remove(widgetId)
@@ -321,7 +325,11 @@ class AutoPollService : Service() {
                 } else if (!mapBitmaps.containsKey(widgetId)) {
                     // Surface the HTTP code so we can tell auth (403) from a bad
                     // request (400) etc. while this is experimental.
-                    mapStatus[widgetId] = if (code > 0) "нет карты ($code)" else "нет сети"
+                    mapStatus[widgetId] = when {
+                        code == 403 -> "карта: исчерпан дневной лимит"
+                        code > 0    -> "нет карты ($code)"
+                        else        -> "нет сети"
+                    }
                 }
                 mapNeedsFull += widgetId
                 sessions[widgetId]?.let { pushUpdate(widgetId, it) }
@@ -410,11 +418,18 @@ class AutoPollService : Service() {
                         snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
                         mapNeedsFull += widgetId   // row data changed → full update
                     }
-                    // Refresh the map circle each poll with the nearest bus's ETA.
+                    // Refresh the map circle when the nearest ETA moves to the
+                    // next 30s bucket (not every poll — Static API has a daily
+                    // request quota and 403s once it's spent).
                     val s2 = sessions[widgetId]
                     if (s2 != null && isMapWidget(widgetId) && s2.lat != 0.0 && s2.lon != 0.0) {
                         val nearEta = liveArrivals(widgetId).firstOrNull()?.etaSeconds
-                        fetchStaticMapAsync(widgetId, s2.lat, s2.lon, nearEta)
+                        val key = if (nearEta == null || nearEta > 180) -1
+                                  else nearEta.coerceAtLeast(0) / 30
+                        if (mapLastKey[widgetId] != key || !mapBitmaps.containsKey(widgetId)) {
+                            mapLastKey[widgetId] = key
+                            fetchStaticMapAsync(widgetId, s2.lat, s2.lon, nearEta)
+                        }
                     }
                     s2?.let { pushUpdate(widgetId, it) }
                 }

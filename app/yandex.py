@@ -459,6 +459,26 @@ def _eta_from_value(value: Any, now_ts: int) -> int | None:
     return v
 
 
+def _frequency_of_thread(thread: dict[str, Any]) -> str | None:
+    """Интервальные маршруты (трамваи и т.п.) вместо прогнозов несут
+    BriefSchedule.Frequency = {"text": "12 мин", "value": 720}."""
+    brief = thread.get("BriefSchedule") or thread.get("briefSchedule")
+    if not isinstance(brief, dict):
+        return None
+    freq = brief.get("Frequency") or brief.get("frequency")
+    if not isinstance(freq, dict):
+        return None
+    text = freq.get("text")
+    if isinstance(text, str) and text.strip():
+        return text.strip()
+    value = freq.get("value")
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        return None
+    return f"{v // 60} мин" if v > 0 else None
+
+
 def _events_of_thread(thread: dict[str, Any]) -> list[tuple[str, int | None, bool]]:
     """Возвращает [(текст, eta_sec, real_time)]; real_time=True если Estimated."""
     out: list[tuple[str, int | None, bool]] = []
@@ -546,13 +566,22 @@ def parse_arrivals(state: dict[str, Any]) -> tuple[str, list[Arrival]]:
                 )
                 wrote_any = True
         if not wrote_any:
+            # Прогнозов нет — возможно, маршрут интервальный (трамваи):
+            # покажем "каждые N мин" вместо голого "нет данных".
+            freq = None
+            for thread in threads:
+                if isinstance(thread, dict):
+                    freq = _frequency_of_thread(thread)
+                    if freq:
+                        break
             arrivals.append(
                 Arrival(
                     route=route,
                     type=ttype,
                     direction=dir_from_name,
-                    eta_text="нет данных",
+                    eta_text=f"каждые {freq}" if freq else "нет данных",
                     eta_seconds=None,
+                    eta_local=f"каждые {freq}" if freq else "",
                 )
             )
     return name, arrivals
