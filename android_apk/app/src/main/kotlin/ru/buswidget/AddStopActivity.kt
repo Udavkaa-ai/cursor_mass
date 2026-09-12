@@ -27,6 +27,10 @@ class AddStopActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_EDIT_STOP_ID = "edit_stop_id"
         const val EXTRA_OPEN_PICKER  = "open_picker"
+        const val EXTRA_PREFILL_ID   = "prefill_id"
+        const val EXTRA_PREFILL_NAME = "prefill_name"
+        const val EXTRA_PREFILL_LAT  = "prefill_lat"
+        const val EXTRA_PREFILL_LON  = "prefill_lon"
 
         private val CHIP_STATES = arrayOf(
             intArrayOf(android.R.attr.state_checked),
@@ -99,6 +103,17 @@ class AddStopActivity : AppCompatActivity() {
             mapPickerLauncher.launch(Intent(this, MapPickerActivity::class.java))
         }
         findViewById<Button>(R.id.btnSave).setOnClickListener { saveStop() }
+
+        // Prefilled from the "nearby stops" sheet: stop already chosen, just
+        // load its routes so the user can pick which ones to track.
+        val prefillId = intent.getStringExtra(EXTRA_PREFILL_ID)
+        if (editingId == null && prefillId != null) {
+            etId.setText(prefillId)
+            etName.setText(intent.getStringExtra(EXTRA_PREFILL_NAME) ?: prefillId)
+            pickedLat = intent.getDoubleExtra(EXTRA_PREFILL_LAT, 0.0)
+            pickedLon = intent.getDoubleExtra(EXTRA_PREFILL_LON, 0.0)
+            fetchAvailableRoutes(prefillId)
+        }
 
         // "Find a stop near me": jump straight into the map picker (it centers
         // itself on the current GPS position when permission is granted).

@@ -11,8 +11,8 @@ android {
         applicationId = "ru.buswidget"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         val mapkitApiKey = System.getenv("MAPKIT_API_KEY") ?: "MAPKIT_API_KEY_PLACEHOLDER"
         buildConfigField("String", "MAPKIT_API_KEY", "\"$mapkitApiKey\"")
@@ -32,12 +32,27 @@ android {
         buildConfigField("String", "STATIC_YA_API", "\"$staticApiKey\"")
     }
 
+    // Fixed signing key checked into the repo so every CI build carries the
+    // SAME signature — otherwise each runner generates a fresh debug keystore
+    // and Android refuses to update the app without uninstalling it first.
+    // (Personal non-published app; committing this keystore is intentional.)
+    signingConfigs {
+        create("shared") {
+            storeFile = file("../keystore/debug.keystore")
+            storePassword = "buswidget"
+            keyAlias = "buswidget"
+            keyPassword = "buswidget"
+        }
+    }
+
     buildTypes {
         debug {
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("shared")
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("shared")
         }
     }
 

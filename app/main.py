@@ -470,6 +470,32 @@ async def stop_arrivals_endpoint(
     )
 
 
+@app.get("/nearby", dependencies=[Depends(require_api_key)])
+async def nearby_stops_endpoint(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    radius: int = Query(default=1500, ge=50, le=5000, description="радиус, м"),
+    limit: int = Query(default=12, ge=1, le=30),
+    debug: bool = Query(default=False),
+) -> JSONResponse:
+    """Остановки рядом с точкой (скрейп поисковой выдачи Я.Карт).
+
+    Ответ: {"stops": [{stop_id, name, lat, lon, distance_m}, ...]}.
+    debug=1 добавляет всё найденное в выдаче без фильтра по радиусу."""
+    assert masstransit is not None
+    try:
+        stops = await masstransit.find_nearby_stops(lat, lon, radius, limit)
+    except yandex.YandexError as e:
+        return JSONResponse({"stops": [], "error": str(e)}, status_code=502)
+    body: dict = {"stops": stops}
+    if debug:
+        # без фильтра по радиусу — чтобы видеть, что вообще нашлось
+        body["all_found"] = await masstransit.find_nearby_stops(
+            lat, lon, radius_m=5_000_000, limit=30
+        )
+    return JSONResponse(body)
+
+
 @app.get("/raw/{stop_id}", dependencies=[Depends(require_api_key)])
 async def raw_stop_endpoint(stop_id: str) -> JSONResponse:
     """Распарсенный встроенный state из HTML-страницы остановки."""

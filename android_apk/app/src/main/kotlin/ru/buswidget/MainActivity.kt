@@ -19,7 +19,6 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import org.json.JSONArray
 import org.json.JSONObject
-import ru.buswidget.data.NearbyStop
 import ru.buswidget.data.Stop
 import ru.buswidget.data.StopStorage
 
@@ -217,34 +216,105 @@ class MainActivity : AppCompatActivity() {
                     toast("Не удалось определить геолокацию")
                     return@addOnSuccessListener
                 }
-                val nearby = StopStorage.findNearby(this, location.latitude, location.longitude)
-                if (nearby.isEmpty()) {
-                    // Nothing saved around — offer picking a new stop on the map
-                    AlertDialog.Builder(this, R.style.SettingsDialog)
-                        .setTitle("Рядом нет сохранённых остановок")
-                        .setMessage("Найти остановку рядом на карте и добавить её в отслеживаемые?")
-                        .setPositiveButton("Искать на карте") { _, _ -> openMapNearMe() }
-                        .setNegativeButton("Отмена", null)
-                        .show()
-                    return@addOnSuccessListener
-                }
-                showNearbyDialog(nearby)
+                showNearbySheet(location.latitude, location.longitude)
             }
         } catch (e: SecurityException) {
             toast("Ошибка доступа: ${e.message}")
         }
     }
 
-    private fun showNearbyDialog(nearby: List<NearbyStop>) {
-        val items = nearby.map { "${it.stop.name} • ${formatDistance(it.distanceMeters)}" }.toTypedArray()
-        AlertDialog.Builder(this, R.style.SettingsDialog)
-            .setTitle("Ближайшие остановки (${nearby.size})")
-            .setItems(items) { _, which ->
-                openArrivals(nearby[which].stop)
+    /** A nearby stop parsed from the Yandex Maps search results (server /nearby). */
+    private data class NearbyMapStop(
+        val id: String, val name: String,
+        val lat: Double, val lon: Double, val distanceM: Int,
+    )
+
+    /**
+     * Bottom sheet with REAL stops around the current position (scraped from
+     * the map by the server) — not just saved ones. Untracked stops can be
+     * added right from here; tracked ones open their arrivals board.
+     */
+    private fun showNearbySheet(lat: Double, lon: Double) {
+        val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.MenuSheet)
+        val v = layoutInflater.inflate(R.layout.sheet_nearby, null)
+        sheet.setContentView(v)
+        val list   = v.findViewById<android.widget.LinearLayout>(R.id.nearbyList)
+        val status = v.findViewById<TextView>(R.id.tvNearbyStatus)
+        v.findViewById<View>(R.id.miMapSearch).setOnClickListener { sheet.dismiss(); openMapNearMe() }
+        sheet.show()
+        (v.parent as? View)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
+        Thread {
+            val stops = fetchNearbyStops(lat, lon)
+            runOnUiThread {
+                if (isFinishing || isDestroyed || !sheet.isShowing) return@runOnUiThread
+                when {
+                    stops == null   -> status.text = "не получилось узнать остановки рядом — попробуйте карту"
+                    stops.isEmpty() -> status.text = "рядом остановок не нашлось — попробуйте карту"
+                    else -> {
+                        status.visibility = View.GONE
+                        val savedIds = StopStorage.load(this)
+                            .map { it.id.removePrefix("stop__") }.toSet()
+                        stops.forEach { ns ->
+                            list.addView(makeNearbyRow(ns, ns.id in savedIds, sheet, list))
+                        }
+                    }
+                }
             }
-            .setPositiveButton("Искать на карте") { _, _ -> openMapNearMe() }
-            .setNegativeButton("Отмена", null)
-            .show()
+        }.start()
+    }
+
+    private fun fetchNearbyStops(lat: Double, lon: Double): List<NearbyMapStop>? = try {
+        val base = ru.buswidget.data.Config.SERVER_URL.trimEnd('/')
+        val url = java.net.URL(
+            "$base/nearby?lat=%.6f&lon=%.6f&radius=1500&limit=8"
+                .format(java.util.Locale.US, lat, lon)
+        )
+        val conn = url.openConnection() as java.net.HttpURLConnection
+        conn.connectTimeout = 10_000
+        conn.readTimeout = 10_000
+        val json = JSONObject(conn.inputStream.bufferedReader().readText())
+        conn.disconnect()
+        val arr = json.optJSONArray("stops") ?: JSONArray()
+        (0 until arr.length()).mapNotNull { i ->
+            val o = arr.getJSONObject(i)
+            val id = o.optString("stop_id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            NearbyMapStop(
+                id        = id.removePrefix("stop__"),
+                name      = o.optString("name", id),
+                lat       = o.optDouble("lat", 0.0),
+                lon       = o.optDouble("lon", 0.0),
+                distanceM = o.optInt("distance_m", 0),
+            )
+        }
+    } catch (_: Exception) { null }
+
+    private fun makeNearbyRow(
+        ns: NearbyMapStop, tracked: Boolean,
+        sheet: com.google.android.material.bottomsheet.BottomSheetDialog,
+        parent: android.view.ViewGroup,
+    ): View {
+        val row = layoutInflater.inflate(R.layout.item_nearby, parent, false)
+        row.findViewById<TextView>(R.id.tvNearbyName).text = ns.name
+        row.findViewById<TextView>(R.id.tvNearbyDist).text = formatDistance(ns.distanceM)
+        row.findViewById<TextView>(R.id.tvNearbyAction).text =
+            if (tracked) "открыть" else "+ добавить"
+        row.setOnClickListener {
+            sheet.dismiss()
+            if (tracked) {
+                StopStorage.load(this)
+                    .find { it.id.removePrefix("stop__") == ns.id }
+                    ?.let { openArrivals(it) }
+            } else {
+                startActivity(Intent(this, AddStopActivity::class.java).apply {
+                    putExtra(AddStopActivity.EXTRA_PREFILL_ID,   ns.id)
+                    putExtra(AddStopActivity.EXTRA_PREFILL_NAME, ns.name)
+                    putExtra(AddStopActivity.EXTRA_PREFILL_LAT,  ns.lat)
+                    putExtra(AddStopActivity.EXTRA_PREFILL_LON,  ns.lon)
+                })
+            }
+        }
+        return row
     }
 
     /** Open AddStopActivity with the map picker auto-launched centered on GPS. */

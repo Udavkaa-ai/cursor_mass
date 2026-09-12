@@ -11,8 +11,10 @@ from __future__ import annotations
 import asyncio
 import html as html_lib
 import json
+import math
 import re
 import time
+import urllib.parse
 from typing import Any
 
 import httpx
@@ -33,6 +35,12 @@ STOP_PAGE_URL_TEMPLATES = [
 ]
 STOP_INFO_URL = "https://yandex.ru/maps/api/masstransit/getStopInfo"
 SEARCH_URL = "https://yandex.ru/maps/api/search"
+# Поисковая страница: SSR-state содержит результаты с id вида stop__NNN
+SEARCH_PAGE_URL = (
+    "https://yandex.ru/maps/213/moscow/search/{query}/"
+    "?ll={lon:.6f}%2C{lat:.6f}&z=17&lang=ru"
+)
+NEARBY_CACHE_TTL_SECONDS = 300.0
 
 
 def normalize_stop_id(value: str) -> str:
@@ -70,6 +78,8 @@ class YandexMasstransit:
         self._lock = asyncio.Lock()
         self._state_cache: dict[str, tuple[float, dict[str, Any]]] = {}
         self._state_cache_lock = asyncio.Lock()
+        self._nearby_cache: dict[tuple[float, float], tuple[float, list[dict[str, Any]]]] = {}
+        self._nearby_cache_lock = asyncio.Lock()
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -169,6 +179,38 @@ class YandexMasstransit:
         except ValueError as e:
             raise YandexError(f"Ответ не JSON: {r.text[:300]}") from e
 
+    async def find_nearby_stops(
+        self, lat: float, lon: float, radius_m: int = 1500, limit: int = 12
+    ) -> list[dict[str, Any]]:
+        """Остановки рядом с точкой: скрейпим поисковую страницу Я.Карт
+        «остановка общественного транспорта» с центром в (lat, lon) и
+        вынимаем из SSR-state все объекты с id вида stop__NNN.
+
+        Кэш 5 минут по сетке ~100 м, чтобы не долбить Яндекс."""
+        cache_key = (round(lat, 3), round(lon, 3))
+        async with self._nearby_cache_lock:
+            entry = self._nearby_cache.get(cache_key)
+            if entry and (time.monotonic() - entry[0]) < NEARBY_CACHE_TTL_SECONDS:
+                return _rank_nearby(entry[1], lat, lon, radius_m, limit)
+        # (кэш ниже пишет сырые записи; ranked считается на каждый запрос,
+        #  чтобы radius/limit можно было менять без повторного скрейпа)
+
+        query = urllib.parse.quote("остановка общественного транспорта")
+        url = SEARCH_PAGE_URL.format(query=query, lat=lat, lon=lon)
+        try:
+            r = await self._client.get(url)
+        except httpx.HTTPError as e:
+            raise YandexError(f"поиск остановок: {e}") from e
+        if r.status_code >= 400:
+            raise YandexError(f"поиск остановок -> {r.status_code}: {r.text[:200]}")
+        state = _extract_state(r.text)
+        found: dict[str, dict[str, Any]] = {}
+        _scan_stop_records(state, found)
+        records = list(found.values())
+        async with self._nearby_cache_lock:
+            self._nearby_cache[cache_key] = (time.monotonic(), records)
+        return _rank_nearby(records, lat, lon, radius_m, limit)
+
     async def search(self, query: str) -> dict[str, Any]:
         csrf, session_id = await self._ensure_session()
         params = {
@@ -248,6 +290,96 @@ def _extract_state(html: str) -> dict[str, Any]:
         "Не нашёл встроенный state в HTML. "
         f"Возможно, Антиробот вернул заглушку. {('Ошибка парсинга: ' + last_err) if last_err else ''}"
     )
+
+
+_STOP_ID_RE = re.compile(r"stop__(\d+)")
+
+
+def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    r = 6_371_000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlmb = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def _record_name(node: dict[str, Any]) -> str | None:
+    for key in ("name", "title", "shortTitle"):
+        v = node.get(key)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+        if isinstance(v, dict):
+            t = v.get("text")
+            if isinstance(t, str) and t.strip():
+                return t.strip()
+    return None
+
+
+def _record_coords(node: dict[str, Any]) -> tuple[float, float] | None:
+    """Пара чисел из полей с координатами. Яндекс хранит [lon, lat]."""
+    for key in ("coordinates", "point", "displayCoordinates", "centerCoordinates"):
+        v = node.get(key)
+        if isinstance(v, dict):
+            v = v.get("coordinates")
+        if (
+            isinstance(v, list)
+            and len(v) == 2
+            and all(isinstance(x, (int, float)) for x in v)
+            and abs(v[1]) <= 90
+        ):
+            return float(v[0]), float(v[1])
+    return None
+
+
+def _scan_stop_records(node: Any, out: dict[str, dict[str, Any]]) -> None:
+    """Рекурсивно обходит state и собирает объекты, похожие на остановку:
+    есть id/uri со stop__NNN + имя + координаты. Структура выдачи у Яндекса
+    плавает, поэтому не завязываемся на конкретный путь."""
+    if isinstance(node, dict):
+        sid = None
+        for key in ("id", "uri", "seoname", "logId"):
+            v = node.get(key)
+            if isinstance(v, str):
+                m = _STOP_ID_RE.search(v)
+                if m:
+                    sid = f"stop__{m.group(1)}"
+                    break
+        if sid and sid not in out:
+            name = _record_name(node)
+            coords = _record_coords(node)
+            if name and coords:
+                out[sid] = {
+                    "stop_id": sid,
+                    "name": name,
+                    "lon": coords[0],
+                    "lat": coords[1],
+                }
+        for v in node.values():
+            _scan_stop_records(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _scan_stop_records(v, out)
+
+
+def _rank_nearby(
+    records: list[dict[str, Any]], lat: float, lon: float, radius_m: int, limit: int
+) -> list[dict[str, Any]]:
+    ranked: list[dict[str, Any]] = []
+    for rec in records:
+        # Порядок [lon, lat] — конвенция Яндекса, но подстрахуемся: берём ту
+        # интерпретацию пары, которая ближе к точке запроса.
+        d_direct = _haversine_m(lat, lon, rec["lat"], rec["lon"])
+        d_swapped = _haversine_m(lat, lon, rec["lon"], rec["lat"])
+        if d_swapped < d_direct and abs(rec["lon"]) <= 90:
+            rec = {**rec, "lat": rec["lon"], "lon": rec["lat"]}
+            dist = d_swapped
+        else:
+            dist = d_direct
+        if dist <= radius_m:
+            ranked.append({**rec, "distance_m": int(dist)})
+    ranked.sort(key=lambda x: x["distance_m"])
+    return ranked[:limit]
 
 
 _NAME_DIRECTION_RE = re.compile(r"^(\S+)\s*(?:\((.+?)\))?\s*$")
