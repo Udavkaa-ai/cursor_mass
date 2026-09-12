@@ -284,42 +284,46 @@ class MainActivity : AppCompatActivity() {
     /** Диагностика последней неудачи /nearby — показывается в шите. */
     @Volatile private var nearbyDebug: String? = null
 
-    private fun fetchNearbyStops(lat: Double, lon: Double): List<NearbyMapStop>? = try {
-        val base = ru.buswidget.data.Config.SERVER_URL.trimEnd('/')
-        val url = java.net.URL(
-            "$base/nearby?lat=%.6f&lon=%.6f&radius=1500&limit=8"
-                .format(java.util.Locale.US, lat, lon)
-        )
-        val conn = url.openConnection() as java.net.HttpURLConnection
-        conn.connectTimeout = 10_000
-        // Холодный старт serverless-контейнера + скрейп Яндекса дольше 10 с —
-        // обычный таймаут /arrivals здесь мал.
-        conn.readTimeout = 25_000
-        val code = conn.responseCode
-        if (code !in 200..299) {
-            val err = conn.errorStream?.bufferedReader()?.readText()?.take(160) ?: ""
-            conn.disconnect()
-            nearbyDebug = "HTTP $code $err"
-            return null
-        }
-        val json = JSONObject(conn.inputStream.bufferedReader().readText())
-        conn.disconnect()
-        nearbyDebug = null
-        val arr = json.optJSONArray("stops") ?: JSONArray()
-        (0 until arr.length()).mapNotNull { i ->
-            val o = arr.getJSONObject(i)
-            val id = o.optString("stop_id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            NearbyMapStop(
-                id        = id.removePrefix("stop__"),
-                name      = o.optString("name", id),
-                lat       = o.optDouble("lat", 0.0),
-                lon       = o.optDouble("lon", 0.0),
-                distanceM = o.optInt("distance_m", 0),
+    private fun fetchNearbyStops(lat: Double, lon: Double): List<NearbyMapStop>? {
+        return try {
+            val base = ru.buswidget.data.Config.SERVER_URL.trimEnd('/')
+            val url = java.net.URL(
+                "$base/nearby?lat=%.6f&lon=%.6f&radius=1500&limit=8"
+                    .format(java.util.Locale.US, lat, lon)
             )
+            val conn = url.openConnection() as java.net.HttpURLConnection
+            conn.connectTimeout = 10_000
+            // Холодный старт serverless-контейнера + скрейп Яндекса дольше
+            // 10 с — обычный таймаут /arrivals здесь мал.
+            conn.readTimeout = 25_000
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                val err = conn.errorStream?.bufferedReader()?.readText()?.take(160) ?: ""
+                conn.disconnect()
+                nearbyDebug = "HTTP $code $err"
+                null
+            } else {
+                val json = JSONObject(conn.inputStream.bufferedReader().readText())
+                conn.disconnect()
+                nearbyDebug = null
+                val arr = json.optJSONArray("stops") ?: JSONArray()
+                (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.getJSONObject(i)
+                    val id = o.optString("stop_id").takeIf { it.isNotBlank() }
+                        ?: return@mapNotNull null
+                    NearbyMapStop(
+                        id        = id.removePrefix("stop__"),
+                        name      = o.optString("name", id),
+                        lat       = o.optDouble("lat", 0.0),
+                        lon       = o.optDouble("lon", 0.0),
+                        distanceM = o.optInt("distance_m", 0),
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            nearbyDebug = e.toString().take(200)
+            null
         }
-    } catch (e: Exception) {
-        nearbyDebug = e.toString().take(200)
-        null
     }
 
     private fun makeNearbyRow(
