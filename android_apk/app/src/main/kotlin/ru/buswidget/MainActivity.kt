@@ -264,7 +264,9 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isFinishing || isDestroyed || !sheet.isShowing) return@runOnUiThread
                 when {
-                    stops == null   -> status.text = "не получилось узнать остановки рядом — попробуйте карту"
+                    stops == null   -> status.text =
+                        "не получилось узнать остановки рядом — попробуйте карту" +
+                        (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
                     stops.isEmpty() -> status.text = "рядом остановок не нашлось — попробуйте карту"
                     else -> {
                         status.visibility = View.GONE
@@ -279,6 +281,9 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    /** Диагностика последней неудачи /nearby — показывается в шите. */
+    @Volatile private var nearbyDebug: String? = null
+
     private fun fetchNearbyStops(lat: Double, lon: Double): List<NearbyMapStop>? = try {
         val base = ru.buswidget.data.Config.SERVER_URL.trimEnd('/')
         val url = java.net.URL(
@@ -290,8 +295,16 @@ class MainActivity : AppCompatActivity() {
         // Холодный старт serverless-контейнера + скрейп Яндекса дольше 10 с —
         // обычный таймаут /arrivals здесь мал.
         conn.readTimeout = 25_000
+        val code = conn.responseCode
+        if (code !in 200..299) {
+            val err = conn.errorStream?.bufferedReader()?.readText()?.take(160) ?: ""
+            conn.disconnect()
+            nearbyDebug = "HTTP $code $err"
+            return null
+        }
         val json = JSONObject(conn.inputStream.bufferedReader().readText())
         conn.disconnect()
+        nearbyDebug = null
         val arr = json.optJSONArray("stops") ?: JSONArray()
         (0 until arr.length()).mapNotNull { i ->
             val o = arr.getJSONObject(i)
@@ -304,7 +317,10 @@ class MainActivity : AppCompatActivity() {
                 distanceM = o.optInt("distance_m", 0),
             )
         }
-    } catch (_: Exception) { null }
+    } catch (e: Exception) {
+        nearbyDebug = e.toString().take(200)
+        null
+    }
 
     private fun makeNearbyRow(
         ns: NearbyMapStop, tracked: Boolean,
