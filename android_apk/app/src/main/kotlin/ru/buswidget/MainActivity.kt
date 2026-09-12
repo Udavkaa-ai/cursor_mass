@@ -209,12 +209,8 @@ class MainActivity : AppCompatActivity() {
         if (hasPerm) findNearby() else locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    private fun findNearby() {
-        ru.buswidget.data.Locator.request(this) { location: Location? ->
-            if (location != null) showNearbySheet(location)
-            else toast("Не удалось определить геолокацию")
-        }
-    }
+    /** Защита от повторных нажатий, пока шит уже открыт и ждёт GPS/сервер. */
+    private var nearbySheetShowing = false
 
     /** A nearby stop parsed from the Yandex Maps search results (server /nearby). */
     private data class NearbyMapStop(
@@ -226,52 +222,69 @@ class MainActivity : AppCompatActivity() {
      * Bottom sheet with REAL stops around the current position (scraped from
      * the map by the server) — not just saved ones. Untracked stops can be
      * added right from here; tracked ones open their arrivals board.
+     *
+     * Opens INSTANTLY with a progress status, then waits for one good GPS
+     * fix — otherwise the button feels dead while GPS thinks and every extra
+     * tap used to spawn its own sheet with its own (often worse) fix.
      */
-    private fun showNearbySheet(fix: Location) {
-        val lat = fix.latitude
-        val lon = fix.longitude
-        nearbyFixInfo = "±%.0fм, %dс назад".format(
-            java.util.Locale.US,
-            if (fix.hasAccuracy()) fix.accuracy else -1f,
-            ru.buswidget.data.Locator.ageMs(fix) / 1000,
-        )
+    private fun findNearby() {
+        if (nearbySheetShowing) return
+        nearbySheetShowing = true
+
         val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.MenuSheet)
         val v = layoutInflater.inflate(R.layout.sheet_nearby, null)
         sheet.setContentView(v)
         val list   = v.findViewById<android.widget.LinearLayout>(R.id.nearbyList)
         val status = v.findViewById<TextView>(R.id.tvNearbyStatus)
+        status.text = "определяю местоположение…"
         v.findViewById<View>(R.id.miMapSearch).setOnClickListener { sheet.dismiss(); openMapNearMe() }
+        sheet.setOnDismissListener { nearbySheetShowing = false }
         sheet.show()
         (v.parent as? View)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
-        Thread {
-            // Первый вызов после простоя = холодный старт контейнера + скрейп
-            // карты, может быть долгим; при неудаче пробуем ещё раз.
-            var stops = fetchNearbyStops(lat, lon)
-            if (stops == null) {
-                Thread.sleep(1500)
-                stops = fetchNearbyStops(lat, lon)
+        ru.buswidget.data.Locator.request(this) { fix: Location? ->
+            if (isFinishing || isDestroyed || !sheet.isShowing) return@request
+            if (fix == null) {
+                status.text = "не удалось определить геолокацию — попробуйте карту"
+                return@request
             }
-            runOnUiThread {
-                if (isFinishing || isDestroyed || !sheet.isShowing) return@runOnUiThread
-                when {
-                    stops == null   -> status.text =
-                        "не получилось узнать остановки рядом — попробуйте карту" +
-                        (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
-                    stops.isEmpty() -> status.text =
-                        "рядом остановок не нашлось — попробуйте карту" +
-                        (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
-                    else -> {
-                        status.visibility = View.GONE
-                        val savedIds = StopStorage.load(this)
-                            .map { it.id.removePrefix("stop__") }.toSet()
-                        stops.forEach { ns ->
-                            list.addView(makeNearbyRow(ns, ns.id in savedIds, sheet, list))
+            status.text = "ищу остановки рядом…"
+            val lat = fix.latitude
+            val lon = fix.longitude
+            nearbyFixInfo = "±%.0fм, %dс назад".format(
+                java.util.Locale.US,
+                if (fix.hasAccuracy()) fix.accuracy else -1f,
+                ru.buswidget.data.Locator.ageMs(fix) / 1000,
+            )
+            Thread {
+                // Первый вызов после простоя = холодный старт контейнера +
+                // скрейп карты, может быть долгим; при неудаче пробуем ещё раз.
+                var stops = fetchNearbyStops(lat, lon)
+                if (stops == null) {
+                    Thread.sleep(1500)
+                    stops = fetchNearbyStops(lat, lon)
+                }
+                runOnUiThread {
+                    if (isFinishing || isDestroyed || !sheet.isShowing) return@runOnUiThread
+                    when {
+                        stops == null   -> status.text =
+                            "не получилось узнать остановки рядом — попробуйте карту" +
+                            (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
+                        stops.isEmpty() -> status.text =
+                            "рядом остановок не нашлось — попробуйте карту" +
+                            (nearbyDebug?.let { "\n\n⚠ $it" } ?: "")
+                        else -> {
+                            status.visibility = View.GONE
+                            val savedIds = StopStorage.load(this)
+                                .map { it.id.removePrefix("stop__") }.toSet()
+                            stops.forEach { ns ->
+                                list.addView(makeNearbyRow(ns, ns.id in savedIds, sheet, list))
+                            }
                         }
                     }
                 }
-            }
-        }.start()
+            }.start()
+        }
     }
 
     /** Диагностика последней неудачи /nearby — показывается в шите. */
