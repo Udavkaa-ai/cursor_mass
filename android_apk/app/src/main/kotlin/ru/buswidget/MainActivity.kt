@@ -254,7 +254,13 @@ class MainActivity : AppCompatActivity() {
         (v.parent as? View)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         Thread {
-            val stops = fetchNearbyStops(lat, lon)
+            // Первый вызов после простоя = холодный старт контейнера + скрейп
+            // карты, может быть долгим; при неудаче пробуем ещё раз.
+            var stops = fetchNearbyStops(lat, lon)
+            if (stops == null) {
+                Thread.sleep(1500)
+                stops = fetchNearbyStops(lat, lon)
+            }
             runOnUiThread {
                 if (isFinishing || isDestroyed || !sheet.isShowing) return@runOnUiThread
                 when {
@@ -281,7 +287,9 @@ class MainActivity : AppCompatActivity() {
         )
         val conn = url.openConnection() as java.net.HttpURLConnection
         conn.connectTimeout = 10_000
-        conn.readTimeout = 10_000
+        // Холодный старт serverless-контейнера + скрейп Яндекса дольше 10 с —
+        // обычный таймаут /arrivals здесь мал.
+        conn.readTimeout = 25_000
         val json = JSONObject(conn.inputStream.bufferedReader().readText())
         conn.disconnect()
         val arr = json.optJSONArray("stops") ?: JSONArray()
