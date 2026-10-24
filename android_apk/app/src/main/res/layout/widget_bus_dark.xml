@@ -50,15 +50,32 @@
     </LinearLayout>
 
     <!-- Idle: start button -->
-    <Button
+    <FrameLayout
         android:id="@+id/btn_start"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="Где автобус?"
-        android:textSize="12sp"
-        android:textColor="#CCFFFFFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
-        android:background="@drawable/bg_widget_btn"/>
+        android:background="@drawable/bg_widget_idle_art"
+        android:clipToOutline="true">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/art_widget_idle"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="14dp"
+            android:text="▶  Где автобус?"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#F2F4FF" android:shadowColor="#CC000000" android:shadowRadius="4" android:shadowDy="1"/>
+
+    </FrameLayout>
 
     <!-- Active: arrival row 1 -->
     <LinearLayout

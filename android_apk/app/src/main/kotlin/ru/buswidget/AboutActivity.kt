@@ -12,6 +12,8 @@ class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
+        // bg_map_card's rounded shape doubles as the clip outline
+        findViewById<android.view.View>(R.id.ivCover).clipToOutline = true
 
         findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
 

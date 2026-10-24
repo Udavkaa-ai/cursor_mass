@@ -46,6 +46,16 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <ImageView
+            android:id="@+id/ivCover"
+            android:layout_width="match_parent"
+            android:layout_height="170dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/art_cover"
+            android:background="@drawable/bg_map_card"
+            android:contentDescription="@null"
+            android:layout_marginBottom="16dp"/>
+
         <!-- App info -->
         <TextView
             android:layout_width="match_parent"

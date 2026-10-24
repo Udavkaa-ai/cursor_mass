@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity() {
 
         rvStops = findViewById(R.id.recyclerView)
         vEmpty  = findViewById(R.id.tvEmpty)
+        // bg_map_card's rounded shape doubles as the clip outline
+        findViewById<View>(R.id.ivCover).clipToOutline = true
         rvStops.layoutManager = LinearLayoutManager(this)
         rvStops.adapter = adapter
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
