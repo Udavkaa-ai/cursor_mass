@@ -89,7 +89,7 @@ class BusWidgetProviderAuto : AppWidgetProvider() {
             rv.setViewVisibility(R.id.rows_active, View.VISIBLE)
             COL_IDS.forEachIndexed { i, ids ->
                 val a = arrivals.getOrNull(i)
-                val color = a?.color ?: 0xFF9090B8.toInt()
+                val color = a?.color ?: PollService.mutedColor(ctx)
                 rv.setViewVisibility(ids.col, if (a != null) View.VISIBLE else View.INVISIBLE)
                 rv.setTextViewText(ids.route, a?.route ?: "")
                 val (num, unit) = if (a != null) PollService.formatEtaParts(a.etaSeconds) else ("" to "")

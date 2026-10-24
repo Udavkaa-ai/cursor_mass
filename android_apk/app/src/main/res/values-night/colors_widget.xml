@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget palette, DARK (names in sync with values/). -->
+<resources>
+    <color name="w_text">#F5F6FB</color>
+    <color name="w_text2">#C7CCE4</color>
+    <color name="w_text3">#B0B7D8</color>
+    <color name="w_accent">#7A9BFF</color>
+    <color name="w_on_art">#F2F4FF</color>
+    <color name="w_on_button">#FFFFFF</color>
+    <color name="w_muted">#9090B8</color>
+    <color name="w_shadow">#99000000</color>
+    <color name="w_shadow_art">#CC000000</color>
+    <color name="w_eta_red">#FF4B5C</color>
+    <color name="w_eta_orange">#FF9A1F</color>
+    <color name="w_eta_green">#2ED87A</color>
+    <color name="w_eta_grey">#8A8FB4</color>
+    <color name="w_body">#3D121327</color>
+    <color name="w_body_stroke">#21FFFFFF</color>
+    <color name="w_row_start">#8C1B1F3E</color>
+    <color name="w_row_end">#8C241C45</color>
+    <color name="w_row_stroke">#3D7A9BFF</color>
+    <color name="w_badge_start">#5E8BFF</color>
+    <color name="w_badge_end">#8E5CF6</color>
+    <color name="w_divider">#1FFFFFFF</color>
+    <color name="w_idle_bg">#121327</color>
+    <color name="w_idle_stroke">#267A9BFF</color>
+    <color name="w_start_a">#4D5E8BFF</color>
+    <color name="w_start_b">#408E5CF6</color>
+    <color name="w_stop_fill">#45FF5A6E</color>
+    <color name="w_stop_stroke">#73FF5A6E</color>
+    <color name="w_stop_text">#FFFFFF</color>
+</resources>

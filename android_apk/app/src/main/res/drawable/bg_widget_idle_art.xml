@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Idle-state card behind art_widget_idle: same night tone as the picture's
-     edges, so letterboxing in tall widget slots blends into the art. -->
+<!-- Idle-state card behind the widget art: same tone as the picture's
+     edges (day or night), so letterboxing blends into the art. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#121327"/>
-    <stroke android:width="1dp" android:color="#267A9BFF"/>
+    <solid android:color="@color/w_idle_bg"/>
+    <stroke android:width="1dp" android:color="@color/w_idle_stroke"/>
     <corners android:radius="14dp"/>
 </shape>

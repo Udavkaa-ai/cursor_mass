@@ -45,7 +45,7 @@ open class BusWidgetProvider : AppWidgetProvider() {
             val stopName = widgetPrefs(ctx).getString("${widgetId}_name", "Остановка") ?: "Остановка"
             val rv = RemoteViews(ctx.packageName, layoutFor(type))
             rv.setTextViewText(R.id.tw_stop, stopName)
-            rv.setTextColor(R.id.tw_live, 0xFF9090B8.toInt())
+            rv.setTextColor(R.id.tw_live, PollService.mutedColor(ctx))
             rv.setViewVisibility(R.id.tw_timer, View.GONE)
             rv.setViewVisibility(R.id.btn_start, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_stop, View.GONE)
@@ -73,7 +73,7 @@ open class BusWidgetProvider : AppWidgetProvider() {
             val m = timeLeft / 60; val s = timeLeft % 60
             rv.setTextViewText(R.id.tw_stop, stopName)
             rv.setTextViewText(R.id.tw_timer, "$m:${s.toString().padStart(2, '0')}")
-            rv.setTextColor(R.id.tw_live, 0xFF2ED87A.toInt())
+            rv.setTextColor(R.id.tw_live, androidx.core.content.ContextCompat.getColor(ctx, R.color.w_eta_green))
             rv.setViewVisibility(R.id.tw_timer, View.VISIBLE)
             rv.setViewVisibility(R.id.btn_start, View.GONE)
             rv.setViewVisibility(R.id.btn_stop, View.VISIBLE)
@@ -82,9 +82,9 @@ open class BusWidgetProvider : AppWidgetProvider() {
                 ROW_IDS.forEachIndexed { i, ids ->
                     rv.setViewVisibility(ids.row, View.VISIBLE)  // explicit — fixes stale GONE state
                     val a = arrivals.getOrNull(i)
-                    val color = a?.color ?: 0xFF9090B8.toInt()
+                    val color = a?.color ?: PollService.mutedColor(ctx)
                     rv.setTextViewText(ids.route, a?.route ?: "—")
-                    rv.setTextColor(ids.route, if (a != null) 0xFFF4F4F6.toInt() else 0xFF9090B8.toInt())
+                    rv.setTextColor(ids.route, androidx.core.content.ContextCompat.getColor(ctx, R.color.w_on_button))
                     val (num, unit) = if (a != null) PollService.formatEtaParts(a.etaSeconds) else ("—" to "")
                     rv.setTextViewText(ids.eta, num)
                     rv.setTextColor(ids.eta, color)

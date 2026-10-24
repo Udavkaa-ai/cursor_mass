@@ -34,7 +34,7 @@
             android:textStyle="bold"
             android:textAllCaps="true"
             android:letterSpacing="0.07"
-            android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+            android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#B0B7D8" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+            android:textColor="@color/w_text3" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
             android:layout_marginStart="6dp"/>
 
         <TextView
@@ -51,7 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="9sp"
-            android:textColor="#7A9BFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+            android:textColor="@color/w_accent" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
             android:fontFamily="monospace"
             android:layout_marginStart="6dp"
             android:visibility="gone"/>
@@ -64,7 +64,7 @@
             android:text="СТОП"
             android:textSize="8sp"
             android:letterSpacing="0.08"
-            android:textColor="#FFFFFF" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+            android:textColor="@color/w_stop_text" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:insetTop="0dp"
@@ -113,7 +113,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:textSize="9sp"
-                    android:textColor="#B0B7D8" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+                    android:textColor="@color/w_text3" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
                     android:gravity="center"
                     android:text="загрузка…"/>
 
@@ -146,7 +146,13 @@
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_on_button"
+                android:background="@drawable/bg_widget_route"
+                android:gravity="center"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"/>
 
                     <TextView
                         android:id="@+id/r1_dir"
@@ -154,7 +160,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textSize="8sp"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
                         android:maxLines="1"
                         android:ellipsize="end"
                         android:paddingStart="4dp"
@@ -167,7 +173,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"/>
                 </LinearLayout>
 
                 <!-- Row 2 -->
@@ -190,7 +196,13 @@
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_on_button"
+                android:background="@drawable/bg_widget_route"
+                android:gravity="center"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"/>
 
                     <TextView
                         android:id="@+id/r2_dir"
@@ -198,7 +210,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textSize="8sp"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
                         android:maxLines="1"
                         android:ellipsize="end"
                         android:paddingStart="4dp"
@@ -211,7 +223,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"/>
                 </LinearLayout>
 
                 <!-- Row 3 -->
@@ -233,7 +245,13 @@
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#F5F6FB" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_on_button"
+                android:background="@drawable/bg_widget_route"
+                android:gravity="center"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"/>
 
                     <TextView
                         android:id="@+id/r3_dir"
@@ -241,7 +259,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textSize="8sp"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"
                         android:maxLines="1"
                         android:ellipsize="end"
                         android:paddingStart="4dp"
@@ -254,7 +272,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:fontFamily="monospace"
-                        android:textColor="#C7CCE4" android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"/>
+                        android:textColor="@color/w_text2" android:shadowColor="@color/w_shadow" android:shadowRadius="3" android:shadowDy="1"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -284,7 +302,7 @@
             android:text="▶  Карта + автобусы"
             android:textSize="13sp"
             android:textStyle="bold"
-            android:textColor="#F2F4FF" android:shadowColor="#CC000000" android:shadowRadius="4" android:shadowDy="1"/>
+            android:textColor="@color/w_on_art" android:shadowColor="@color/w_shadow_art" android:shadowRadius="4" android:shadowDy="1"/>
 
     </FrameLayout>
 

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget palette, LIGHT. The launcher inflates widgets with the system night mode, so these follow the phone's theme (not the in-app override). -->
+<resources>
+    <color name="w_text">#1B1E2E</color>
+    <color name="w_text2">#4A5070</color>
+    <color name="w_text3">#6A7090</color>
+    <color name="w_accent">#3D63D4</color>
+    <color name="w_on_art">#262B52</color>
+    <color name="w_on_button">#FFFFFF</color>
+    <color name="w_muted">#8A8FA6</color>
+    <color name="w_shadow">#00000000</color>
+    <color name="w_shadow_art">#B3FFFFFF</color>
+    <color name="w_eta_red">#D3263A</color>
+    <color name="w_eta_orange">#DD7400</color>
+    <color name="w_eta_green">#169B57</color>
+    <color name="w_eta_grey">#7A7F99</color>
+    <color name="w_body">#B8F6F7FD</color>
+    <color name="w_body_stroke">#26FFFFFF</color>
+    <color name="w_row_start">#E6FFFFFF</color>
+    <color name="w_row_end">#D9F1EEFF</color>
+    <color name="w_row_stroke">#335E8BFF</color>
+    <color name="w_badge_start">#5E8BFF</color>
+    <color name="w_badge_end">#8E5CF6</color>
+    <color name="w_divider">#1F1B1E2E</color>
+    <color name="w_idle_bg">#EEF0FD</color>
+    <color name="w_idle_stroke">#335E8BFF</color>
+    <color name="w_start_a">#4D5E8BFF</color>
+    <color name="w_start_b">#408E5CF6</color>
+    <color name="w_stop_fill">#2ED3263A</color>
+    <color name="w_stop_stroke">#73D3263A</color>
+    <color name="w_stop_text">#C62F42</color>
+</resources>

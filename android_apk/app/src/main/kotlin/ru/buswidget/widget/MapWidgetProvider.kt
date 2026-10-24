@@ -101,7 +101,7 @@ class MapWidgetProvider : AppWidgetProvider() {
                 rv.setTextViewText(ids.route, a?.route ?: "")
                 rv.setTextViewText(ids.dir, a?.direction ?: "")
                 rv.setTextViewText(ids.eta, a?.eta ?: "")
-                rv.setTextColor(ids.eta, a?.color ?: 0xFF9090B8.toInt())
+                rv.setTextColor(ids.eta, a?.color ?: PollService.mutedColor(ctx))
             }
 
             rv.setOnClickPendingIntent(R.id.btn_stop, stopIntent(ctx, widgetId))
@@ -126,7 +126,7 @@ class MapWidgetProvider : AppWidgetProvider() {
             ROW_IDS.forEachIndexed { i, ids ->
                 val a = arrivals.getOrNull(i)
                 rv.setTextViewText(ids.eta, a?.eta ?: "")
-                rv.setTextColor(ids.eta, a?.color ?: 0xFF9090B8.toInt())
+                rv.setTextColor(ids.eta, a?.color ?: PollService.mutedColor(ctx))
             }
             awm.partiallyUpdateAppWidget(widgetId, rv)
         }

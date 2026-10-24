@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Route-number pill, same gradient as the in-app route badge -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="@color/w_badge_start"
+        android:endColor="@color/w_badge_end"
+        android:angle="0"/>
+    <corners android:radius="8dp"/>
+</shape>

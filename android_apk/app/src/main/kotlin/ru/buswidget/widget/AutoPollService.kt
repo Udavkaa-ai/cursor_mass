@@ -403,21 +403,35 @@ class AutoPollService : Service() {
     private fun drawCircleOverlay(base: Bitmap, bucket: Int, etaSeconds: Int?): Bitmap {
         val out = base.copy(Bitmap.Config.ARGB_8888, true) ?: return base
         if (bucket < 0 || etaSeconds == null) return out
-        val (strokeColor, fillColor) = when {
-            etaSeconds <= 60  -> 0xFFE53040.toInt() to 0x55E53040
-            etaSeconds <= 120 -> 0xFFFF8C00.toInt() to 0x55FF8C00
-            else              -> 0xFF2ED87A.toInt() to 0x4D2ED87A
-        }
+        val base = androidx.core.content.ContextCompat.getColor(this, when {
+            etaSeconds <= 60  -> ru.buswidget.R.color.w_eta_red
+            etaSeconds <= 120 -> ru.buswidget.R.color.w_eta_orange
+            else              -> ru.buswidget.R.color.w_eta_green
+        })
+        fun withAlpha(a: Int) = (base and 0x00FFFFFF) or (a shl 24)
         val canvas = Canvas(out)
         val cx = out.width / 2f
         val cy = out.height / 2f
         val r = minOf(out.width, out.height) / 2f / 1.25f
+        // The bitmap is fetched at ~2 px per dp and then upscaled by the
+        // launcher, so stroke widths are in bitmap pixels: ~2 px ≈ 1 dp.
+        // Radar-like fill: clear in the middle, denser towards the edge.
         canvas.drawCircle(cx, cy, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = fillColor; style = Paint.Style.FILL
+            style = Paint.Style.FILL
+            shader = android.graphics.RadialGradient(
+                cx, cy, r,
+                intArrayOf(withAlpha(0x0A), withAlpha(0x1C), withAlpha(0x40)),
+                floatArrayOf(0f, 0.65f, 1f),
+                Shader.TileMode.CLAMP,
+            )
         })
+        // soft glow under the ring
         canvas.drawCircle(cx, cy, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = strokeColor; style = Paint.Style.STROKE
-            strokeWidth = 2f * resources.displayMetrics.density
+            color = withAlpha(0x2E); style = Paint.Style.STROKE; strokeWidth = 7f
+        })
+        // thin ring
+        canvas.drawCircle(cx, cy, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = withAlpha(0xE6); style = Paint.Style.STROKE; strokeWidth = 2.2f
         })
         return out
     }
@@ -433,7 +447,7 @@ class AutoPollService : Service() {
             a.copy(
                 eta        = liveSecs?.let { PollService.formatEta(it) } ?: a.eta,
                 etaSeconds = liveSecs,
-                color      = PollService.etaColor(liveSecs ?: a.etaSeconds),
+                color      = PollService.etaColor(this, liveSecs ?: a.etaSeconds),
             )
         }
     }
@@ -458,12 +472,22 @@ class AutoPollService : Service() {
                         snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
                         mapNeedsFull += widgetId   // row data changed → full update
                     }
+                    // live (countdown-adjusted) ETAs: raw ones may be up to 45 s
+                    // stale because of the server cache
+                    ru.buswidget.data.ArrivalHistory.observe(
+                        this, s.stopId, liveArrivals(widgetId).map { it.route to it.etaSeconds })
                     // Refresh the map circle when the nearest ETA moves to the
                     // next 30s bucket (not every poll — Static API has a daily
                     // request quota and 403s once it's spent).
                     val s2 = sessions[widgetId]
                     if (s2 != null && isMapWidget(widgetId) && s2.lat != 0.0 && s2.lon != 0.0) {
-                        val nearEta = liveArrivals(widgetId).firstOrNull()?.etaSeconds
+                        // circle uses the ETA corrected by this route's history
+                        val near = liveArrivals(widgetId)
+                            .filter { it.etaSeconds != null }
+                            .minByOrNull { it.etaSeconds!! }
+                        val nearEta = near?.etaSeconds?.let { eta ->
+                            ru.buswidget.data.ArrivalHistory.correctedEta(this, s2.stopId, near.route, eta)
+                        }
                         val key = if (nearEta == null || nearEta > 180) -1
                                   else nearEta.coerceAtLeast(0) / 30
                         if (mapLastKey[widgetId] != key || !mapBitmaps.containsKey(widgetId)) {
@@ -488,7 +512,7 @@ class AutoPollService : Service() {
                 direction  = str("direction"),
                 eta        = str("eta_local").ifBlank { str("eta_text") }.ifBlank { "—" },
                 etaSeconds = secs,
-                color      = PollService.etaColor(secs),
+                color      = PollService.etaColor(this, secs),
             )
         }.sortedBy { it.etaSeconds ?: Int.MAX_VALUE }
     }

@@ -91,7 +91,7 @@ class ArrivalsActivity : AppCompatActivity() {
         val firstEta = live.firstOrNull()
         val now = System.currentTimeMillis()
         if (now - lastMapUpdateTime > 100) {
-            updateMapDistance(firstEta?.etaSeconds ?: 0, firstEta?.etaLocal ?: "—")
+            updateMapDistance(firstEta?.route ?: "", firstEta?.etaSeconds ?: 0, firstEta?.etaLocal ?: "—")
             lastMapUpdateTime = now
         }
         checkAndNotifyIfBusNear(firstEta)
@@ -319,9 +319,14 @@ class ArrivalsActivity : AppCompatActivity() {
                         lastMapUpdateTime = 0  // let the next tick refresh the map
                         adapter.submit(arrivals)
                         arrivals.firstOrNull()?.let {
-                            updateMapDistance(it.etaSeconds ?: 0, it.etaLocal)
+                            updateMapDistance(it.route, it.etaSeconds ?: 0, it.etaLocal)
                         }
                     }
+                    // History is fed live (countdown-adjusted) ETAs: the raw
+                    // payload can be up to 45 s stale because of the server cache.
+                    val elapsedSec = ((System.currentTimeMillis() - lastFetchAt) / 1000).toInt()
+                    ru.buswidget.data.ArrivalHistory.observe(this, stopId,
+                        lastFetched.map { it.route to it.etaSeconds?.minus(elapsedSec) })
                     val t = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                         .format(java.util.Date())
                     tvStatus.text = "обновлено $t"
@@ -343,13 +348,17 @@ class ArrivalsActivity : AppCompatActivity() {
         mapView.evaluateJavascript("initMap($stopLat, $stopLon, '$escapedName')") { }
         // Push the latest known ETA right away so the circle appears without
         // waiting for the next poll tick.
-        lastFetched.firstOrNull()?.let { updateMapDistance(it.etaSeconds ?: 0, it.etaLocal) }
+        lastFetched.firstOrNull()?.let { updateMapDistance(it.route, it.etaSeconds ?: 0, it.etaLocal) }
     }
 
-    private fun updateMapDistance(etaSeconds: Int, etaText: String) {
+    private fun updateMapDistance(route: String, etaSeconds: Int, etaText: String) {
         if (!mapInitialized) return
+        // The circle uses the ETA corrected by this route's arrival history
+        // (how late/early it usually is here); the label keeps Yandex's text.
+        val circleEta = if (route.isBlank()) etaSeconds
+            else ru.buswidget.data.ArrivalHistory.correctedEta(this, stopId, route, etaSeconds)
         val escapedText = etaText.replace("'", "\\'")
-        mapView.evaluateJavascript("updateDistance($etaSeconds, '$escapedText')") { }
+        mapView.evaluateJavascript("updateDistance($circleEta, '$escapedText')") { }
     }
 
     private fun loadAssetWithApiKey(apiKey: String): String {

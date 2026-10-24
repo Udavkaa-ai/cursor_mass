@@ -11,8 +11,10 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.buswidget.R
 import ru.buswidget.data.Config
 import java.net.HttpURLConnection
 import java.net.URL
@@ -75,14 +77,16 @@ class PollService : Service() {
             else         -> "${secs / 3600}ч" to "${(secs % 3600) / 60}м"
         }
 
-        fun etaColor(secs: Int?): Int = when {
-            secs == null -> 0xFF7878A0.toInt()  // grey   — unknown
-            secs <= 0    -> 0xFFE53040.toInt()  // red    — arriving now
-            secs < 300   -> 0xFFE53040.toInt()  // red    — < 5 min
-            secs < 480   -> 0xFFFF8C00.toInt()  // orange — 5-8 min
-            secs < 660   -> 0xFF2ED87A.toInt()  // green  — 8-11 min
-            else         -> 0xFF7878A0.toInt()  // grey   — > 11 min
-        }
+        /** Widget ETA color; resources follow the system light/dark theme. */
+        fun etaColor(ctx: Context, secs: Int?): Int = ContextCompat.getColor(ctx, when {
+            secs == null -> R.color.w_eta_grey    // unknown
+            secs < 300   -> R.color.w_eta_red     // arriving / < 5 min
+            secs < 480   -> R.color.w_eta_orange  // 5-8 min
+            secs < 660   -> R.color.w_eta_green   // 8-11 min
+            else         -> R.color.w_eta_grey    // > 11 min
+        })
+
+        fun mutedColor(ctx: Context): Int = ContextCompat.getColor(ctx, R.color.w_muted)
     }
 
     private data class Session(
@@ -185,7 +189,7 @@ class PollService : Service() {
             a.copy(
                 eta        = liveSecs?.let { formatEta(it) } ?: a.eta,
                 etaSeconds = liveSecs,
-                color      = etaColor(liveSecs ?: a.etaSeconds),
+                color      = etaColor(this, liveSecs ?: a.etaSeconds),
             )
         }
     }
@@ -209,6 +213,10 @@ class PollService : Service() {
                     if (arrivals.isNotEmpty() && arrivals != prev?.arrivals) {
                         snapshots[widgetId] = Snapshot(System.currentTimeMillis(), arrivals)
                     }
+                    // live (countdown-adjusted) ETAs: raw ones may be up to 45 s
+                    // stale because of the server cache
+                    ru.buswidget.data.ArrivalHistory.observe(
+                        this, s.stopId, liveArrivals(widgetId).map { it.route to it.etaSeconds })
                     sessions[widgetId]?.let { pushUpdate(widgetId, it) }
                 }
             } catch (_: Exception) { handler.post { fetching -= widgetId } }
@@ -226,7 +234,7 @@ class PollService : Service() {
                 direction  = str("direction"),
                 eta        = str("eta_local").ifBlank { str("eta_text") }.ifBlank { "—" },
                 etaSeconds = secs,
-                color      = etaColor(secs),
+                color      = etaColor(this, secs),
             )
         }.sortedBy { it.etaSeconds ?: Int.MAX_VALUE }
     }
