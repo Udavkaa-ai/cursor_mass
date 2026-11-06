@@ -74,6 +74,34 @@
             android:textColor="@color/textTertiary"
             android:layout_marginBottom="24dp"/>
 
+        <!-- Credits -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/bg_card"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Разработка"
+                android:textSize="12sp"
+                android:textColor="@color/textTertiary"
+                android:letterSpacing="0.05"
+                android:textAllCaps="true"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Разработано при участии Kimi — ИИ-ассистента от Moonshot AI"
+                android:textSize="14sp"
+                android:textColor="@color/textPrimary"/>
+
+        </LinearLayout>
+
         <!-- Yandex Maps Terms -->
         <LinearLayout
             android:layout_width="match_parent"
